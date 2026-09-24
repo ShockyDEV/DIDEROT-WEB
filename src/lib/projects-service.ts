@@ -21,6 +21,8 @@ export interface PublicProject {
   endYear: number | null;
   summary: string | null;
   url: string | null;
+  /** Ficha en el Portal de Producción Científica de la USAL. */
+  portalUrl: string | null;
   image: string | null;
   featured: boolean;
 }
@@ -59,6 +61,7 @@ export async function getPublicProjects(locale: Locale): Promise<PublicProject[]
       endYear: p.endYear,
       summary: (en ? clean(p.summaryEn) : null) ?? clean(p.summary),
       url: safeHttpUrl(p.url),
+      portalUrl: safeHttpUrl(p.portalUrl),
       image: safeImageSrc(p.image),
       featured: p.featured,
     }));

@@ -30,6 +30,7 @@ export default async function AdminProjectsPage() {
     summary: p.summary,
     summaryEn: p.summaryEn,
     url: p.url,
+    portalUrl: p.portalUrl,
     image: p.image,
     featured: p.featured,
     active: p.active,

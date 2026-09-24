@@ -258,6 +258,7 @@ export const projectInputSchema = z
     summary: optionalText("el resumen", 4000),
     summaryEn: optionalText("el resumen en inglés", 4000),
     url: optionalLinkUrl("La web del proyecto"),
+    portalUrl: optionalLinkUrl("La ficha del Portal"),
     image: optionalMediaUrl("La imagen"),
     featured: z.boolean().optional(),
     active: z.boolean().optional(),

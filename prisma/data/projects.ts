@@ -29,8 +29,10 @@ export interface ProjectSeed {
   endYear: number;
   summary?: string;
   summaryEn?: string;
-  /** Web del proyecto o, si no tiene, su ficha en el Portal de Producción Científica. */
+  /** Web propia del proyecto (si la tiene). */
   url?: string;
+  /** Ficha en el Portal de Producción Científica de la USAL. */
+  portalUrl?: string;
   featured?: boolean;
 }
 
@@ -55,6 +57,7 @@ export const projects: ProjectSeed[] = [
       "European and Ibero-American staff-exchange network for the digital collection, analysis and dissemination of folk music. Co-led by DIDEROT's group leader; team members also include Javier Cruz Rodríguez and Concepción Pedrero Muñoz.",
     featured: true,
     url: "https://digifolk.usal.es/#/",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/334855/detalle",
   },
   {
     title: "Teachers' HAVEN: Teachers' Haven Academy for promoting professional Versatility, inner Equilibrium and Networking",
@@ -71,7 +74,7 @@ export const projects: ProjectSeed[] = [
       "Academia europea para el bienestar, la versatilidad profesional y el trabajo en red del profesorado. Participa desde DIDEROT: Bohdan Syroyid Syroyid.",
     summaryEn:
       "European academy for teachers' wellbeing, professional versatility and networking. DIDEROT participant: Bohdan Syroyid Syroyid.",
-    url: "https://produccioncientifica.usal.es/proyectos/1336763/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/1336763/detalle",
   },
   {
     title: "PreMedBullying: Preventing Bullying in Primary Schools at the Mediterranean Region",
@@ -88,7 +91,7 @@ export const projects: ProjectSeed[] = [
       "Prevención del acoso escolar en centros de Educación Primaria de la región mediterránea. Participa desde DIDEROT: Javier Cruz Rodríguez.",
     summaryEn:
       "Bullying prevention in primary schools across the Mediterranean region. DIDEROT participant: Javier Cruz Rodríguez.",
-    url: "https://produccioncientifica.usal.es/proyectos/996235/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/996235/detalle",
   },
   {
     title: "EC2U: European Campus of City-Universities 2023-2027",
@@ -105,7 +108,7 @@ export const projects: ProjectSeed[] = [
       "Alianza de universidades europeas «European Campus of City-Universities», de la que forma parte la Universidad de Salamanca. Participa desde DIDEROT: Javier Félix Merchán Sánchez-Jara.",
     summaryEn:
       "European University alliance «European Campus of City-Universities», which includes the University of Salamanca. DIDEROT participant: Javier Félix Merchán Sánchez-Jara.",
-    url: "https://produccioncientifica.usal.es/proyectos/701590/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/701590/detalle",
   },
   {
     title:
@@ -123,7 +126,7 @@ export const projects: ProjectSeed[] = [
       "Competencias para el desarrollo del turismo religioso y la gestión de espacios religiosos en entornos urbanos. Participa desde DIDEROT: Bohdan Syroyid Syroyid.",
     summaryEn:
       "Skills for religious tourism development and the management of religious sites in urban settings. DIDEROT participant: Bohdan Syroyid Syroyid.",
-    url: "https://produccioncientifica.usal.es/proyectos/751565/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/751565/detalle",
   },
   {
     title:
@@ -141,7 +144,7 @@ export const projects: ProjectSeed[] = [
       "Potencial turístico de los pequeños productores gastronómicos tradicionales y conciencia cultural sobre el patrimonio gastronómico. Participa desde DIDEROT: Bohdan Syroyid Syroyid.",
     summaryEn:
       "Tourism potential of small traditional food producers and cultural awareness of gastronomic heritage. DIDEROT participant: Bohdan Syroyid Syroyid.",
-    url: "https://produccioncientifica.usal.es/proyectos/340579/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/340579/detalle",
   },
   {
     title: "NUBETECA, tercera fase de la investigación",
@@ -158,7 +161,7 @@ export const projects: ProjectSeed[] = [
       "Contrato de investigación con la Diputación de Badajoz (tercera fase). Participa desde DIDEROT: Javier Félix Merchán Sánchez-Jara.",
     summaryEn:
       "Research contract with the Provincial Council of Badajoz (third phase). DIDEROT participant: Javier Félix Merchán Sánchez-Jara.",
-    url: "https://produccioncientifica.usal.es/proyectos/782592/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/782592/detalle",
   },
   {
     title: "Tratados musicales en español",
@@ -176,7 +179,7 @@ export const projects: ProjectSeed[] = [
       "Estudio de los tratados musicales escritos en español. Participan desde DIDEROT: Javier Félix Merchán Sánchez-Jara y Beatriz Hernández Polo.",
     summaryEn:
       "Study of music treatises written in Spanish. DIDEROT participants: Javier Félix Merchán Sánchez-Jara and Beatriz Hernández Polo.",
-    url: "https://produccioncientifica.usal.es/proyectos/47015/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/47015/detalle",
   },
   {
     title: "Exocanónicos: márgenes y descentramiento en la literatura en español del siglo XXI",
@@ -194,7 +197,7 @@ export const projects: ProjectSeed[] = [
       "Literatura en español del siglo XXI situada en los márgenes del canon. Participa desde DIDEROT: Javier Félix Merchán Sánchez-Jara.",
     summaryEn:
       "21st-century literature in Spanish at the margins of the canon. DIDEROT participant: Javier Félix Merchán Sánchez-Jara.",
-    url: "https://produccioncientifica.usal.es/proyectos/47051/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/47051/detalle",
   },
   {
     title: "FolkAI: Preservación y Difusión de la Tradición Musical Europea a través de la Inteligencia Artificial",
@@ -212,7 +215,7 @@ export const projects: ProjectSeed[] = [
       "Inteligencia artificial para preservar y difundir la tradición musical europea. Participa desde DIDEROT: Javier Félix Merchán Sánchez-Jara.",
     summaryEn:
       "Artificial intelligence to preserve and disseminate the European musical tradition. DIDEROT participant: Javier Félix Merchán Sánchez-Jara.",
-    url: "https://produccioncientifica.usal.es/proyectos/47151/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/47151/detalle",
   },
   {
     title: "Co-POEM: Platform for the Collaborative Generation of European Popular Music",
@@ -230,12 +233,13 @@ export const projects: ProjectSeed[] = [
     summaryEn:
       "Platform for the collaborative creation of European popular music in education. DIDEROT participants: Javier Félix Merchán Sánchez-Jara and Sara González Gutiérrez.",
     featured: true,
-    url: "https://produccioncientifica.usal.es/proyectos/46881/detalle",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/46881/detalle",
   },
   {
     title: "IHMAGINE: Intangible Heritage Music and Gender: International Network",
     acronym: "IHMAGINE",
     reference: "SA053G24",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/996214/detalle",
     funder: "Consejería de Educación y Cultura, Junta de Castilla y León",
     ip: "Matilde María Olarte Martínez",
     scope: "Autonómico",
@@ -252,6 +256,7 @@ export const projects: ProjectSeed[] = [
     titleEn:
       "Popular song as a source of inspiration. A study of gender identities through women promoters of popular music (1917-1961)",
     reference: "HAR2017-82413-R",
+    portalUrl: "https://produccioncientifica.usal.es/proyectos/46094/detalle",
     funder: "Ministerio de Economía y Competitividad",
     ip: "Judith Helvia García Martín; Matilde María Olarte Martínez",
     scope: "Nacional",

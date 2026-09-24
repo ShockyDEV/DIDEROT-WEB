@@ -131,6 +131,7 @@ model Project {
   summary     String? // resumen breve (texto plano)
   summaryEn   String?
   url         String? // web del proyecto
+  portalUrl   String? // ficha en el Portal de Producción Científica de la USAL
   image       String? // logotipo o imagen (URL de Archivos)
   featured    Boolean  @default(false) // destacado en portada
   active      Boolean  @default(true) // visible en la web

@@ -109,6 +109,12 @@ function normalize(s: string): string {
     .toLowerCase();
 }
 
+/** Fichas del Portal de Producción Científica de la USAL. */
+const PORTAL = "https://produccioncientifica.usal.es/";
+
+const enlaceClass =
+  "inline-flex min-h-6 items-center gap-1 rounded text-sm font-medium text-diderot-violet hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card";
+
 /**
  * Título sin el acrónimo inicial cuando ya se muestra aparte
  * («EA-DIGIFOLK: An European…» → «An European…»).
@@ -450,7 +456,7 @@ export function ProjectsExplorer({
                     </dl>
                   ) : null}
 
-                  {fechas || p.url ? (
+                  {fechas || p.url || p.portalUrl ? (
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5">
                       {fechas ? (
                         <span className="whitespace-nowrap rounded-full bg-diderot-pale px-3 py-1 text-xs font-medium text-ink">
@@ -459,18 +465,21 @@ export function ProjectsExplorer({
                       ) : (
                         <span />
                       )}
-                      {p.url ? (
-                        <a
-                          href={p.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex min-h-6 items-center gap-1 rounded text-sm font-medium text-diderot-violet hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
-                        >
-                          {p.url.startsWith("https://produccioncientifica.usal.es/")
-                            ? t.fichaPortal
-                            : t.web}
-                          <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                        </a>
+                      {p.url || p.portalUrl ? (
+                        <span className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+                          {p.url ? (
+                            <a href={p.url} target="_blank" rel="noopener noreferrer" className={enlaceClass}>
+                              {p.url.startsWith(PORTAL) ? t.fichaPortal : t.web}
+                              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                            </a>
+                          ) : null}
+                          {p.portalUrl && p.portalUrl !== p.url ? (
+                            <a href={p.portalUrl} target="_blank" rel="noopener noreferrer" className={enlaceClass}>
+                              {t.fichaPortal}
+                              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                            </a>
+                          ) : null}
+                        </span>
                       ) : null}
                     </div>
                   ) : null}

@@ -35,6 +35,9 @@ const prisma = new PrismaClient();
 
 const DEV_ADMIN_PASSWORD = "diderot-admin-dev";
 
+/** Fichas de proyecto del Portal de Producción Científica de la USAL. */
+const PORTAL_PREFIX = "https://produccioncientifica.usal.es/proyectos/";
+
 interface PublicationSeed {
   title: string;
   authors: string;
@@ -168,8 +171,19 @@ async function seedProjects() {
         : { title: p.title },
     });
     if (exists) {
-      // Solo relleno: enlace y resumen si faltan (lo editado en el panel manda).
-      const fill: { url?: string; summary?: string; summaryEn?: string } = {};
+      // Solo relleno: enlaces y resumen si faltan (lo editado en el panel manda).
+      const fill: {
+        url?: string | null;
+        portalUrl?: string;
+        summary?: string;
+        summaryEn?: string;
+      } = {};
+      // Una ficha del Portal guardada como «web del proyecto» pasa a su campo.
+      if (!exists.portalUrl && exists.url?.startsWith(PORTAL_PREFIX)) {
+        fill.portalUrl = exists.url;
+        fill.url = p.url ?? null;
+      }
+      if (!exists.portalUrl && !fill.portalUrl && p.portalUrl) fill.portalUrl = p.portalUrl;
       if (!exists.url && p.url) fill.url = p.url;
       if (!exists.summary && p.summary) fill.summary = p.summary;
       if (!exists.summaryEn && p.summaryEn) fill.summaryEn = p.summaryEn;

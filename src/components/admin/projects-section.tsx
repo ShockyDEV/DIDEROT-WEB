@@ -34,6 +34,7 @@ export interface ProjectRow {
   summary: string | null;
   summaryEn: string | null;
   url: string | null;
+  portalUrl: string | null;
   image: string | null;
   featured: boolean;
   active: boolean;
@@ -61,6 +62,7 @@ function emptyForm(): FormState {
     summary: "",
     summaryEn: "",
     url: "",
+    portalUrl: "",
     image: "",
     featured: false,
     active: true,
@@ -84,6 +86,7 @@ function toForm(p: ProjectRow): FormState {
     summary: p.summary ?? "",
     summaryEn: p.summaryEn ?? "",
     url: p.url ?? "",
+    portalUrl: p.portalUrl ?? "",
     image: p.image ?? "",
     featured: p.featured,
     active: p.active,
@@ -402,6 +405,20 @@ export function ProjectsSection({ rows }: Readonly<{ rows: ProjectRow[] }>) {
                 value={form.url}
                 placeholder="https://…"
                 onChange={(e) => set("url", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field
+              id="p-portal"
+              label="Ficha en el Portal de Producción Científica"
+              hint="p. ej. https://produccioncientifica.usal.es/proyectos/334855/detalle"
+            >
+              <input
+                id="p-portal"
+                type="text"
+                value={form.portalUrl}
+                placeholder="https://produccioncientifica.usal.es/proyectos/…"
+                onChange={(e) => set("portalUrl", e.target.value)}
                 className={inputClass}
               />
             </Field>

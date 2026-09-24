@@ -67,6 +67,7 @@ export async function projectData(d: ProjectInput) {
     summary: d.summary ?? null,
     summaryEn: d.summaryEn ?? t.summaryEn ?? null,
     url: d.url ?? null,
+    portalUrl: d.portalUrl ?? null,
     image: d.image ?? null,
   };
 }
