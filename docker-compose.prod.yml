@@ -1,8 +1,10 @@
 # Producción de la web de DIDEROT (diderot.usal.es).
 #
-#   docker compose -f docker-compose.prod.yml up -d --build          # app + BD
+#   docker compose -f docker-compose.prod.yml --profile tools build  # app + migrate
 #   docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
 #                                   # crea/actualiza el esquema y siembra la BD
+#   docker compose -f docker-compose.prod.yml up -d                  # app + BD
+# (run NO reconstruye la imagen de migrate: constrúyela siempre antes).
 #
 # La app solo escucha en 127.0.0.1:APP_PORT: el acceso público va SIEMPRE por
 # el proxy inverso con HTTPS (Apache o nginx, ver deploy/). La BD no publica

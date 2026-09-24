@@ -61,7 +61,8 @@ correo.
 ## 3. Construir y arrancar
 
 ```bash
-docker compose -f docker-compose.prod.yml build
+# Construye la app y la imagen de herramientas (migrate) a la vez:
+docker compose -f docker-compose.prod.yml --profile tools build
 docker compose -f docker-compose.prod.yml up -d db
 # Esquema + contenido inicial (idempotente; se puede repetir sin duplicar):
 docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
@@ -109,8 +110,10 @@ cabecera de `deploy/backup-prod.sh`.
 cd /opt/diderot-web
 sh deploy/backup-prod.sh                                   # siempre antes
 git pull
-docker compose -f docker-compose.prod.yml build
-# solo si cambió prisma/schema.prisma:
+# «--profile tools» reconstruye también la imagen de migrate: sin él, run
+# usaría la imagen anterior (esquema viejo) y la BD no se actualizaría.
+docker compose -f docker-compose.prod.yml --profile tools build
+# solo si cambió prisma/schema.prisma o los datos de la semilla:
 docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
 docker compose -f docker-compose.prod.yml up -d app
 docker image prune -f
