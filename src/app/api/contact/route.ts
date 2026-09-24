@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { contactSchema, HONEYPOT_FIELD } from "@/lib/validations";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/site-settings";
 import {
   contactAutoReplyEmail,
   contactNotifyEmail,
@@ -77,7 +77,10 @@ export async function POST(request: Request) {
     try {
       const resend = new Resend(apiKey);
       const from = process.env.EMAIL_FROM ?? "DIDEROT <onboarding@resend.dev>";
-      const to = process.env.CONTACT_TO || SITE.email;
+      // Destinatario: CONTACT_TO (servidor) o, si falta, el correo de contacto
+      // del panel (Configuración → Datos del sitio).
+      const settings = await getSiteSettings();
+      const to = process.env.CONTACT_TO || settings.email;
 
       // El SDK de Resend devuelve los errores de API en `error` (no lanza):
       // los registramos para saber si el envío llegó de verdad a salir.
@@ -103,7 +106,13 @@ export async function POST(request: Request) {
         console.log(`[contact] Aviso al grupo enviado (id ${notify.data?.id})`);
       }
 
-      const autoMail = contactAutoReplyEmail({ name, subject, message, locale });
+      const autoMail = contactAutoReplyEmail({
+        name,
+        subject,
+        message,
+        locale,
+        contactEmail: settings.email,
+      });
       const auto = await resend.emails.send({
         from,
         to: email,

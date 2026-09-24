@@ -1,0 +1,154 @@
+{
+  "bulk": [
+    {
+      "work": {
+        "created-date": { "value": 1717600000000 },
+        "last-modified-date": { "value": 1717600000000 },
+        "source": { "source-name": { "value": "Crossref" } },
+        "put-code": 166812634,
+        "path": "/0000-0003-1828-5182/work/166812634",
+        "title": {
+          "title": { "value": "Capítulo de prueba sobre aplicaciones de acordes y escalas" },
+          "subtitle": null,
+          "translated-title": null
+        },
+        "journal-title": null,
+        "short-description": null,
+        "citation": null,
+        "type": "book-chapter",
+        "publication-date": { "year": { "value": "2024" }, "month": null, "day": null },
+        "external-ids": {
+          "external-id": [
+            {
+              "external-id-type": "doi",
+              "external-id-value": "10.1007/978-981-97-1814-6_135",
+              "external-id-normalized": { "value": "10.1007/978-981-97-1814-6_135", "transient": true },
+              "external-id-normalized-error": null,
+              "external-id-url": { "value": "https://doi.org/10.1007/978-981-97-1814-6_135" },
+              "external-id-relationship": "self"
+            },
+            {
+              "external-id-type": "doi",
+              "external-id-value": "10.1007/978-981-97-1814-6",
+              "external-id-normalized": { "value": "10.1007/978-981-97-1814-6", "transient": true },
+              "external-id-normalized-error": null,
+              "external-id-url": { "value": "https://doi.org/10.1007/978-981-97-1814-6" },
+              "external-id-relationship": "part-of"
+            }
+          ]
+        },
+        "url": { "value": "https://doi.org/10.1007/978-981-97-1814-6_135" },
+        "contributors": {
+          "contributor": [
+            {
+              "contributor-orcid": null,
+              "credit-name": { "value": "García-Iasci Patricia" },
+              "contributor-email": null,
+              "contributor-attributes": { "contributor-sequence": null, "contributor-role": "author" }
+            },
+            {
+              "contributor-orcid": null,
+              "credit-name": { "value": "Merchán Sánchez-Jara Javier" },
+              "contributor-email": null,
+              "contributor-attributes": { "contributor-sequence": null, "contributor-role": "author" }
+            },
+            {
+              "contributor-orcid": null,
+              "credit-name": { "value": "Ana Editora Prueba" },
+              "contributor-email": null,
+              "contributor-attributes": { "contributor-sequence": null, "contributor-role": "editor" }
+            }
+          ]
+        },
+        "language-code": null,
+        "country": null,
+        "visibility": "public"
+      }
+    },
+    {
+      "error": {
+        "response-code": 400,
+        "developer-message": "400 Bad Request: The put code provided is not valid.",
+        "user-message": "There was an error when updating the record.",
+        "error-code": 9034,
+        "more-info": "https://members.orcid.org/api/resources/troubleshooting"
+      }
+    },
+    {
+      "work": {
+        "created-date": { "value": 1782914946375 },
+        "last-modified-date": { "value": 1782914946375 },
+        "source": { "source-name": { "value": "Crossref" } },
+        "put-code": 219341159,
+        "path": "/0000-0003-1828-5182/work/219341159",
+        "title": {
+          "title": {
+            "value": "Artificial Intelligence (AI) in Music Education Ecology: AI as an Agent for Understanding, Meaning-Making, and Creative and Cognitive Growth"
+          },
+          "subtitle": null,
+          "translated-title": null
+        },
+        "journal-title": { "value": "AI in Education" },
+        "short-description": "<jats:p>Resumen de prueba con &amp; entidades y <jats:italic>marcado</jats:italic>.</jats:p>",
+        "citation": null,
+        "type": "journal-article",
+        "publication-date": {
+          "year": { "value": "2026" },
+          "month": { "value": "07" },
+          "day": { "value": "01" }
+        },
+        "external-ids": {
+          "external-id": [
+            {
+              "external-id-type": "doi",
+              "external-id-value": "10.3390/aieduc2030022",
+              "external-id-normalized": { "value": "10.3390/aieduc2030022", "transient": true },
+              "external-id-normalized-error": null,
+              "external-id-url": { "value": "https://doi.org/10.3390/aieduc2030022" },
+              "external-id-relationship": "self"
+            }
+          ]
+        },
+        "url": { "value": "https://doi.org/10.3390/aieduc2030022" },
+        "contributors": {
+          "contributor": [
+            {
+              "contributor-orcid": null,
+              "credit-name": { "value": "Sara GonzÃ¡lez-GutiÃ©rrez" },
+              "contributor-email": null,
+              "contributor-attributes": { "contributor-sequence": null, "contributor-role": "author" }
+            },
+            {
+              "contributor-orcid": null,
+              "credit-name": { "value": "Javier MerchÃ¡n-SÃ¡nchez-Jara" },
+              "contributor-email": null,
+              "contributor-attributes": { "contributor-sequence": null, "contributor-role": "author" }
+            }
+          ]
+        },
+        "language-code": null,
+        "country": null,
+        "visibility": "public"
+      }
+    },
+    {
+      "work": {
+        "put-code": 150000001,
+        "path": "/0000-0003-1828-5182/work/150000001",
+        "title": {
+          "title": { "value": "Didáctica digital del <i>jazz</i> en secundaria" },
+          "subtitle": { "value": "una propuesta de aula" },
+          "translated-title": null
+        },
+        "journal-title": { "value": "Actas del Congreso de Prueba" },
+        "short-description": null,
+        "type": "conference-paper",
+        "publication-date": { "year": { "value": "2022" }, "month": null, "day": null },
+        "external-ids": { "external-id": [] },
+        "url": null,
+        "contributors": { "contributor": [] },
+        "visibility": "public"
+      }
+    }
+  ]
+}

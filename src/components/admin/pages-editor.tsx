@@ -6,6 +6,9 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { ListBlockEditor } from "@/components/admin/list-block-editor";
+import { errorMessage, sendJson } from "@/components/admin/admin-fetch";
+import { isUrlBlockKey } from "@/lib/admin-options";
+import { ICON_NAMES } from "@/lib/icon-map";
 import { PAGE_BLOCKS } from "@/lib/content/page-blocks";
 import { LIST_BLOCKS, type ListItem } from "@/lib/content/list-blocks";
 
@@ -19,11 +22,7 @@ const inputClass =
  * Los títulos del registro siguen la convención «Sección — detalle», que se
  * usa para agrupar los bloques por secciones dentro de cada página. */
 
-const URL_KEY = /(^|[-:])url([-:]|$)/;
-
-function isUrlBlock(blockKey: string) {
-  return URL_KEY.test(blockKey);
-}
+const isUrlBlock = isUrlBlockKey;
 
 function sectionOf(title: string) {
   return title.includes("—") ? title.split("—")[0].trim() : "";
@@ -116,14 +115,14 @@ function BlockHeader({
   );
 }
 
+/** Guarda un bloque; devuelve true si además se tradujo al inglés. */
 async function saveBlock(pageSlug: string, blockKey: string, content: string) {
-  const res = await fetch("/api/admin/content-blocks", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pageSlug, blockKey, content }),
+  const json = await sendJson<{ translated?: boolean }>("/api/admin/content-blocks", "PUT", {
+    pageSlug,
+    blockKey,
+    content,
   });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error ?? "No se pudo guardar");
+  return Boolean(json.translated);
 }
 
 /* ── bloque de enlace (URL) ─────────────────────────────────────────────── */
@@ -164,7 +163,7 @@ function UrlBlockEditor({
       setSavedUrl(value);
       toast.success("Guardado");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar");
+      toast.error(errorMessage(err, "No se pudo guardar"));
     } finally {
       setSaving(false);
     }
@@ -250,11 +249,11 @@ function BlockEditor({
   async function handleSave() {
     setSaving(true);
     try {
-      await saveBlock(pageSlug, blockKey, content);
+      const translated = await saveBlock(pageSlug, blockKey, content);
       setSavedContent(content);
-      toast.success("Guardado y traducido automáticamente (EN)");
+      toast.success(translated ? "Guardado y traducido automáticamente (EN)" : "Guardado");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar");
+      toast.error(errorMessage(err, "No se pudo guardar"));
     } finally {
       setSaving(false);
     }
@@ -277,6 +276,7 @@ function BlockEditor({
           value={content}
           onChange={setContent}
           minHeight={130}
+          uploadFolder="pages"
         />
       </div>
     </div>
@@ -299,7 +299,7 @@ interface PagesEditorProps {
 }
 
 export function PagesEditor({ saved }: Readonly<PagesEditorProps>) {
-  const [pageSlug, setPageSlug] = useState(PAGE_BLOCKS[0].pageSlug);
+  const [pageSlug, setPageSlug] = useState(PAGE_BLOCKS[0]?.pageSlug ?? "");
   const page = useMemo(
     () => PAGE_BLOCKS.find((p) => p.pageSlug === pageSlug) ?? PAGE_BLOCKS[0],
     [pageSlug],
@@ -309,11 +309,29 @@ export function PagesEditor({ saved }: Readonly<PagesEditorProps>) {
     [pageSlug],
   );
 
+  // Registro de contenido todavía vacío: nada que editar (sin romper).
+  if (!page) {
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
+        <p className="text-sm text-gray-500">
+          Todavía no hay páginas con contenido editable. Los bloques se declaran en
+          src/lib/content/blocks/*.ts.
+        </p>
+      </div>
+    );
+  }
+
   // Bloques agrupados por la sección del título («Sección — detalle»).
   let lastSection: string | null = null;
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Sugerencias de iconos para todos los campos «icono» de las listas */}
+      <datalist id="lucide-icons">
+        {ICON_NAMES.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
       <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
         <label
           htmlFor="page-select"
@@ -333,10 +351,11 @@ export function PagesEditor({ saved }: Readonly<PagesEditorProps>) {
             </option>
           ))}
         </select>
-        <p className="text-xs text-gray-500">
-          Cada página se compone de piezas agrupadas por secciones: textos,
-          enlaces y listas. Cada pieza se guarda por separado; los textos se
-          traducen automáticamente al inglés.
+        <p className="min-w-[240px] flex-1 text-xs text-gray-500">
+          Cada página de la web de DIDEROT se compone de piezas agrupadas por
+          secciones: textos, enlaces y listas. Cada pieza se guarda por separado;
+          los textos se traducen automáticamente al inglés (si la traducción está
+          configurada).
         </p>
       </div>
 

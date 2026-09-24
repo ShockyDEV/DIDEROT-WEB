@@ -9,8 +9,23 @@ const inputClass =
   "h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25";
 
 /**
- * Formulario de acceso al panel. Autenticación con Credentials
- * (email + contraseña); en caso de éxito redirige al callbackUrl o /backstage.
+ * Destino tras el login: solo rutas internas del panel. Un callbackUrl
+ * externo («https://otra-web…» o «//otra-web») convertiría el login en una
+ * redirección abierta útil para suplantaciones.
+ */
+export function safeCallbackUrl(raw: string | null): string {
+  if (!raw) return "/backstage";
+  if (!raw.startsWith("/backstage") || raw.startsWith("//") || raw.includes("\\")) {
+    return "/backstage";
+  }
+  return raw;
+}
+
+/**
+ * Formulario de acceso al panel. Autenticación con Credentials (email +
+ * contraseña); en caso de éxito redirige al callbackUrl (interno) o a
+ * /backstage. El error es siempre el mismo: no revela si el correo tiene
+ * cuenta ni si se ha activado el límite de intentos.
  */
 export function SignInForm() {
   const router = useRouter();
@@ -24,19 +39,25 @@ export function SignInForm() {
     setLoading(true);
 
     const data = new FormData(e.currentTarget);
-    const res = await signIn("credentials", {
-      email: data.get("email"),
-      password: data.get("password"),
-      redirect: false,
-    });
-
-    setLoading(false);
-    if (res?.error) {
-      setError("Credenciales no válidas. Comprueba el correo y la contraseña.");
-      return;
+    try {
+      const res = await signIn("credentials", {
+        email: data.get("email"),
+        password: data.get("password"),
+        redirect: false,
+      });
+      if (!res || res.error) {
+        setError(
+          "No se ha podido iniciar sesión. Comprueba el correo y la contraseña; si has hecho varios intentos seguidos, espera unos minutos.",
+        );
+        setLoading(false);
+        return;
+      }
+      router.push(safeCallbackUrl(searchParams.get("callbackUrl")));
+      router.refresh();
+    } catch {
+      setError("No se ha podido conectar. Inténtalo de nuevo.");
+      setLoading(false);
     }
-    router.push(searchParams.get("callbackUrl") ?? "/backstage");
-    router.refresh();
   }
 
   return (
@@ -51,10 +72,7 @@ export function SignInForm() {
       ) : null}
 
       <div className="mb-4 flex flex-col gap-2">
-        <label
-          htmlFor="admin-email"
-          className="text-[13px] font-medium text-gray-700"
-        >
+        <label htmlFor="admin-email" className="text-[13px] font-medium text-gray-700">
           Correo electrónico
         </label>
         <input
@@ -62,22 +80,20 @@ export function SignInForm() {
           name="email"
           type="email"
           required
+          maxLength={200}
           placeholder="tu@usal.es"
-          autoComplete="email"
+          autoComplete="username"
           className={inputClass}
         />
       </div>
 
       <div className="mb-5 flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
-          <label
-            htmlFor="admin-pass"
-            className="text-[13px] font-medium text-gray-700"
-          >
+          <label htmlFor="admin-pass" className="text-[13px] font-medium text-gray-700">
             Contraseña
           </label>
           <a
-            href="mailto:iuce.tecnico@usal.es?subject=Restablecer%20contrase%C3%B1a%20del%20panel"
+            href="mailto:iuce.tecnico@usal.es?subject=Restablecer%20contrase%C3%B1a%20del%20panel%20de%20DIDEROT"
             title="Escribe al soporte técnico para restablecerla"
             className="text-xs text-diderot-violet hover:underline"
           >
@@ -89,7 +105,8 @@ export function SignInForm() {
           name="password"
           type="password"
           required
-          placeholder="••••••••"
+          maxLength={256}
+          placeholder="••••••••••••"
           autoComplete="current-password"
           className={inputClass}
         />

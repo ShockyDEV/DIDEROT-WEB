@@ -1,57 +1,37 @@
-import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getCurrentAdmin } from "@/lib/admin-guard";
 import { prisma } from "@/lib/prisma";
-import {
-  SettingsSection,
-  type AccountRow,
-  type SiteData,
-} from "@/components/admin/settings-section";
+import { getSiteSettings } from "@/lib/site-settings";
+import { SettingsSection, type AccountRow } from "@/components/admin/settings-section";
 
 export const dynamic = "force-dynamic";
 
-const SITE_DEFAULTS: SiteData = {
-  name: "IUCE — Universidad de Salamanca",
-  email: "iuce@usal.es",
-  phone: "+34 923 294 634",
-  reservasUrl: "https://reservas.iuce.usal.es",
-  seoDescription:
-    "Instituto Universitario de Ciencias de la Educación de la Universidad de Salamanca: investigación, formación del profesorado y doctorado en Educación.",
-};
-
 export default async function AdminSettingsPage() {
-  const session = await auth();
+  const me = await getCurrentAdmin();
+  if (!me) redirect("/auth/signin?callbackUrl=/backstage/settings");
 
-  const [users, blocks] = await Promise.all([
+  const [users, site] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "asc" },
-      select: { id: true, email: true, name: true, role: true },
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
     }),
-    prisma.contentBlock.findMany({ where: { pageSlug: "_site" } }),
+    getSiteSettings(),
   ]);
-
-  const blockMap = Object.fromEntries(
-    blocks.map((b) => [b.blockKey, b.content]),
-  );
-  const site: SiteData = {
-    name: blockMap["name"] ?? SITE_DEFAULTS.name,
-    email: blockMap["email"] ?? SITE_DEFAULTS.email,
-    phone: blockMap["phone"] ?? SITE_DEFAULTS.phone,
-    reservasUrl: blockMap["reservas-url"] ?? SITE_DEFAULTS.reservasUrl,
-    seoDescription:
-      blockMap["seo-description"] ?? SITE_DEFAULTS.seoDescription,
-  };
 
   const accounts: AccountRow[] = users.map((u) => ({
     id: u.id,
     email: u.email,
     name: u.name,
     role: u.role,
+    createdAt: u.createdAt.toISOString(),
   }));
 
   return (
     <SettingsSection
       site={site}
       accounts={accounts}
-      isSuperAdmin={session?.user?.role === "SUPER_ADMIN"}
+      currentUserId={me.id}
+      isSuperAdmin={me.role === "SUPER_ADMIN"}
     />
   );
 }

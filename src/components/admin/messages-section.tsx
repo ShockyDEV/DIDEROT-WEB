@@ -6,6 +6,7 @@ import { Eye, Reply, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/admin/modal";
+import { errorMessage, sendJson } from "@/components/admin/admin-fetch";
 import { cn } from "@/lib/cn";
 
 export interface MessageRow {
@@ -209,12 +210,24 @@ export function MessagesSection({
             </div>
             <div className="flex items-center gap-3 border-t border-gray-100 pt-4">
               {viewing.status === "NEW" ? (
-                <Button variant="primary" onClick={() => markReplied(viewing)}>
+                <Button variant="primary" onClick={() => setStatus(viewing, "REPLIED")}>
                   Marcar como respondido
                 </Button>
-              ) : null}
+              ) : (
+                <Button variant="secondary" onClick={() => setStatus(viewing, "NEW")}>
+                  Marcar como pendiente
+                </Button>
+              )}
               <a
                 href={`mailto:${viewing.email}?subject=${encodeURIComponent(`RE: ${viewing.subject}`)}`}
                 className="text-sm font-medium text-diderot-violet hover:underline"
               >
-             
+                Responder por email →
+              </a>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
+    </div>
+  );
+}

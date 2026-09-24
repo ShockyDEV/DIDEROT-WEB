@@ -61,6 +61,28 @@ export const ALLOWED_UPLOADS: Record<string, AllowedType> = {
   ".mp4": { mime: "video/mp4", kind: "video", sniff: (b) => ascii(b, "ftyp", 4) },
 };
 
+/**
+ * Otros MIME con los que distintos navegadores/sistemas declaran el mismo
+ * tipo (p. ej. Windows envía «audio/x-wav» o «audio/wave» para un .wav).
+ */
+const MIME_ALIASES: Record<string, string[]> = {
+  ".jpg": ["image/pjpeg", "image/jpg"],
+  ".jpeg": ["image/pjpeg", "image/jpg"],
+  ".png": ["image/x-png"],
+  ".pdf": ["application/x-pdf"],
+  ".mp3": ["audio/mp3", "audio/x-mp3", "audio/mpeg3", "audio/x-mpeg-3"],
+  ".ogg": ["application/ogg", "audio/x-ogg", "audio/vorbis"],
+  ".wav": ["audio/x-wav", "audio/wave", "audio/vnd.wave"],
+  ".mp4": ["video/x-m4v", "application/mp4"],
+};
+
+function declaredMimeMatches(ext: string, mime: string, declared: string): boolean {
+  const d = declared.toLowerCase();
+  // «application/octet-stream» = el sistema no sabe el tipo: se juzga por la
+  // extensión y la firma.
+  return d === mime || d === "application/octet-stream" || (MIME_ALIASES[ext] ?? []).includes(d);
+}
+
 /** MIME con el que se SIRVE un archivo según su extensión (o null si no se sirve). */
 export function mimeForUpload(filename: string): string | null {
   return ALLOWED_UPLOADS[path.extname(filename).toLowerCase()]?.mime ?? null;
@@ -110,8 +132,10 @@ export async function saveUpload(
       415,
     );
   }
-  // El MIME declarado por el navegador debe cuadrar (si lo declara).
-  if (file.type && file.type !== allowed.mime && !(ext === ".mp3" && file.type === "audio/mp3")) {
+  // El MIME declarado por el navegador debe cuadrar con la extensión (si lo
+  // declara). Es una comprobación secundaria: la protección real es la lista
+  // cerrada de extensiones + la firma binaria + el tipo que fija el servidor.
+  if (file.type && !declaredMimeMatches(ext, allowed.mime, file.type)) {
     throw new UploadError("El tipo del archivo no coincide con su extensión", 415);
   }
 

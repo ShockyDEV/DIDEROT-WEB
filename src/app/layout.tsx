@@ -4,9 +4,12 @@ import { ThemeScript } from "@/components/theme-script";
 import { getLocale } from "@/lib/locale-server";
 import { ToastProvider } from "@/components/toast-provider";
 import { SITE, SITE_URL } from "@/lib/site";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   const en = getLocale() === "en";
+  // Descripción SEO en español editable en el panel (Configuración).
+  const { seoDescription } = await getSiteSettings();
   return {
     metadataBase: new URL(SITE_URL),
     title: {
@@ -17,7 +20,7 @@ export function generateMetadata(): Metadata {
     },
     description: en
       ? "DIDEROT is a Recognised Research Group of the University of Salamanca, attached to the IUCE, working on new methodologies and digital didactics at the intersection of music education, the arts and technology."
-      : "DIDEROT es un Grupo de Investigación Reconocido de la Universidad de Salamanca, adscrito al IUCE, que investiga nuevas metodologías y didácticas digitales en la intersección entre la educación musical, el arte y la vanguardia tecnológica.",
+      : seoDescription,
     openGraph: {
       type: "website",
       siteName: "DIDEROT",
@@ -26,15 +29,16 @@ export function generateMetadata(): Metadata {
   };
 }
 
-// Datos estructurados del grupo (Google, agregadores académicos).
-const ORGANIZATION_JSONLD = {
+// Datos estructurados del grupo (Google, agregadores académicos). El correo
+// sale de Configuración (panel), como el resto de datos de contacto.
+const organizationJsonLd = (email: string) => ({
   "@context": "https://schema.org",
   "@type": "ResearchOrganization",
   name: `DIDEROT: ${SITE.name}`,
   alternateName: "DIDEROT",
   url: SITE_URL,
   logo: `${SITE_URL}/images/diderot-logo.png`,
-  email: SITE.email,
+  email,
   address: {
     "@type": "PostalAddress",
     streetAddress: "Paseo de Canalejas, 169. Edificio Solís (IUCE)",
@@ -53,11 +57,12 @@ const ORGANIZATION_JSONLD = {
     },
   },
   sameAs: [SITE.links.twitter],
-};
+});
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { email } = await getSiteSettings();
   return (
     <html lang={getLocale()} suppressHydrationWarning>
       <body className="min-h-screen bg-surface-page text-gray-600 antialiased">
@@ -66,8 +71,11 @@ export default function RootLayout({
         <ToastProvider />
         <script
           type="application/ld+json"
-          // Contenido estático definido arriba; no incluye datos de usuario.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSONLD) }}
+          // JSON-LD; «<» escapado para que un dato editado en el panel no pueda
+          // cerrar la etiqueta <script>.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd(email)).replace(/</g, "\\u003c"),
+          }}
         />
       </body>
     </html>

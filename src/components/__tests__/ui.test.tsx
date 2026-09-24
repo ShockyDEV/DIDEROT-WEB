@@ -6,14 +6,14 @@ import { ImagePlaceholder } from "@/components/ui/image-placeholder";
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
 
 describe("Button", () => {
-  it("renderiza con la variante por defecto (navy)", () => {
-    render(<Button>Conoce el Instituto</Button>);
-    const btn = screen.getByRole("button", { name: "Conoce el Instituto" });
+  it("renderiza con la variante por defecto (índigo DIDEROT)", () => {
+    render(<Button>Conoce el grupo</Button>);
+    const btn = screen.getByRole("button", { name: "Conoce el grupo" });
     expect(btn).toBeInTheDocument();
     expect(btn.className).toContain("bg-diderot-indigo");
   });
 
-  it("aplica la variante primary (rojo USAL)", () => {
+  it("aplica la variante primary (ámbar, la del panel)", () => {
     render(<Button variant="primary">Nueva noticia</Button>);
     expect(
       screen.getByRole("button", { name: "Nueva noticia" }).className,
@@ -36,9 +36,9 @@ describe("Badge", () => {
 
 describe("ImagePlaceholder", () => {
   it("expone la etiqueta como imagen accesible", () => {
-    render(<ImagePlaceholder label="Foto del Edificio Solís" />);
+    render(<ImagePlaceholder label="Foto del grupo DIDEROT" />);
     expect(
-      screen.getByRole("img", { name: "Foto del Edificio Solís" }),
+      screen.getByRole("img", { name: "Foto del grupo DIDEROT" }),
     ).toBeInTheDocument();
   });
 });

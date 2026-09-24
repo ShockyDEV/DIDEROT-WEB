@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
+import { errorMessage, sendJson } from "@/components/admin/admin-fetch";
 import { cn } from "@/lib/cn";
 
 export interface VisibilityRow {
@@ -36,20 +37,12 @@ export function VisibilitySection({
     setSaving(row.slug);
     setState((s) => ({ ...s, [row.slug]: hidden })); // optimista
     try {
-      const res = await fetch("/api/admin/page-visibility", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: row.slug, hidden }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo guardar");
-      toast.success(
-        hidden ? `«${row.label}» está oculta` : `«${row.label}» ya se ve`,
-      );
+      await sendJson("/api/admin/page-visibility", "PUT", { slug: row.slug, hidden });
+      toast.success(hidden ? `«${row.label}» está oculta` : `«${row.label}» ya se ve`);
       router.refresh();
     } catch (err) {
       setState((s) => ({ ...s, [row.slug]: !hidden })); // revertir
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar");
+      toast.error(errorMessage(err, "No se pudo guardar"));
     } finally {
       setSaving(null);
     }
@@ -140,8 +133,8 @@ export function VisibilitySection({
           con tu sesión del panel, para trabajar en ella antes de publicarla.
         </p>
         <p className="mt-3 text-xs text-gray-500">
-          La portada, las páginas legales y el área de miembros no se pueden
-          ocultar.
+          La portada y las páginas legales (aviso legal, privacidad, cookies y
+          accesibilidad) no se pueden ocultar.
         </p>
       </div>
 

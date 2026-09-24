@@ -24,9 +24,14 @@ export function CountUp({
   const match = /^(\d[\d.]*)(.*)$/.exec(value.trim());
   const target = match ? parseInt(match[1].replace(/\./g, ""), 10) : null;
   const suffix = match ? match[2] : "";
+  // Un año (1900–2100, sin sufijo) no «cuenta desde 0» —se vería pasar por
+  // cifras absurdas—: se desliza desde un par de décadas antes.
+  const isYear =
+    target !== null && suffix === "" && target >= 1900 && target <= 2100;
+  const from = isYear && target !== null ? target - 20 : 0;
 
   const ref = useRef<HTMLSpanElement>(null);
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(from);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
@@ -48,7 +53,7 @@ export function CountUp({
       const tick = (now: number) => {
         const t = Math.min(1, (now - start) / duration);
         const eased = 1 - Math.pow(1 - t, 3); // ease-out cúbico
-        setCurrent(Math.round(target * eased));
+        setCurrent(Math.round(from + (target - from) * eased));
         if (t < 1) {
           frame = requestAnimationFrame(tick);
         } else {
@@ -78,7 +83,7 @@ export function CountUp({
       cancelAnimationFrame(frame);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, duration]);
+  }, [target, from, duration]);
 
   if (target === null) {
     return <span className={className}>{value}</span>;

@@ -54,6 +54,10 @@ model User {
   name         String
   passwordHash String
   role         Role     @default(ADMIN)
+  // Versión de las sesiones: se incrementa al cambiar la contraseña (propia o
+  // restablecida por un SUPER_ADMIN) e invalida todos los JWT emitidos antes,
+  // incluida una sesión robada que siguiera abierta.
+  sessionVersion Int    @default(0)
   createdAt    DateTime @default(now())
 }
 

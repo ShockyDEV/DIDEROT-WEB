@@ -261,12 +261,14 @@ export function contactAutoReplyEmail(opts: {
   subject: string;
   message: string;
   locale?: Locale;
+  /** Correo de contacto del grupo (panel → Configuración). */
+  contactEmail?: string;
 }): EmailContent {
   const en = opts.locale === "en";
   const subjectLabel = en
     ? (CONTACT_SUBJECT_EN[opts.subject as ContactSubject] ?? opts.subject)
     : opts.subject;
-  const email = SITE.email;
+  const email = opts.contactEmail ?? SITE.email;
 
   if (en) {
     const bodyHtml = `

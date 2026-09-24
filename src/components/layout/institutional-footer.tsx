@@ -1,13 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, MapPin, Globe } from "lucide-react";
+import { Mail, MapPin, Phone, Globe } from "lucide-react";
 import { pick, withLocale } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
 import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export function InstitutionalFooter() {
+export async function InstitutionalFooter() {
   const year = new Date().getFullYear();
   const locale = getLocale();
+  // Correo y teléfono editables en el panel (Configuración → Datos del sitio).
+  const { email, phone } = await getSiteSettings();
   return (
     <footer className="mt-16 bg-gray-950 text-white">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-6 py-10 sm:grid-cols-3">
@@ -22,12 +25,21 @@ export function InstitutionalFooter() {
         </div>
 
         <div className="flex flex-col items-center gap-2 text-center text-sm">
+          {phone ? (
+            <a
+              href={`tel:${phone.replace(/[^+\d]/g, "")}`}
+              className="inline-flex items-center gap-2 text-white/90 transition-colors hover:text-white"
+            >
+              <Phone className="h-4 w-4 text-diderot-gold" aria-hidden="true" />
+              {phone}
+            </a>
+          ) : null}
           <a
-            href={`mailto:${SITE.email}`}
+            href={`mailto:${email}`}
             className="inline-flex items-center gap-2 text-white/90 transition-colors hover:text-white"
           >
             <Mail className="h-4 w-4 text-diderot-gold" aria-hidden="true" />
-            {SITE.email}
+            {email}
           </a>
           <p className="inline-flex items-center gap-2 text-white/75">
             <MapPin className="h-4 w-4 flex-none text-diderot-gold" aria-hidden="true" />

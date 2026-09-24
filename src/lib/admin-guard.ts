@@ -48,10 +48,13 @@ export async function getCurrentAdmin(
   if (!id) return null;
   const user = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, sessionVersion: true },
   });
   if (!user || !ADMIN_ROLES.has(user.role)) return null;
-  return user as AdminUser;
+  // Tras cambiar (o restablecer) la contraseña se incrementa la versión de
+  // sesión de la cuenta: los JWT emitidos antes dejan de valer al momento.
+  if ((current?.user?.sessionVersion ?? 0) !== user.sessionVersion) return null;
+  return { id: user.id, email: user.email, name: user.name, role: user.role as AdminRole };
 }
 
 export async function requireAdmin(options?: {

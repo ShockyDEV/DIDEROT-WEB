@@ -191,7 +191,12 @@ export function cleanText(value: string | null | undefined): string {
     }
     return ENTITIES[ref.toLowerCase()] ?? m;
   });
-  return fixMojibake(decoded).replace(/\s+/g, " ").trim();
+  return fixMojibake(decoded)
+    .replace(/\s+/g, " ")
+    // las etiquetas quitadas dejan huecos antes de la puntuación («marcado .»)
+    .replace(/\s+([.,;:!?)\]])/g, "$1")
+    .replace(/([([¿¡])\s+/g, "$1")
+    .trim();
 }
 
 /**

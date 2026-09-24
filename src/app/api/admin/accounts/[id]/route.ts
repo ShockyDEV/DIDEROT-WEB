@@ -61,7 +61,8 @@ export const PATCH = withErrorHandling(
         data: {
           ...(role ? { role } : {}),
           ...(name ? { name } : {}),
-          ...(passwordHash ? { passwordHash } : {}),
+          // Contraseña restablecida: fuera las sesiones abiertas de esa cuenta.
+          ...(passwordHash ? { passwordHash, sessionVersion: { increment: 1 } } : {}),
         },
         select: { id: true, email: true, name: true, role: true },
       });

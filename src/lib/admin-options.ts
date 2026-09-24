@@ -82,16 +82,8 @@ export function publicationSourceLabel(value: string): string {
 
 /* ── Eventos ────────────────────────────────────────────────────────────── */
 
-export const EVENT_TYPES = [
-  "Seminario",
-  "Jornada",
-  "Congreso",
-  "Concierto",
-  "Taller",
-  "Conferencia",
-] as const;
-
-export type EventTypeValue = (typeof EVENT_TYPES)[number];
+// Fuente única: src/lib/content/events.ts (también da las etiquetas en inglés).
+export { EVENT_TYPES, type EventType as EventTypeValue } from "@/lib/content/events";
 
 /* ── Proyectos ──────────────────────────────────────────────────────────── */
 

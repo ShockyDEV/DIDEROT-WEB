@@ -44,9 +44,14 @@ export const POST = withErrorHandling("me:password", async (request: Request) =>
     return apiError("La contraseña no puede ser tu propio correo", 400);
   }
 
+  // Nueva versión de sesión: se cierran TODAS las sesiones abiertas de la
+  // cuenta (también esta; el panel pide volver a entrar con la nueva).
   await prisma.user.update({
     where: { id: guard.user.id },
-    data: { passwordHash: await bcrypt.hash(newPassword, BCRYPT_COST) },
+    data: {
+      passwordHash: await bcrypt.hash(newPassword, BCRYPT_COST),
+      sessionVersion: { increment: 1 },
+    },
   });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, reauth: true });
 });

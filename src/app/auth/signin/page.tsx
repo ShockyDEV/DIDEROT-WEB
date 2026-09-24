@@ -7,7 +7,7 @@ import { SignInForm } from "@/components/auth/signin-form";
 
 export const metadata: Metadata = {
   title: "Iniciar sesión",
-  robots: { index: false },
+  robots: { index: false, follow: false },
 };
 
 export default function SignInPage() {
@@ -17,18 +17,18 @@ export default function SignInPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
           <div className="mb-6 flex flex-col items-center text-center">
             <Image
-              src="/images/iuce-logo.png"
-              alt="IUCE — Universidad de Salamanca"
-              width={800}
-              height={362}
+              src="/images/diderot-logo.png"
+              alt="DIDEROT — Didácticas Digitales de la Expresión Musical y las Artes Performativas"
+              width={1023}
+              height={295}
               priority
-              className="mb-3.5 h-11 w-auto"
+              className="mb-4 h-12 w-auto"
             />
             <h1 className="mb-1 text-xl font-bold text-diderot-indigo">
               Panel de administración
             </h1>
             <p className="text-[13px] text-gray-500">
-              Gestión de contenidos de iuce.usal.es
+              Gestión de contenidos de la web del grupo DIDEROT
             </p>
           </div>
 
@@ -42,19 +42,15 @@ export default function SignInPage() {
               aria-hidden="true"
             />
             <p className="text-xs leading-normal text-gray-500">
-              Acceso restringido a las cuentas de administración autorizadas
-              por el IUCE. Disponer de una cuenta{" "}
-              <strong className="text-gray-700">@usal.es</strong> no da acceso
-              al panel.
+              Acceso restringido a las cuentas autorizadas por la administración del
+              grupo. Disponer de una cuenta <strong className="text-gray-700">@usal.es</strong>{" "}
+              no da acceso al panel.
             </p>
           </div>
         </div>
 
-        <Link
-          href="/"
-          className="text-center text-[13px] text-gray-500 hover:text-gray-700"
-        >
-          ← Volver a iuce.usal.es
+        <Link href="/" className="text-center text-[13px] text-gray-500 hover:text-gray-700">
+          ← Volver a la web de DIDEROT
         </Link>
       </div>
     </div>

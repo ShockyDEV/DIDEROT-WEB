@@ -9,6 +9,7 @@ import { getBlock, getBlockText } from "@/lib/content-blocks-service";
 import { withLocale } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
 import { assertVisible } from "@/lib/page-visibility";
+import { getSiteSettings } from "@/lib/site-settings";
 import { CONTACT_SUBJECT_KEYS } from "@/lib/validations";
 
 export const generateMetadata = metadataBilingue(
@@ -86,7 +87,7 @@ export default async function ContactoPage({
     intro,
     direccion,
     coordinacion,
-    correo,
+    settings,
     redes,
     urlPrivacidad,
     comoLlegar,
@@ -94,7 +95,8 @@ export default async function ContactoPage({
     getBlock("contacto", "intro"),
     getBlock("contacto", "direccion"),
     getBlock("contacto", "coordinacion"),
-    getBlockText("contacto", "correo"),
+    // El correo público tiene una sola fuente: panel → Configuración.
+    getSiteSettings(),
     getBlock("contacto", "redes"),
     getBlockText("contacto", "url-privacidad"),
     getBlock("contacto", "como-llegar"),
@@ -105,7 +107,7 @@ export default async function ContactoPage({
 
   // Un bloque vaciado en el panel (solo etiquetas o espacios) oculta su dato.
   const lleno = (html: string) => html.replace(/<[^>]*>|&nbsp;|\s/g, "") !== "";
-  const email = EMAIL_RE.test(correo) ? correo : null;
+  const email = EMAIL_RE.test(settings.email) ? settings.email : null;
 
   const candidatos: Array<Dato | null> = [
     lleno(direccion) ? { icon: MapPin, title: t.direccion, html: direccion } : null,

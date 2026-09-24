@@ -85,6 +85,16 @@ describe("saveUpload", () => {
     await expect(mod.saveUpload(file(PNG, "foto.png", "text/html"))).rejects.toMatchObject({ status: 415 });
   });
 
+  it("acepta alias de MIME habituales y el genérico octet-stream", async () => {
+    // Cabecera WAV mínima: «RIFF» + tamaño + «WAVE»
+    const WAV = Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WAVEfmt ")]);
+    const wav = await mod.saveUpload(file(WAV, "toma.wav", "audio/x-wav"));
+    expect(wav.kind).toBe("audio");
+    expect(wav.mimeType).toBe("audio/wav");
+    const png = await mod.saveUpload(file(PNG, "foto.png", "application/octet-stream"));
+    expect(png.kind).toBe("image");
+  });
+
   it("respeta la restricción de tipo (only)", async () => {
     await expect(
       mod.saveUpload(file(PDF, "doc.pdf", "application/pdf"), { only: ["image"] }),

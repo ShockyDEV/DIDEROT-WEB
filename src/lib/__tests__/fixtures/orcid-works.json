@@ -1,0 +1,316 @@
+{
+  "last-modified-date": { "value": 1783296432079 },
+  "group": [
+    {
+      "last-modified-date": { "value": 1783296432079 },
+      "external-ids": {
+        "external-id": [
+          {
+            "external-id-type": "doi",
+            "external-id-value": "10.3390/aieduc2030022",
+            "external-id-normalized": { "value": "10.3390/aieduc2030022", "transient": true },
+            "external-id-normalized-error": null,
+            "external-id-url": { "value": "https://doi.org/10.3390/aieduc2030022" },
+            "external-id-relationship": "self"
+          }
+        ]
+      },
+      "work-summary": [
+        {
+          "put-code": 219341159,
+          "created-date": { "value": 1782914946375 },
+          "last-modified-date": { "value": 1782914946375 },
+          "source": {
+            "source-orcid": null,
+            "source-client-id": {
+              "uri": "https://orcid.org/client/0000-0001-9884-1913",
+              "path": "0000-0001-9884-1913",
+              "host": "orcid.org"
+            },
+            "source-name": { "value": "Crossref" }
+          },
+          "title": {
+            "title": {
+              "value": "Artificial Intelligence (AI) in Music Education Ecology: AI as an Agent for Understanding, Meaning-Making, and Creative and Cognitive Growth"
+            },
+            "subtitle": null,
+            "translated-title": null
+          },
+          "external-ids": {
+            "external-id": [
+              {
+                "external-id-type": "doi",
+                "external-id-value": "10.3390/aieduc2030022",
+                "external-id-normalized": { "value": "10.3390/aieduc2030022", "transient": true },
+                "external-id-normalized-error": null,
+                "external-id-url": { "value": "https://doi.org/10.3390/aieduc2030022" },
+                "external-id-relationship": "self"
+              }
+            ]
+          },
+          "url": { "value": "https://doi.org/10.3390/aieduc2030022" },
+          "type": "journal-article",
+          "publication-date": {
+            "year": { "value": "2026" },
+            "month": { "value": "07" },
+            "day": { "value": "01" }
+          },
+          "journal-title": { "value": "AI in Education" },
+          "visibility": "public",
+          "path": "/0000-0003-1828-5182/work/219341159",
+          "display-index": "1"
+        },
+        {
+          "put-code": 219737205,
+          "created-date": { "value": 1783296432079 },
+          "last-modified-date": { "value": 1783296432079 },
+          "source": {
+            "source-orcid": null,
+            "source-client-id": {
+              "uri": "https://orcid.org/client/APP-WRQOUAK78G5F7GMD",
+              "path": "APP-WRQOUAK78G5F7GMD",
+              "host": "orcid.org"
+            },
+            "source-name": { "value": "Multidisciplinary Digital Publishing Institute" }
+          },
+          "title": {
+            "title": {
+              "value": "Artificial Intelligence (AI) in Music Education Ecology: AI as an Agent for Understanding, Meaning-Making, and Creative and Cognitive Growth"
+            },
+            "subtitle": null,
+            "translated-title": null
+          },
+          "external-ids": {
+            "external-id": [
+              {
+                "external-id-type": "doi",
+                "external-id-value": "10.3390/aieduc2030022",
+                "external-id-normalized": { "value": "10.3390/aieduc2030022", "transient": true },
+                "external-id-normalized-error": null,
+                "external-id-url": { "value": "https://doi.org/10.3390/aieduc2030022" },
+                "external-id-relationship": "self"
+              }
+            ]
+          },
+          "url": { "value": "https://www.mdpi.com/3042-8130/2/3/22" },
+          "type": "journal-article",
+          "publication-date": {
+            "year": { "value": "2026" },
+            "month": { "value": "07" },
+            "day": { "value": "01" }
+          },
+          "journal-title": { "value": "AI in Education" },
+          "visibility": "public",
+          "path": "/0000-0003-1828-5182/work/219737205",
+          "display-index": "0"
+        }
+      ]
+    },
+    {
+      "last-modified-date": { "value": 1717600000000 },
+      "external-ids": {
+        "external-id": [
+          {
+            "external-id-type": "doi",
+            "external-id-value": "10.1007/978-981-97-1814-6_135",
+            "external-id-normalized": { "value": "10.1007/978-981-97-1814-6_135", "transient": true },
+            "external-id-normalized-error": null,
+            "external-id-url": { "value": "https://doi.org/10.1007/978-981-97-1814-6_135" },
+            "external-id-relationship": "self"
+          }
+        ]
+      },
+      "work-summary": [
+        {
+          "put-code": 166812634,
+          "source": { "source-name": { "value": "Crossref" } },
+          "title": {
+            "title": { "value": "Capítulo de prueba sobre aplicaciones de acordes y escalas" },
+            "subtitle": null,
+            "translated-title": null
+          },
+          "external-ids": {
+            "external-id": [
+              {
+                "external-id-type": "doi",
+                "external-id-value": "10.1007/978-981-97-1814-6_135",
+                "external-id-normalized": { "value": "10.1007/978-981-97-1814-6_135", "transient": true },
+                "external-id-normalized-error": null,
+                "external-id-url": { "value": "https://doi.org/10.1007/978-981-97-1814-6_135" },
+                "external-id-relationship": "self"
+              },
+              {
+                "external-id-type": "doi",
+                "external-id-value": "10.1007/978-981-97-1814-6",
+                "external-id-normalized": { "value": "10.1007/978-981-97-1814-6", "transient": true },
+                "external-id-normalized-error": null,
+                "external-id-url": { "value": "https://doi.org/10.1007/978-981-97-1814-6" },
+                "external-id-relationship": "part-of"
+              },
+              {
+                "external-id-type": "isbn",
+                "external-id-value": "9789819718139",
+                "external-id-normalized": null,
+                "external-id-normalized-error": null,
+                "external-id-url": null,
+                "external-id-relationship": "part-of"
+              }
+            ]
+          },
+          "url": { "value": "https://doi.org/10.1007/978-981-97-1814-6_135" },
+          "type": "book-chapter",
+          "publication-date": { "year": { "value": "2024" }, "month": null, "day": null },
+          "journal-title": null,
+          "visibility": "public",
+          "path": "/0000-0003-1828-5182/work/166812634",
+          "display-index": "1"
+        }
+      ]
+    },
+    {
+      "last-modified-date": { "value": 1700000000000 },
+      "external-ids": {
+        "external-id": [
+          {
+            "external-id-type": "doi",
+            "external-id-value": "10.7203/LEEME.0.27178",
+            "external-id-normalized": { "value": "10.7203/leeme.0.27178", "transient": true },
+            "external-id-normalized-error": null,
+            "external-id-url": { "value": "https://doi.org/10.7203/LEEME.0.27178" },
+            "external-id-relationship": "self"
+          }
+        ]
+      },
+      "work-summary": [
+        {
+          "put-code": 166812631,
+          "source": { "source-name": { "value": "Crossref" } },
+          "title": {
+            "title": { "value": "Plataformas digitales de producción musical en el aula" },
+            "subtitle": null,
+            "translated-title": null
+          },
+          "external-ids": {
+            "external-id": [
+              {
+                "external-id-type": "doi",
+                "external-id-value": "10.7203/LEEME.0.27178",
+                "external-id-normalized": { "value": "10.7203/leeme.0.27178", "transient": true },
+                "external-id-normalized-error": null,
+                "external-id-url": { "value": "https://doi.org/10.7203/LEEME.0.27178" },
+                "external-id-relationship": "self"
+              }
+            ]
+          },
+          "url": { "value": "https://doi.org/10.7203/LEEME.0.27178" },
+          "type": "journal-article",
+          "publication-date": {
+            "year": { "value": "2023" },
+            "month": { "value": "12" },
+            "day": null
+          },
+          "journal-title": { "value": "Revista Electrónica de LEEME" },
+          "visibility": "public",
+          "path": "/0000-0003-1828-5182/work/166812631",
+          "display-index": "1"
+        }
+      ]
+    },
+    {
+      "last-modified-date": { "value": 1700000000001 },
+      "external-ids": {
+        "external-id": [
+          {
+            "external-id-type": "doi",
+            "external-id-value": "10.7203/LEEME.52.27178",
+            "external-id-normalized": { "value": "10.7203/leeme.52.27178", "transient": true },
+            "external-id-normalized-error": null,
+            "external-id-url": { "value": "https://doi.org/10.7203/LEEME.52.27178" },
+            "external-id-relationship": "self"
+          }
+        ]
+      },
+      "work-summary": [
+        {
+          "put-code": 166812632,
+          "source": { "source-name": { "value": "Crossref" } },
+          "title": {
+            "title": { "value": "Plataformas digitales de producción musical en el aula" },
+            "subtitle": null,
+            "translated-title": null
+          },
+          "external-ids": {
+            "external-id": [
+              {
+                "external-id-type": "doi",
+                "external-id-value": "10.7203/LEEME.52.27178",
+                "external-id-normalized": { "value": "10.7203/leeme.52.27178", "transient": true },
+                "external-id-normalized-error": null,
+                "external-id-url": { "value": "https://doi.org/10.7203/LEEME.52.27178" },
+                "external-id-relationship": "self"
+              }
+            ]
+          },
+          "url": { "value": "https://doi.org/10.7203/LEEME.52.27178" },
+          "type": "journal-article",
+          "publication-date": {
+            "year": { "value": "2023" },
+            "month": { "value": "12" },
+            "day": null
+          },
+          "journal-title": { "value": "Revista Electrónica de LEEME" },
+          "visibility": "public",
+          "path": "/0000-0003-1828-5182/work/166812632",
+          "display-index": "1"
+        }
+      ]
+    },
+    {
+      "last-modified-date": { "value": 1650000000000 },
+      "external-ids": { "external-id": [] },
+      "work-summary": [
+        {
+          "put-code": 150000001,
+          "source": { "source-name": { "value": "Javier Merchán-Sánchez-Jara" } },
+          "title": {
+            "title": { "value": "Didáctica digital del <i>jazz</i> en secundaria" },
+            "subtitle": { "value": "una propuesta de aula" },
+            "translated-title": null
+          },
+          "external-ids": { "external-id": [] },
+          "url": null,
+          "type": "conference-paper",
+          "publication-date": { "year": { "value": "2022" }, "month": null, "day": null },
+          "journal-title": { "value": "Actas del Congreso de Prueba" },
+          "visibility": "public",
+          "path": "/0000-0003-1828-5182/work/150000001",
+          "display-index": "1"
+        }
+      ]
+    },
+    {
+      "last-modified-date": { "value": 1600000000000 },
+      "external-ids": { "external-id": [] },
+      "work-summary": [
+        {
+          "put-code": 150000002,
+          "source": { "source-name": { "value": "Javier Merchán-Sánchez-Jara" } },
+          "title": {
+            "title": { "value": "Informe técnico sin fecha" },
+            "subtitle": null,
+            "translated-title": null
+          },
+          "external-ids": { "external-id": [] },
+          "url": { "value": "javascript:alert(1)" },
+          "type": "report",
+          "publication-date": null,
+          "journal-title": null,
+          "visibility": "public",
+          "path": "/0000-0003-1828-5182/work/150000002",
+          "display-index": "1"
+        }
+      ]
+    }
+  ],
+  "path": "/0000-0003-1828-5182/works"
+}

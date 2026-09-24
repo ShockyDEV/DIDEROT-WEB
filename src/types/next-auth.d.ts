@@ -8,6 +8,8 @@ declare module "next-auth" {
       email: string;
       name: string;
       role: Role | string;
+      /** Versión de sesión de la cuenta al iniciar sesión (ver User.sessionVersion). */
+      sessionVersion?: number;
     };
   }
 
@@ -16,6 +18,7 @@ declare module "next-auth" {
     email?: string | null;
     name?: string | null;
     role: Role | string;
+    sessionVersion?: number;
   }
 }
 
@@ -23,5 +26,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     userId?: string;
     role?: Role | string;
+    sessionVersion?: number;
   }
 }

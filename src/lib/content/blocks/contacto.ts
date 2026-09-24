@@ -29,11 +29,6 @@ export const content: PageContentModule = {
         defaultContent: `<p>${SITE.lead}</p>`,
       },
       {
-        blockKey: "correo",
-        title: "Contacto — correo electrónico visible (solo la dirección; vacío = ocultar)",
-        defaultContent: `<p>${SITE.email}</p>`,
-      },
-      {
         blockKey: "redes",
         title: "Contacto — redes sociales (vacío = ocultar)",
         defaultContent: `<p><a href="${SITE.links.twitter}">@DiderotGir</a> en X (Twitter)</p>`,

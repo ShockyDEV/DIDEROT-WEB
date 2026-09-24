@@ -11,7 +11,6 @@
  * (AbortController) y el resultado se guarda 10 minutos en memoria para que
  * «vista previa → importar» no descargue todo dos veces.
  */
-import type { Locale } from "@/lib/locale";
 import {
   ownerFromPersonalDetails,
   preferredSummary,
@@ -182,27 +181,4 @@ export async function fetchOrcidRecords(
     Array.from({ length: Math.min(concurrency, sources.length) }, () => worker()),
   );
   return results;
-}
-
-/* ── Compatibilidad ─────────────────────────────────────────────────────── */
-
-export interface ArticuloDireccion {
-  eyebrow: string;
-  titulo: string;
-  autores: string;
-  revista: string;
-  enlace: string;
-}
-
-/**
- * @deprecated Heredado de la web del IUCE («últimos artículos de la
- * dirección», que buscaba cargos del IUCE). En DIDEROT la producción
- * científica sale de la tabla Publication (panel → Publicaciones). Devuelve
- * siempre null, que la página trata como «usar su lista de reserva»; se
- * mantiene solo mientras /investigacion siga importándolo.
- */
-export async function getArticulosDireccion(
-  _locale: Locale,
-): Promise<ArticuloDireccion[] | null> {
-  return null;
 }

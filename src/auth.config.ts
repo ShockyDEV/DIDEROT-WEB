@@ -12,12 +12,14 @@ export const authConfig: NextAuthConfig = {
   },
   providers: [], // se completa en lib/auth.ts
   callbacks: {
-    // `user` solo llega en el sign-in; copia id y rol al token JWT
-    // (sin tocar la BD: authorize ya los cargó).
+    // `user` solo llega en el sign-in; copia id, rol y versión de sesión al
+    // token JWT (sin tocar la BD: authorize ya los cargó). El panel compara
+    // esa versión con la de la BD en cada acceso (src/lib/admin-guard.ts).
     jwt({ token, user }) {
       if (user) {
         token.userId = user.id;
         token.role = user.role;
+        token.sessionVersion = user.sessionVersion ?? 0;
       }
       return token;
     },
@@ -25,6 +27,7 @@ export const authConfig: NextAuthConfig = {
       if (session.user) {
         session.user.id = token.userId as string;
         session.user.role = token.role as string;
+        session.user.sessionVersion = (token.sessionVersion as number | undefined) ?? 0;
       }
       return session;
     },

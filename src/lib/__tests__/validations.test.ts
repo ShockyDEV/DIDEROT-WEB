@@ -7,7 +7,6 @@ import {
   isLocalPath,
   safeHref,
 } from "@/lib/validations";
-import { newsInputSchema, accountInputSchema } from "@/lib/admin-schemas";
 
 const validContact = {
   name: "María López",
@@ -105,46 +104,5 @@ describe("isLocalPath", () => {
   });
 });
 
-describe("newsInputSchema", () => {
-  const valid = {
-    title: "Título de prueba",
-    content: "<p>Cuerpo</p>",
-    category: "Investigación",
-    status: "DRAFT",
-  };
-
-  it("acepta una noticia mínima válida", () => {
-    expect(newsInputSchema.safeParse(valid).success).toBe(true);
-  });
-
-  it("rechaza categoría desconocida", () => {
-    const r = newsInputSchema.safeParse({ ...valid, category: "Otra" });
-    expect(r.success).toBe(false);
-  });
-
-  it("rechaza estado desconocido", () => {
-    const r = newsInputSchema.safeParse({ ...valid, status: "PENDIENTE" });
-    expect(r.success).toBe(false);
-  });
-});
-
-describe("accountInputSchema", () => {
-  it("exige contraseña de al menos 8 caracteres", () => {
-    const r = accountInputSchema.safeParse({
-      email: "nueva@usal.es",
-      name: "Nueva Cuenta",
-      password: "corta",
-    });
-    expect(r.success).toBe(false);
-  });
-
-  it("normaliza el email a minúsculas", () => {
-    const r = accountInputSchema.parse({
-      email: "MiXtO@Usal.es",
-      name: "Cuenta Mixta",
-      password: "contraseña-larga",
-    });
-    expect(r.email).toBe("mixto@usal.es");
-    expect(r.role).toBe("ADMIN"); // rol por defecto
-  });
-});
+// Los esquemas del panel (noticias, cuentas, publicaciones…) se prueban en
+// admin-schemas.test.ts.

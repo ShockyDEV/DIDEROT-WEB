@@ -4,6 +4,7 @@ import { getHiddenPaths } from "@/lib/page-visibility";
 import { SITE_URL as BASE } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Aviso legal, privacidad y cookies llevan noindex: fuera del sitemap.
   const allStatic: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${BASE}/grupo`, changeFrequency: "monthly", priority: 0.8 },
@@ -14,9 +15,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/eventos`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/noticias`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/contacto`, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${BASE}/aviso-legal`, changeFrequency: "yearly", priority: 0.1 },
-    { url: `${BASE}/privacidad`, changeFrequency: "yearly", priority: 0.1 },
-    { url: `${BASE}/politica-de-cookies`, changeFrequency: "yearly", priority: 0.1 },
     { url: `${BASE}/accesibilidad`, changeFrequency: "yearly", priority: 0.1 },
   ];
 

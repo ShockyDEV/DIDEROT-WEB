@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { ICON_NAMES, iconFor } from "@/lib/icon-map";
+import { iconFor } from "@/lib/icon-map";
+import { errorMessage, sendJson } from "@/components/admin/admin-fetch";
 import type { ListBlockDef, ListItem } from "@/lib/content/list-blocks";
 import { cn } from "@/lib/cn";
 
@@ -61,21 +62,15 @@ export function ListBlockEditor({
     setSaving(true);
     try {
       const content = JSON.stringify(items);
-      const res = await fetch("/api/admin/content-blocks", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pageSlug: def.pageSlug,
-          blockKey: def.blockKey,
-          content,
-        }),
+      await sendJson("/api/admin/content-blocks", "PUT", {
+        pageSlug: def.pageSlug,
+        blockKey: def.blockKey,
+        content,
       });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo guardar");
       setSavedJson(content);
       toast.success("Lista guardada");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar");
+      toast.error(errorMessage(err, "No se pudo guardar"));
     } finally {
       setSaving(false);
     }
@@ -270,12 +265,8 @@ export function ListBlockEditor({
           </Button>
         </div>
 
-        {/* Sugerencias de iconos compartidas por todos los campos icon */}
-        <datalist id="lucide-icons">
-          {ICON_NAMES.map((n) => (
-            <option key={n} value={n} />
-          ))}
-        </datalist>
+        {/* Las sugerencias de iconos (datalist «lucide-icons») las pinta una
+            sola vez el editor de páginas, para no repetir ids. */}
       </div>
     </div>
   );
