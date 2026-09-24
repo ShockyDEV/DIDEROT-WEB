@@ -91,5 +91,5 @@ networks:
   # Red interna sin salida a Internet: solo app ↔ BD.
   backend:
     internal: true
-  # Salida de la app (correo con Resend, ORCID, DeepL).
+  # Salida de la app (ORCID, DeepL).
   frontend:

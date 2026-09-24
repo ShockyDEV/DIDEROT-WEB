@@ -12,7 +12,6 @@ import {
   FileText,
   FlaskConical,
   FolderOpen,
-  Inbox,
   LayoutDashboard,
   LogOut,
   Newspaper,
@@ -25,8 +24,6 @@ interface NavItem {
   label: string;
   icon: typeof LayoutDashboard;
   href: string;
-  /** Contador opcional (p. ej. mensajes sin responder). */
-  badge?: "messages";
 }
 
 const NAV_GROUPS: Array<{ title: string | null; items: NavItem[] }> = [
@@ -52,10 +49,7 @@ const NAV_GROUPS: Array<{ title: string | null; items: NavItem[] }> = [
   },
   {
     title: "Actividad",
-    items: [
-      { label: "Eventos", icon: Calendar, href: "/backstage/events" },
-      { label: "Mensajes", icon: Inbox, href: "/backstage/messages", badge: "messages" },
-    ],
+    items: [{ label: "Eventos", icon: Calendar, href: "/backstage/events" }],
   },
   {
     title: "Sistema",
@@ -71,7 +65,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminSidebar({ newMessages = 0 }: Readonly<{ newMessages?: number }>) {
+export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
@@ -105,7 +99,6 @@ export function AdminSidebar({ newMessages = 0 }: Readonly<{ newMessages?: numbe
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(pathname, item.href);
-                const count = item.badge === "messages" ? newMessages : 0;
                 return (
                   <Link
                     key={item.href}
@@ -120,14 +113,6 @@ export function AdminSidebar({ newMessages = 0 }: Readonly<{ newMessages?: numbe
                   >
                     <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
                     <span className="flex-1">{item.label}</span>
-                    {count > 0 ? (
-                      <span
-                        className="min-w-[20px] rounded-full bg-diderot-amber px-1.5 py-px text-center text-[11px] font-semibold text-white"
-                        aria-label={`${count} sin responder`}
-                      >
-                        {count > 99 ? "99+" : count}
-                      </span>
-                    ) : null}
                   </Link>
                 );
               })}

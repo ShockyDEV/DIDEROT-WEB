@@ -130,7 +130,7 @@ export const content: PageContentModule = {
           ip: "Javier Félix Merchán Sánchez-Jara y María Navarro Cáceres",
           texto:
             "Recopilación, análisis y difusión digital de la música folk desde un enfoque europeo e iberoamericano, con intercambio de personal investigador entre instituciones.",
-          enlace: "",
+          enlace: "https://digifolk.usal.es/#/",
         },
         {
           acronimo: "Co-POEM",
@@ -241,7 +241,7 @@ export const content: PageContentModule = {
         ip: "Javier Félix Merchán Sánchez-Jara and María Navarro Cáceres",
         texto:
           "Digital collection, analysis and dissemination of folk music from a European and Ibero-American perspective, with staff exchanges between institutions.",
-        enlace: "",
+        enlace: "https://digifolk.usal.es/#/",
       },
       {
         acronimo: "Co-POEM",

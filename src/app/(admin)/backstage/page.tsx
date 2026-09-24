@@ -6,7 +6,6 @@ import {
   Eye,
   FlaskConical,
   FolderOpen,
-  Inbox,
   Newspaper,
   TrendingUp,
   Users,
@@ -59,7 +58,6 @@ async function getStats() {
     projects,
     upcomingEvents,
     files,
-    newMessages,
   ] = await Promise.all([
     count(() => prisma.pageView.count({ where: { date: { gte: startOfDay } } })),
     count(() => prisma.pageView.count({ where: { date: { gte: startOfWeek } } })),
@@ -75,7 +73,6 @@ async function getStats() {
     count(() => prisma.project.count({ where: { active: true } })),
     count(() => prisma.event.count({ where: { status: "UPCOMING", startsAt: { gte: startOfDay } } })),
     count(() => prisma.fileAsset.count()),
-    count(() => prisma.contactMessage.count({ where: { status: "NEW" } })),
   ]);
 
   const [topPages, referrers] = await Promise.all([
@@ -118,7 +115,6 @@ async function getStats() {
     projects,
     upcomingEvents,
     files,
-    newMessages,
     topPages: topPages.map((p) => ({ path: p.path, count: p._count._all })),
     referrers: referrers
       .filter((r) => r.referrer)
@@ -260,7 +256,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Recuentos */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           icon={Newspaper}
           iconClass="bg-[#F0FDF4] text-[#16A34A]"
@@ -308,14 +304,6 @@ export default async function AdminDashboardPage() {
           label="Archivos subidos"
           value={n(stats.files)}
           href="/backstage/files"
-        />
-        <StatCard
-          icon={Inbox}
-          iconClass="bg-diderot-pale text-diderot-indigo"
-          label="Mensajes nuevos"
-          value={n(stats.newMessages)}
-          detail="sin responder"
-          href="/backstage/messages"
         />
       </div>
 

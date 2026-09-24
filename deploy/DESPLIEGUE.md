@@ -54,9 +54,9 @@ nano .env
 Rellena como mínimo: `POSTGRES_PASSWORD` (`openssl rand -hex 24`),
 `NEXTAUTH_SECRET` (`openssl rand -base64 32`), `ADMIN_EMAIL` /
 `ADMIN_PASSWORD` y `TECH_ADMIN_PASSWORD` (propias, ≥ 12 caracteres: la
-semilla se niega a usar las de desarrollo), y `RESEND_API_KEY` +
-`EMAIL_FROM` (dominio remitente verificado en Resend) + `CONTACT_TO` para el
-formulario de contacto.
+semilla se niega a usar las de desarrollo). La web no envía correos (no hay
+formulario de contacto), así que no hace falta configurar ningún servicio de
+correo.
 
 ## 3. Construir y arrancar
 

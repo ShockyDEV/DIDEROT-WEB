@@ -33,6 +33,6 @@ export const SITE = {
     iuce: "https://iuce.usal.es",
     doctorado: "https://knowledgesociety.usal.es",
     portal: "https://produccioncientifica.usal.es",
-    twitter: "https://twitter.com/DiderotGir",
+    twitter: "https://x.com/DiderotGir",
   },
 } as const;

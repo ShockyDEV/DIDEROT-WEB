@@ -61,6 +61,7 @@ const T = {
     enCursoBadge: "En curso",
     destacado: "Destacado",
     web: "Web del proyecto",
+    fichaPortal: "Ficha en el Portal",
     logoDe: (n: string) => `Logotipo de ${n}`,
     mostrarMas: "Mostrar más",
     restantes: "restantes",
@@ -91,6 +92,7 @@ const T = {
     enCursoBadge: "Ongoing",
     destacado: "Featured",
     web: "Project website",
+    fichaPortal: "Research Portal record",
     logoDe: (n: string) => `${n} logo`,
     mostrarMas: "Show more",
     restantes: "remaining",
@@ -464,7 +466,9 @@ export function ProjectsExplorer({
                           rel="noopener noreferrer"
                           className="inline-flex min-h-6 items-center gap-1 rounded text-sm font-medium text-diderot-violet hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
                         >
-                          {t.web}
+                          {p.url.startsWith("https://produccioncientifica.usal.es/")
+                            ? t.fichaPortal
+                            : t.web}
                           <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </a>
                       ) : null}

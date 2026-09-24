@@ -686,7 +686,7 @@ export default async function EventosPage({
             </div>
           </div>
           <Link
-            href={href("/contacto?asunto=eventos")}
+            href={href("/contacto")}
             className={cn(buttonClassName(), "flex-none")}
           >
             {t.contactar}

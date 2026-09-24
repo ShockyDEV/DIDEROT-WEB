@@ -122,10 +122,13 @@ async function seedMembers() {
   for (const m of members) {
     const exists = await prisma.member.findFirst({ where: { name: m.name } });
     if (exists) {
-      // Solo relleno: pone la foto si la ficha no tiene (nunca pisa la subida
-      // desde el panel).
-      if (!exists.photo && m.photo) {
-        await prisma.member.update({ where: { id: exists.id }, data: { photo: m.photo } });
+      // Solo relleno: completa foto y correo si la ficha no los tiene (nunca
+      // pisa lo editado desde el panel).
+      const fill: { photo?: string; email?: string } = {};
+      if (!exists.photo && m.photo) fill.photo = m.photo;
+      if (!exists.email && m.email) fill.email = m.email;
+      if (Object.keys(fill).length > 0) {
+        await prisma.member.update({ where: { id: exists.id }, data: fill });
         filled++;
       }
       continue;
@@ -151,23 +154,37 @@ async function seedMembers() {
     created++;
   }
   console.log(
-    `✓ Equipo: ${created} creados, ${filled} con foto completada (${members.length} en la semilla)`,
+    `✓ Equipo: ${created} creados, ${filled} completados (${members.length} en la semilla)`,
   );
 }
 
 async function seedProjects() {
   let created = 0;
+  let filled = 0;
   for (const p of projects) {
     const exists = await prisma.project.findFirst({
       where: p.reference
         ? { OR: [{ reference: p.reference }, { title: p.title }] }
         : { title: p.title },
     });
-    if (exists) continue;
+    if (exists) {
+      // Solo relleno: enlace y resumen si faltan (lo editado en el panel manda).
+      const fill: { url?: string; summary?: string; summaryEn?: string } = {};
+      if (!exists.url && p.url) fill.url = p.url;
+      if (!exists.summary && p.summary) fill.summary = p.summary;
+      if (!exists.summaryEn && p.summaryEn) fill.summaryEn = p.summaryEn;
+      if (Object.keys(fill).length > 0) {
+        await prisma.project.update({ where: { id: exists.id }, data: fill });
+        filled++;
+      }
+      continue;
+    }
     await prisma.project.create({ data: { ...p, active: true, featured: p.featured ?? false } });
     created++;
   }
-  console.log(`✓ Proyectos: ${created} creados (${projects.length} en la semilla)`);
+  console.log(
+    `✓ Proyectos: ${created} creados, ${filled} completados (${projects.length} en la semilla)`,
+  );
 }
 
 async function seedPublications() {

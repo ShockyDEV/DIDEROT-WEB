@@ -191,16 +191,6 @@ model FileAsset {
   createdAt DateTime @default(now())
 }
 
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  subject   String
-  body      String
-  status    String   @default("NEW") // NEW | REPLIED
-  createdAt DateTime @default(now())
-}
-
 // Visibilidad de las páginas públicas (panel → Visualización). Sin fila = la
 // página se ve; se crea/actualiza al usar el interruptor del ojo.
 model PageVisibility {

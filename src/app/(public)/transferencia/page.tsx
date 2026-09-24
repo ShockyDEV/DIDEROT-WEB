@@ -526,7 +526,7 @@ export default async function TransferenciaPage() {
             dangerouslySetInnerHTML={{ __html: cta }}
           />
           <Link
-            href={href("/contacto?asunto=transferencia")}
+            href={href("/contacto")}
             className={cn(buttonClassName(), "flex-none")}
           >
             {t.contactar}

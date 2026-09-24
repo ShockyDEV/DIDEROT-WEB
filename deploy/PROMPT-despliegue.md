@@ -30,7 +30,7 @@ Contexto que debes respetar:
 - `cp .env.production.example .env && chmod 600 .env` y rellénalo: genera tú
   `POSTGRES_PASSWORD` (`openssl rand -hex 24`), `NEXTAUTH_SECRET`
   (`openssl rand -base64 32`), `ADMIN_PASSWORD` y `TECH_ADMIN_PASSWORD`
-  (≥ 16 caracteres). Las credenciales de Resend te las paso yo. **No
+  (≥ 16 caracteres). **No
   muestres secretos en el chat** salvo las dos contraseñas del panel al final.
 
 ## Fase 2 — Contenedores y datos
@@ -57,8 +57,7 @@ configuración antes de recargar el servidor web.
 - `http://` redirige a `https://`; `/wp-login.php` responde 410.
 - Cabeceras: `curl -sI https://diderot.usal.es` muestra HSTS y CSP.
 - Login del panel `/backstage` con la contraseña nueva; subir una imagen en
-  Archivos y verla en su URL pública; enviar el formulario de contacto (llega
-  el correo a `CONTACT_TO` y aparece en Mensajes).
+  Archivos y verla en su URL pública.
 - Desde fuera de la máquina, los puertos 3000 y 5432 NO responden.
 
 ## Fase 5 — Copias de seguridad

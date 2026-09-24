@@ -5,17 +5,16 @@ import { withLocale } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
 
 /**
- * Política de privacidad del formulario de contacto (enlazada desde la
- * casilla RGPD del formulario y desde el pie). Texto editable en Contenido →
- * Páginas → Páginas legales, como el resto de páginas legales.
+ * Política de privacidad de la web (enlazada desde el pie). Texto editable en
+ * Contenido → Páginas → Páginas legales, como el resto de páginas legales.
  */
 export function generateMetadata(): Metadata {
   const en = getLocale() === "en";
   return {
     title: en ? "Privacy policy" : "Política de privacidad",
     description: en
-      ? "How the DIDEROT website processes the personal data sent through its contact form: controller, purpose, legal basis, retention and your rights."
-      : "Cómo trata la web de DIDEROT los datos personales enviados por su formulario de contacto: responsable, finalidad, base jurídica, conservación y derechos.",
+      ? "How the DIDEROT website processes personal data: controller, purpose, legal basis, retention and your rights."
+      : "Cómo trata los datos personales la web de DIDEROT: responsable, finalidad, base jurídica, conservación y derechos.",
     robots: { index: false },
   };
 }

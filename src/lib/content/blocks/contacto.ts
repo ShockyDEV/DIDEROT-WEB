@@ -3,10 +3,10 @@ import type { PageContentModule } from "./types";
 
 /**
  * Contenido editable de «Contacto» (pageSlug "contacto"): datos de contacto,
- * enlace de la política de privacidad del formulario y «Cómo llegar».
+ * redes sociales (también en el pie de página) y «Cómo llegar».
  *
- * El destinatario real del formulario no se edita aquí: es la variable de
- * entorno CONTACT_TO (y, si falta, el correo de SITE).
+ * La web no tiene formulario: el correo público es el de panel →
+ * Configuración → Datos del sitio (por defecto, el de la coordinación).
  */
 export const content: PageContentModule = {
   blocks: {
@@ -29,16 +29,6 @@ export const content: PageContentModule = {
         defaultContent: `<p>${SITE.lead}</p>`,
       },
       {
-        blockKey: "redes",
-        title: "Contacto — redes sociales (vacío = ocultar)",
-        defaultContent: `<p><a href="${SITE.links.twitter}">@DiderotGir</a> en X (Twitter)</p>`,
-      },
-      {
-        blockKey: "url-privacidad",
-        title: "Contacto — URL de la política de privacidad del formulario (RGPD)",
-        defaultContent: `<p>/privacidad</p>`,
-      },
-      {
         blockKey: "como-llegar",
         title: "Contacto — Cómo llegar (transporte; vacío = ocultar)",
         defaultContent: `<p>El grupo tiene su sede en el Instituto Universitario de Ciencias de la Educación (IUCE), en el Edificio Solís, dentro del Campus de Educación (Paseo de Canalejas, 169).</p>
@@ -49,11 +39,28 @@ export const content: PageContentModule = {
       },
     ],
   },
-  lists: [],
+  lists: [
+    {
+      pageSlug: "contacto",
+      blockKey: "list:redes",
+      title: "Redes sociales (también en el pie de página; sin elementos = no se muestran)",
+      itemLabel: "red",
+      fields: [
+        {
+          key: "red",
+          label: "Red",
+          type: "text",
+          hint: "x, instagram, facebook, youtube o linkedin; otra = icono genérico",
+        },
+        { key: "usuario", label: "Nombre visible", type: "text", hint: "p. ej. @DiderotGir" },
+        { key: "url", label: "Enlace", type: "url" },
+      ],
+      defaultItems: [{ red: "x", usuario: "@DiderotGir", url: SITE.links.twitter }],
+    },
+  ],
   blocksEn: {
     "contacto:intro": `<p>Write to us to collaborate on research, to do your doctoral thesis or your bachelor's or master's thesis with the group, to discuss a knowledge transfer project, to propose an activity or with a media request.</p>`,
     "contacto:direccion": `<p>University Institute of Education Sciences (IUCE)<br>Solís Building · Paseo de Canalejas, 169<br>37008 Salamanca (Spain)</p>`,
-    "contacto:redes": `<p><a href="${SITE.links.twitter}">@DiderotGir</a> on X (Twitter)</p>`,
     "contacto:como-llegar": `<p>The group is based at the University Institute of Education Sciences (IUCE), in the Solís Building, within the Education Campus (Paseo de Canalejas, 169).</p>
 <ul><li><strong>By train:</strong> Vialia station (Paseo de la Estación, s/n) offers direct connections to Madrid, Ávila and Valladolid. Timetables and tickets at renfe.com.</li>
 <li><strong>By coach:</strong> the Bus Station (Avda. Filiberto Villalobos, 71-85) connects Salamanca with the main cities through ALSA and Avanza; Avanza runs a direct service to Madrid-Barajas airport.</li>

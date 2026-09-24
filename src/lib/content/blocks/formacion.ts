@@ -278,7 +278,7 @@ export const content: PageContentModule = {
           texto:
             "Cursos, talleres y seminarios para docentes de música y artes sobre recursos, metodologías y tecnologías digitales.",
           cta: "Proponer una actividad →",
-          enlace: "/contacto?asunto=colaboracion",
+          enlace: "/contacto",
           acento: false,
         },
         {
@@ -287,7 +287,7 @@ export const content: PageContentModule = {
           texto:
             "Dirección de TFG sobre educación musical, artes performativas y tecnología.",
           cta: "Escríbenos →",
-          enlace: "/contacto?asunto=doctorado",
+          enlace: "/contacto",
           acento: false,
         },
         {
@@ -296,7 +296,7 @@ export const content: PageContentModule = {
           texto:
             "Dirección de TFM y orientación a quienes quieren iniciarse en la investigación en educación musical y artes.",
           cta: "Escríbenos →",
-          enlace: "/contacto?asunto=doctorado",
+          enlace: "/contacto",
           acento: true,
         },
       ],
@@ -456,7 +456,7 @@ export const content: PageContentModule = {
         texto:
           "Courses, workshops and seminars for music and arts teachers on digital resources, methods and technologies.",
         cta: "Propose an activity →",
-        enlace: "/contacto?asunto=colaboracion",
+        enlace: "/contacto",
         acento: false,
       },
       {
@@ -465,7 +465,7 @@ export const content: PageContentModule = {
         texto:
           "Supervision of bachelor's theses on music education, the performing arts and technology.",
         cta: "Write to us →",
-        enlace: "/contacto?asunto=doctorado",
+        enlace: "/contacto",
         acento: false,
       },
       {
@@ -474,7 +474,7 @@ export const content: PageContentModule = {
         texto:
           "Supervision of master's theses and guidance for those starting out in research on music and arts education.",
         cta: "Write to us →",
-        enlace: "/contacto?asunto=doctorado",
+        enlace: "/contacto",
         acento: true,
       },
     ],

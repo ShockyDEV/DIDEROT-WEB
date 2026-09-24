@@ -14,7 +14,6 @@ const TITLES: Array<[prefix: string, title: string]> = [
   ["/backstage/publications", "Publicaciones"],
   ["/backstage/projects", "Proyectos"],
   ["/backstage/events", "Eventos"],
-  ["/backstage/messages", "Mensajes de contacto"],
   ["/backstage/visualizacion", "Visualización"],
   ["/backstage/settings", "Configuración"],
   ["/backstage", "Dashboard"],

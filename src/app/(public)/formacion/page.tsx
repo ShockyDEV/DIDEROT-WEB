@@ -658,7 +658,7 @@ export default async function FormacionPage() {
             />
           </div>
           <Link
-            href={href("/contacto?asunto=doctorado")}
+            href={href("/contacto")}
             className={cn(buttonClassName(), "flex-none")}
           >
             {t.contactar}

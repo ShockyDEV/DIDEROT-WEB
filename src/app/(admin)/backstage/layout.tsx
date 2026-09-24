@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/admin-guard";
-import { prisma } from "@/lib/prisma";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminHeader } from "@/components/admin/admin-header";
 
@@ -28,13 +27,9 @@ export default async function AdminLayout({
     redirect("/auth/signin?callbackUrl=/backstage");
   }
 
-  const newMessages = await prisma.contactMessage
-    .count({ where: { status: "NEW" } })
-    .catch(() => 0);
-
   return (
     <div className="theme-light min-h-screen bg-gray-50 text-gray-600">
-      <AdminSidebar newMessages={newMessages} />
+      <AdminSidebar />
       <div className="pl-[260px]">
         <AdminHeader userName={user.name} userEmail={user.email} userRole={user.role} />
         <main className="max-w-[1200px] p-8">{children}</main>

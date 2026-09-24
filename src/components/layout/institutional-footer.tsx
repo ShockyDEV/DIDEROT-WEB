@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, MapPin, Phone, Globe } from "lucide-react";
+import { SocialIcon, socialLinks } from "@/components/ui/social-links";
+import { getListBlock } from "@/lib/content-blocks-service";
 import { pick, withLocale } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
 import { SITE } from "@/lib/site";
@@ -10,7 +12,12 @@ export async function InstitutionalFooter() {
   const year = new Date().getFullYear();
   const locale = getLocale();
   // Correo y teléfono editables en el panel (Configuración → Datos del sitio).
-  const { email, phone } = await getSiteSettings();
+  const [{ email, phone }, redesItems] = await Promise.all([
+    getSiteSettings(),
+    // Redes sociales: panel → Páginas → Contacto → Redes sociales.
+    getListBlock("contacto", "list:redes"),
+  ]);
+  const redes = socialLinks(redesItems);
   return (
     <footer className="mt-16 bg-gray-950 text-white">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-6 py-10 sm:grid-cols-3">
@@ -135,31 +142,21 @@ export async function InstitutionalFooter() {
             >
               <Globe className="h-4 w-4" aria-hidden="true" />
             </a>
-            <a
-              href={SITE.links.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={pick(locale, "X / Twitter de DIDEROT", "DIDEROT on X / Twitter")}
-              className="inline-flex h-6 w-6 items-center justify-center rounded transition-colors hover:text-white"
-            >
-              <XIcon className="h-3.5 w-3.5" />
-            </a>
+            {redes.map((r) => (
+              <a
+                key={r.url}
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={pick(locale, `${r.name} de DIDEROT (${r.handle})`, `DIDEROT on ${r.name} (${r.handle})`)}
+                className="inline-flex h-6 w-6 items-center justify-center rounded transition-colors hover:text-white"
+              >
+                <SocialIcon red={r.red} className={r.red === "x" ? "h-3.5 w-3.5" : "h-4 w-4"} />
+              </a>
+            ))}
           </div>
         </div>
       </div>
     </footer>
-  );
-}
-
-function XIcon({ className }: Readonly<{ className?: string }>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
   );
 }

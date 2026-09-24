@@ -111,13 +111,13 @@ La web anterior del grupo era un WordPress sin mantenimiento que acabó **compro
 - **El grupo**: presentación, objetivos, **equipo** por categorías (coordinación, personal investigador, predoctoral y colaboradores) con buscador y perfiles académicos, y afiliación (IUCE, USAL, doctorado, DIDEROT TransferLab).
 - **Investigación**: cinco ejes con las nueve líneas oficiales del grupo y **explorador de proyectos** (ámbito, vigentes/finalizados, búsqueda y orden).
 - **Publicaciones**: la producción científica agrupada por año, con filtros por tipo y año, buscador sin tildes, paginación, DOI, acceso abierto y resumen desplegable.
-- **Transferencia**, **Formación** (doctorado, tesis dirigidas, Seminario Internacional), **Eventos** (con carteles), **Noticias** (con detalle y RSS), **Contacto** (formulario con Resend y mapa bajo demanda) y páginas legales.
+- **Transferencia**, **Formación** (doctorado, tesis dirigidas, Seminario Internacional), **Eventos** (con carteles), **Noticias** (con detalle y RSS), **Contacto** (correo de la coordinación, redes sociales y mapa bajo demanda; sin formularios) y páginas legales.
 - Modo claro/oscuro, animaciones de aparición y contadores, firma visual propia (ondas sonoras y pentagrama) y SEO: metadatos, Open Graph, JSON-LD, `sitemap.xml`, `robots.txt` y `feed.xml`.
 
 **Panel de administración** (`/backstage`)
 
 - **Publicaciones**: tabla con búsqueda y filtros, alta y edición, visibilidad y destacadas en un clic, e **importación desde ORCID** con vista previa y detección de duplicados (mismo DOI, ya importada o título y año coincidentes, también entre coautores).
-- **Equipo**, **Proyectos**, **Eventos** y **Noticias** (editor TipTap) con subida de imágenes; **Archivos**; **Mensajes** del formulario de contacto.
+- **Equipo**, **Proyectos**, **Eventos** y **Noticias** (editor TipTap) con subida de imágenes; **Archivos**.
 - **Páginas**: todos los textos y listas de la web pública son editables por bloques, con traducción automática al inglés (DeepL, opcional).
 - **Dashboard** con recuentos y **analítica propia sin cookies**; **Visualización** para ocultar páginas o secciones; **Configuración** con datos del sitio, cuentas (roles ADMIN / SUPER_ADMIN) y cambio de contraseña.
 
@@ -132,7 +132,6 @@ La web anterior del grupo era un WordPress sin mantenimiento que acabó **compro
 | ORM | [Prisma](https://www.prisma.io) | 6 |
 | Base de datos | PostgreSQL | 16 |
 | Autenticación | [NextAuth.js](https://authjs.dev) v5 (Credentials + bcrypt, JWT) | beta |
-| Email transaccional | [Resend](https://resend.com) | 4 |
 | Traducción automática | [DeepL API](https://www.deepl.com/pro-api) (opcional) | — |
 | Editor de contenido | [TipTap](https://tiptap.dev) | 3 |
 | Estilos | [Tailwind CSS](https://tailwindcss.com) + lucide-react | 3 |
@@ -177,7 +176,6 @@ La web estará en [http://localhost:3000](http://localhost:3000) y el panel en [
 | `NEXTAUTH_SECRET` | Secreto de las sesiones (`openssl rand -base64 32`). |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta SUPER_ADMIN que crea la semilla. |
 | `TECH_ADMIN_EMAIL` / `TECH_ADMIN_PASSWORD` | Cuenta técnica SUPER_ADMIN (opcional). |
-| `RESEND_API_KEY` / `EMAIL_FROM` / `CONTACT_TO` | Envío del formulario de contacto (sin clave, los mensajes se guardan en el panel). |
 | `DEEPL_API_KEY` | Traducción automática al inglés al guardar (opcional). |
 | `UPLOADS_DIR` | Carpeta de los archivos subidos (por defecto `./uploads`, fuera de `public/`). |
 
@@ -234,7 +232,6 @@ npm run build && npm run start
 │   │   ├── (admin)/backstage/ # Panel de administración
 │   │   ├── api/
 │   │   │   ├── admin/         # API del panel (publicaciones, ORCID, equipo, archivos…)
-│   │   │   ├── contact/       # Formulario de contacto
 │   │   │   ├── track/         # Analítica propia sin cookies
 │   │   │   └── health/        # Health check (Docker)
 │   │   ├── uploads/[...path]/ # Sirve los archivos subidos desde el panel
