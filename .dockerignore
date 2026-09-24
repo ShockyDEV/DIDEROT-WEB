@@ -10,14 +10,15 @@ node_modules
 .env
 .env.*
 !.env.example
-uploads
-backups
-migracion
+# Solo las carpetas de la RAÍZ (src/app/uploads es código y sí entra)
+/uploads
+/backups
+/migracion
 coverage
 *.log
 npm-debug.log*
 Dockerfile
 docker-compose*.yml
-deploy
-docs
+/deploy
+/docs
 tsconfig.tsbuildinfo
