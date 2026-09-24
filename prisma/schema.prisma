@@ -1,0 +1,214 @@
+// Esquema de datos de la web de DIDEROT (Grupo de Investigación Reconocido
+// «Didácticas Digitales de la Expresión Musical y las Artes Performativas»,
+// Universidad de Salamanca). Misma base que la web del IUCE, adaptada a un
+// grupo de investigación: equipo, proyectos, publicaciones y actividad.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum NewsStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EventStatus {
+  UPCOMING
+  PAST
+  CANCELLED
+}
+
+// Tipología de la producción científica (filtros de /publicaciones).
+enum PublicationType {
+  ARTICLE // Artículo en revista
+  BOOK // Libro / monografía
+  CHAPTER // Capítulo de libro
+  CONFERENCE // Comunicación o ponencia en congreso
+  THESIS // Tesis doctoral / TFM dirigido
+  OTHER // Otros (informes, recursos, datasets, software…)
+}
+
+// Categoría del miembro en la página del equipo (orden de las secciones).
+enum MemberCategory {
+  COORDINATION // Coordinación / dirección del grupo
+  RESEARCHER // Personal investigador
+  PREDOCTORAL // Personal investigador en formación
+  COLLABORATOR // Colaboradores y colaboradoras
+}
+
+// Cuentas del panel de administración (solo las crea un SUPER_ADMIN).
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+}
+
+model News {
+  id          String     @id @default(cuid())
+  title       String
+  titleEn     String?
+  slug        String     @unique
+  excerpt     String?
+  excerptEn   String?
+  content     String // HTML de TipTap
+  contentEn   String?
+  coverImage  String?
+  category    String
+  status      NewsStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Contenido editable de páginas estáticas por bloques (patrón del IUCE).
+model ContentBlock {
+  id       String @id @default(cuid())
+  pageSlug String // "inicio", "grupo", "investigacion", …
+  blockKey String // "hero-parrafo", "list:lineas", … (+ ":en" para inglés)
+  content  String
+
+  @@unique([pageSlug, blockKey])
+}
+
+// Personas del grupo (página «El grupo» → Equipo).
+model Member {
+  id          String         @id @default(cuid())
+  name        String
+  category    MemberCategory @default(RESEARCHER)
+  // Cargo visible (p. ej. «Coordinador del grupo», «Investigadora principal»)
+  role        String?
+  roleEn      String?
+  // Institución y departamento/área (el grupo es interuniversitario)
+  affiliation String?
+  area        String?
+  bio         String? // Semblanza breve (texto plano)
+  bioEn       String?
+  email       String?
+  photo       String?
+  portalUrl   String? // perfil en produccioncientifica.usal.es
+  orcid       String? // p. ej. https://orcid.org/0000-0003-1828-5182
+  scopus      String? // p. ej. https://www.scopus.com/authid/detail.uri?authorId=…
+  scholar     String? // perfil de Google Scholar
+  website     String? // web personal u otro perfil
+  active      Boolean        @default(true)
+  order       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+// Proyectos de investigación, innovación y transferencia del grupo.
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  titleEn     String?
+  acronym     String? // p. ej. «EA-DIGIFOLK»
+  reference   String? // código de la convocatoria (p. ej. «PID2019-107523GB-I00»)
+  funder      String? // entidad financiadora
+  ip          String? // investigador(es) principal(es)
+  scope       String? // ámbito: Europeo, Internacional, Nacional, Autonómico, Institucional, Local
+  amount      String? // importe, texto original («60.500,00 €»)
+  period      String? // periodo original legible
+  startYear   Int?
+  endYear     Int?
+  summary     String? // resumen breve (texto plano)
+  summaryEn   String?
+  url         String? // web del proyecto
+  image       String? // logotipo o imagen (URL de Archivos)
+  featured    Boolean  @default(false) // destacado en portada
+  active      Boolean  @default(true) // visible en la web
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Producción científica del grupo (página /publicaciones). Se da de alta a
+// mano desde el panel o se importa desde ORCID (deduplicada por DOI y por
+// el put-code de ORCID).
+model Publication {
+  id           String          @id @default(cuid())
+  title        String
+  authors      String // «Merchán-Sánchez-Jara, J. F.; González-Gutiérrez, S.»
+  year         Int
+  type         PublicationType @default(ARTICLE)
+  venue        String? // revista, editorial, congreso o libro
+  details      String? // volumen(número), páginas, edición…
+  doi          String?         @unique // sin prefijo: «10.3390/aieduc2030022»
+  url          String?
+  abstract     String?
+  openAccess   Boolean         @default(false)
+  featured     Boolean         @default(false) // destacada en portada
+  published    Boolean         @default(true) // visible en la web
+  source       String          @default("manual") // manual | orcid
+  orcidPutCode String?         @unique // «0000-0003-1828-5182:123456»
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([year])
+  @@index([type])
+}
+
+model Event {
+  id            String      @id @default(cuid())
+  title         String
+  titleEn       String?
+  type          String // Seminario, Jornada, Congreso, Concierto, Taller…
+  description   String? // entradilla (texto plano)
+  descriptionEn String?
+  startsAt      DateTime
+  endsAt        DateTime?
+  location      String?
+  url           String?
+  image         String? // cartel o ilustración (URL de Archivos)
+  // Crónica asociada: slug de la noticia que cuenta el evento («leer más»).
+  newsSlug      String?
+  status        EventStatus @default(UPCOMING)
+}
+
+model FileAsset {
+  id        String   @id @default(cuid())
+  filename  String
+  mimeType  String
+  size      Int
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  body      String
+  status    String   @default("NEW") // NEW | REPLIED
+  createdAt DateTime @default(now())
+}
+
+// Visibilidad de las páginas públicas (panel → Visualización). Sin fila = la
+// página se ve; se crea/actualiza al usar el interruptor del ojo.
+model PageVisibility {
+  slug      String   @id // clave del registro de public-pages.ts
+  hidden    Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+// Analítica ligera y sin cookies (patrón del IUCE).
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  visitorId String
+  date      DateTime @default(now())
+}

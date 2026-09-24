@@ -1,0 +1,21 @@
+name: diderot-web
+# Entorno de DESARROLLO: solo PostgreSQL (la app corre con `npm run dev`).
+# Producción: docker-compose.prod.yml (app + BD, ver README → Despliegue).
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: diderot-web-postgres
+    environment:
+      POSTGRES_USER: diderot
+      POSTGRES_PASSWORD: diderot-dev
+      POSTGRES_DB: diderot_web
+    ports:
+      # 5436 en el host: 5433 = web del IUCE, 5434 = DIGIFOLK, 5435 = IETIC27.
+      # Solo accesible desde este equipo.
+      - "127.0.0.1:5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

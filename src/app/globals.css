@@ -1,0 +1,446 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Tokens de diseño de DIDEROT (misma arquitectura que la web del IUCE).
+   Capa semántica en variables CSS. El modo oscuro (.dark en <html>) solo
+   redefine el subconjunto necesario; los alias (--surface-*, --brand-ink) se
+   resuelven en cascada y siguen al tema automáticamente.
+
+   Paleta del logotipo: índigo #29235C y ámbar #DF8602. Contrastes medidos
+   (WCAG AA ≥ 4,5:1 para texto):
+   - --diderot-violet #4a3fb4: 7,89 sobre blanco · 7,04 sobre --diderot-pale
+   - --diderot-amber  #a15800: 5,37 sobre blanco · 4,79 sobre --diderot-pale
+   - el ámbar puro del logo (#df8602) da 2,78 sobre blanco → solo decorativo
+     (--diderot-gold), nunca como color de texto sobre fondo claro.
+   ========================================================================== */
+:root {
+  /* Marca — índigo DIDEROT (botones, bandas oscuras, titulares) */
+  --diderot-indigo: #29235c;
+  /* Interacción — violeta de enlaces, foco y acentos */
+  --diderot-violet: #4a3fb4;
+  /* Tinte suave (chips, cuadrados de icono, bandas claras) */
+  --diderot-pale: #f2f1fa;
+
+  /* Acento — ámbar DIDEROT apto para texto */
+  --diderot-amber: #a15800;
+  --diderot-amber-dark: #8a4b00;
+  /* Ámbar puro del logo: barra superior, ondas, detalles decorativos */
+  --diderot-gold: #df8602;
+
+  /* Neutros (rampa Tailwind) */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #0c0a1d;
+
+  /* Superficies */
+  --surface-page: var(--gray-50);
+  --surface-card: #ffffff;
+  --surface-tinted: var(--diderot-pale);
+  --surface-inverse: var(--gray-950);
+
+  /* Tinta de titulares/logo */
+  --brand-ink: var(--diderot-indigo);
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+
+  /* Tipografía */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   Modo oscuro: neutros teñidos de índigo, superficies propias y marca
+   aclarada. Contrastes sobre la tarjeta oscura (#1a1736): gray-600 8,44 ·
+   gray-500 5,71 · violeta 8,33 · ámbar 8,39.
+   -------------------------------------------------------------------------- */
+html.dark {
+  color-scheme: dark;
+
+  --gray-50: #13112a;
+  --gray-100: #1e1b3d;
+  --gray-200: #2a2650;
+  --gray-300: #3a3563;
+  --gray-400: #77729b;
+  --gray-500: #9590b8;
+  --gray-600: #b6b2d3;
+  --gray-700: #cdcae3;
+  --gray-800: #dedcee;
+  --gray-900: #f2f1fa;
+
+  --surface-page: #0f0d22;
+  --surface-card: #1a1736;
+  --diderot-pale: #221f45;
+
+  /* El índigo en oscuro solo actúa como FONDO con texto blanco (11:1): se
+     levanta un punto para que botones y fechas se distingan de la página. */
+  --diderot-indigo: #3a3187;
+  --diderot-violet: #b4acf5;
+  --diderot-amber: #f2a541;
+  --diderot-amber-dark: #df8602;
+  --brand-ink: #cfc9f7;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   Zona solo-claro (login y panel de administración, como en el IUCE).
+   Redeclara los tokens con sus valores de tema claro para que el subárbol
+   ignore la clase .dark del <html>.
+   -------------------------------------------------------------------------- */
+.theme-light {
+  color-scheme: light;
+
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  --surface-page: var(--gray-50);
+  --surface-card: #ffffff;
+  --diderot-pale: #f2f1fa;
+  --surface-tinted: var(--diderot-pale);
+
+  --diderot-indigo: #29235c;
+  --diderot-violet: #4a3fb4;
+  --diderot-amber: #a15800;
+  --diderot-amber-dark: #8a4b00;
+  --brand-ink: #29235c;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+}
+
+/* Las anclas de las subnavegaciones (Instituto, Investigación) se desplazan
+   con animación en vez de saltar, salvo que el usuario pida menos movimiento. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Aparición al hacer scroll (componente Reveal). Sutil a propósito: solo
+   secciones y rejillas señaladas, nunca todos los elementos.
+   -------------------------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-left {
+  transform: translateX(-22px);
+}
+
+.reveal-right {
+  transform: translateX(22px);
+}
+
+.reveal-scale {
+  transform: scale(0.955);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Tarjetas que se elevan ligeramente al pasar el ratón. */
+.card-lift {
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-lift:hover {
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-left,
+  .reveal-right,
+  .reveal-scale {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .card-lift,
+  .card-lift:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+body {
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   Cuerpo de noticia (HTML del editor del gestor).
+   Coincide con el prototipo: negritas en tinta de titular, blockquote con
+   borde izquierdo rojo sobre fondo tinted.
+   -------------------------------------------------------------------------- */
+.news-body p {
+  margin: 0;
+}
+
+.news-body strong {
+  color: var(--gray-900);
+}
+
+.news-body a {
+  color: var(--diderot-violet);
+}
+
+.news-body blockquote {
+  margin: 8px 0;
+  padding: 18px 24px;
+  border-left: 3px solid var(--diderot-amber);
+  background: var(--surface-tinted);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.news-body blockquote p {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--gray-900);
+  font-style: italic;
+}
+
+.news-body ul,
+.news-body ol {
+  padding-left: 1.5rem;
+}
+
+/* Medios dentro de una noticia: imágenes y vídeos incrustados (embeds del
+   histórico de WordPress o pegados en el editor) se comportan como bloques
+   centrados, igual que una imagen de portada. */
+.news-body img {
+  display: block;
+  margin: 4px auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+
+.news-body figure {
+  /* OJO: nada de márgenes «auto» aquí — .news-body es un flex en columna y
+     los márgenes auto anulan el stretch (la figura colapsaría al ancho
+     intrínseco del iframe, 300px). El centrado lo ponen los hijos. */
+  margin: 4px 0;
+  width: 100%;
+}
+
+.news-body figcaption {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--gray-500, #6b7280);
+}
+
+/* Los iframes (YouTube…) llegan con ancho y alto fijos: se fuerzan a bloque
+   centrado a lo ancho del texto con proporción 16:9 adaptable. */
+.news-body iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin: 4px auto;
+  border: 0;
+  border-radius: 0.75rem;
+  background: #000;
+}
+
+.news-body .wp-block-embed__wrapper {
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Bloques de página editables desde el gestor (Contenido → Páginas).
+   -------------------------------------------------------------------------- */
+.page-block p {
+  margin: 0 0 14px;
+}
+
+.page-block p:last-child {
+  margin-bottom: 0;
+}
+
+.page-block strong {
+  color: var(--gray-900);
+}
+
+.page-block a {
+  color: var(--diderot-violet);
+}
+
+.page-block ul,
+.page-block ol {
+  margin: 0 0 14px;
+  padding-left: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Contenido editable del editor TipTap (panel de administración).
+   -------------------------------------------------------------------------- */
+.rte-content p {
+  margin: 0 0 12px;
+}
+
+.rte-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rte-content h2,
+.rte-content h3 {
+  margin: 16px 0 8px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.rte-content h2 {
+  font-size: 1.25rem;
+}
+
+.rte-content h3 {
+  font-size: 1.05rem;
+}
+
+.rte-content ul,
+.rte-content ol {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.rte-content blockquote {
+  margin: 8px 0 12px;
+  padding: 10px 16px;
+  border-left: 3px solid var(--diderot-amber);
+  background: var(--surface-tinted);
+  border-radius: 0 6px 6px 0;
+}
+
+.rte-content a {
+  color: var(--diderot-violet);
+  text-decoration: underline;
+}
+
+.rte-content img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.rte-content table {
+  border-collapse: collapse;
+  margin: 0 0 12px;
+  width: 100%;
+}
+
+.rte-content th,
+.rte-content td {
+  border: 1px solid var(--gray-300);
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.rte-content th {
+  background: var(--gray-50);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Firma visual de DIDEROT: ondas sonoras (barras de ecualizador) que laten
+   suavemente. Decorativas (aria-hidden); con prefers-reduced-motion quedan
+   quietas a media altura.
+   Uso: <SoundWave /> (src/components/ui/sound-wave.tsx)
+   -------------------------------------------------------------------------- */
+.sound-wave {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+}
+
+.sound-wave > span {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: diderot-wave 1.3s ease-in-out infinite;
+}
+
+.sound-wave > span:nth-child(2) { animation-delay: -0.9s; }
+.sound-wave > span:nth-child(3) { animation-delay: -0.35s; }
+.sound-wave > span:nth-child(4) { animation-delay: -1.1s; }
+.sound-wave > span:nth-child(5) { animation-delay: -0.6s; }
+.sound-wave > span:nth-child(6) { animation-delay: -0.2s; }
+.sound-wave > span:nth-child(7) { animation-delay: -0.75s; }
+
+@keyframes diderot-wave {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Pentagrama: líneas horizontales finas como fondo decorativo de bandas. */
+.staff-lines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 13px,
+    rgba(41, 35, 92, 0.07) 13px,
+    rgba(41, 35, 92, 0.07) 14px
+  );
+}
+
+html.dark .staff-lines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 13px,
+    rgba(207, 201, 247, 0.07) 13px,
+    rgba(207, 201, 247, 0.07) 14px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-wave > span {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+}
