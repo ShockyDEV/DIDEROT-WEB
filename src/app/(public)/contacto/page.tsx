@@ -39,7 +39,7 @@ const T = {
     coordinacion: "Coordinación del grupo",
     correo: "Correo electrónico",
     redes: "Redes sociales",
-    mapaTitle: "Mapa — Edificio Solís (IUCE), Paseo de Canalejas 169, Salamanca",
+    mapaTitle: "Mapa del Edificio Solís (IUCE), Paseo de Canalejas 169, Salamanca",
     comoLlegar: "Cómo llegar",
   },
   en: {
@@ -50,7 +50,7 @@ const T = {
     coordinacion: "Group coordinator",
     correo: "Email",
     redes: "Social media",
-    mapaTitle: "Map — Solís Building (IUCE), Paseo de Canalejas 169, Salamanca",
+    mapaTitle: "Map of the Solís Building (IUCE), Paseo de Canalejas 169, Salamanca",
     comoLlegar: "How to find us",
   },
 } as const;

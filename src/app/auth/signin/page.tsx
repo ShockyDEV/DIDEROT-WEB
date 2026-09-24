@@ -18,7 +18,7 @@ export default function SignInPage() {
           <div className="mb-6 flex flex-col items-center text-center">
             <Image
               src="/images/diderot-logo.png"
-              alt="DIDEROT — Didácticas Digitales de la Expresión Musical y las Artes Performativas"
+              alt="DIDEROT (Didácticas Digitales de la Expresión Musical y las Artes Performativas)"
               width={1023}
               height={295}
               priority

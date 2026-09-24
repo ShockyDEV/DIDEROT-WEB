@@ -29,7 +29,7 @@ export interface SiteSettings {
 }
 
 export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
-  name: `${SITE.shortName} — ${SITE.name}`,
+  name: `${SITE.shortName} (${SITE.name})`,
   email: SITE.email,
   phone: "",
   // Misma descripción que los metadatos por defecto de src/app/layout.tsx.

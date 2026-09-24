@@ -176,6 +176,7 @@ model Event {
   location      String?
   url           String?
   image         String? // cartel o ilustración (URL de Archivos)
+  programUrl    String? // programa en PDF (URL de Archivos o /docs/…)
   // Crónica asociada: slug de la noticia que cuenta el evento («leer más»).
   newsSlug      String?
   status        EventStatus @default(UPCOMING)

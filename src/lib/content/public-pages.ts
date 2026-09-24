@@ -36,7 +36,7 @@ export interface PublicSectionDef {
 export const PUBLIC_SECTIONS: PublicSectionDef[] = [
   {
     slug: "seccion-proyectos",
-    label: "Investigación — Proyectos",
+    label: "Investigación (Proyectos)",
     path: "/investigacion#proyectos",
     hint: "Explorador de proyectos del grupo (se gestionan en Proyectos)",
     defaultHidden: false,

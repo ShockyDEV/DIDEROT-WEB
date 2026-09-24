@@ -23,7 +23,7 @@ export const content: PageContentModule = {
       {
         blockKey: "mision",
         title: "Transferencia — texto de misión (banda destacada)",
-        defaultContent: `<p>El grupo pone su investigación —didácticas digitales, tecnologías inteligentes aplicadas a la música, edición y codificación digital del patrimonio musical— al servicio de docentes, centros e instituciones, mediante proyectos colaborativos, formación especializada, recursos digitales y actividades de divulgación.</p>`,
+        defaultContent: `<p>El grupo pone su investigación (didácticas digitales, tecnologías inteligentes aplicadas a la música, edición y codificación digital del patrimonio musical) al servicio de docentes, centros e instituciones, mediante proyectos colaborativos, formación especializada, recursos digitales y actividades de divulgación.</p>`,
       },
       {
         blockKey: "transferlab",
@@ -57,7 +57,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "transferencia",
       blockKey: "list:lineas",
-      title: "Líneas y servicios de transferencia — tarjetas",
+      title: "Líneas y servicios de transferencia (tarjetas)",
       itemLabel: "línea",
       fields: [
         ICON_FIELD,
@@ -159,7 +159,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "transferencia",
       blockKey: "list:divulgacion",
-      title: "Divulgación — tarjetas",
+      title: "Divulgación (tarjetas)",
       itemLabel: "tarjeta",
       fields: [
         ICON_FIELD,
@@ -169,7 +169,7 @@ export const content: PageContentModule = {
           key: "enlace",
           label: "Enlace",
           type: "url",
-          hint: "URL o ruta interna (/eventos); vacío = sin enlace",
+          hint: "URL o ruta interna como /eventos; vacío = sin enlace",
         },
       ],
       defaultItems: [
@@ -198,7 +198,7 @@ export const content: PageContentModule = {
   ],
   blocksEn: {
     "transferencia:intro": `<p>Transferring knowledge to society is part of DIDEROT's work: making sure that research on digital didactics of music and the performing arts reaches classrooms, schools, cultural institutions and companies in the sector.</p>`,
-    "transferencia:mision": `<p>The group places its research — digital didactics, intelligent technologies applied to music, digital editing and encoding of musical heritage — at the service of teachers, schools and institutions, through collaborative projects, specialised training, digital resources and outreach activities.</p>`,
+    "transferencia:mision": `<p>The group places its research (digital didactics, intelligent technologies applied to music, digital editing and encoding of musical heritage) at the service of teachers, schools and institutions, through collaborative projects, specialised training, digital resources and outreach activities.</p>`,
     "transferencia:transferlab": `<p><strong>DIDEROT TransferLab</strong> is the Knowledge Transfer Group (GTC) of the University Institute of Education Sciences (IUCE) linked to DIDEROT. It channels the group's knowledge transfer towards the education system, the cultural sector and industry: advice, training, resource development and collaboration on projects.</p>`,
     "transferencia:otc-descripcion": `<p>The Knowledge Transfer Office of the University of Salamanca channels Article 60 contracts, patents and collaboration with companies and institutions.</p>`,
     "transferencia:cta": `<p><strong>Would your school, institution or company like to work with DIDEROT?</strong></p>

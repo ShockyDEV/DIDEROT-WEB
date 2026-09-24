@@ -333,7 +333,7 @@ export function ProjectsSection({ rows }: Readonly<{ rows: ProjectRow[] }>) {
                   onChange={(e) => set("scope", e.target.value)}
                   className={inputClass}
                 >
-                  <option value="">—</option>
+                  <option value="">(Sin especificar)</option>
                   {scopeOptions.map((s) => (
                     <option key={s} value={s}>
                       {s}

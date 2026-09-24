@@ -58,5 +58,5 @@ export const ICON_FIELD: ListField = {
   key: "icon",
   label: "Icono",
   type: "icon",
-  hint: "nombre de icono Lucide (elige de la lista)",
+  hint: "nombre de icono Lucide; elige de la lista",
 };

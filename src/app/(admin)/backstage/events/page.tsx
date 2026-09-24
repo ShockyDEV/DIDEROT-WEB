@@ -29,6 +29,7 @@ export default async function AdminEventsPage({
     location: e.location,
     url: e.url,
     image: e.image,
+    programUrl: e.programUrl,
     newsSlug: e.newsSlug,
     status: e.status,
   }));

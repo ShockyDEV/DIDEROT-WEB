@@ -18,7 +18,7 @@ interface MapEmbedProps {
  */
 export function MapEmbed({
   query = DEFAULT_QUERY,
-  title = "Mapa — Edificio Solís, Paseo de Canalejas 169, Salamanca",
+  title = "Mapa del Edificio Solís, Paseo de Canalejas 169, Salamanca",
   className,
 }: Readonly<MapEmbedProps>) {
   const src = `https://www.google.com/maps?q=${encodeURIComponent(query)}&hl=es&z=17&output=embed`;

@@ -184,7 +184,7 @@ export function SiteHeader({
           {/* Logo */}
           <Link
             href={withLocale("/", locale)}
-            aria-label={pick(locale, "DIDEROT — Inicio", "DIDEROT — Home")}
+            aria-label={pick(locale, "DIDEROT (página de inicio)", "DIDEROT (home page)")}
             className="flex flex-none items-center rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
           >
             <Image

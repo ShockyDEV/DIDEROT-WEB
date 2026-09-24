@@ -31,6 +31,8 @@ export interface PublicEvent {
   url: string | null;
   /** Cartel o imagen, ya saneado (ruta local o https). */
   image: string | null;
+  /** Programa en PDF, ya saneado (solo http/https o ruta interna). */
+  programUrl: string | null;
   /** Slug de la crónica, solo si la noticia existe y está publicada. */
   newsSlug: string | null;
   cancelled: boolean;
@@ -208,6 +210,7 @@ export async function getPublicEvents(locale: Locale): Promise<PublicEvents> {
         location: r.location?.trim() || null,
         url: safeEventUrl(r.url),
         image: safeImage(r.image),
+        programUrl: safeEventUrl(r.programUrl),
         newsSlug: published.has(slug) ? slug : null,
         cancelled: r.status === "CANCELLED",
       };

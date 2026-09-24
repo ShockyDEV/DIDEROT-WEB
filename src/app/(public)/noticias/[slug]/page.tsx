@@ -104,11 +104,11 @@ export default async function NoticiaPage({ params }: Readonly<PageProps>) {
     ...(item.coverImage ? { image: [absoluteUrl(item.coverImage)] } : {}),
     author: {
       "@type": "Organization",
-      name: `${SITE.shortName} — ${locale === "en" ? "University of Salamanca" : "Universidad de Salamanca"}`,
+      name: `${SITE.shortName} (${locale === "en" ? "University of Salamanca" : "Universidad de Salamanca"})`,
     },
     publisher: {
       "@type": "Organization",
-      name: `${SITE.shortName} — ${locale === "en" ? SITE.nameEn : SITE.name}`,
+      name: `${SITE.shortName} (${locale === "en" ? SITE.nameEn : SITE.name})`,
       logo: {
         "@type": "ImageObject",
         url: `${SITE_URL}/images/diderot-logo.png`,

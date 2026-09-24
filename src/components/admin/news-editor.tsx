@@ -229,7 +229,7 @@ export function NewsEditor({ initial }: Readonly<{ initial?: NewsFormValues }>) 
                       type="button"
                       onClick={() => update("coverImage", selected ? "" : url)}
                       aria-pressed={selected}
-                      title={selected ? "Portada actual — clic para quitarla" : "Usar como portada"}
+                      title={selected ? "Portada actual (clic para quitarla)" : "Usar como portada"}
                       className={cn(
                         "relative h-[84px] w-[112px] overflow-hidden rounded-md border-2 bg-gray-50 transition-all",
                         selected

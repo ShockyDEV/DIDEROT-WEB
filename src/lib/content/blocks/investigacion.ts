@@ -38,7 +38,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "investigacion",
       blockKey: "list:lineas",
-      title: "Líneas de investigación — ejes (tarjetas)",
+      title: "Líneas de investigación (tarjetas de ejes)",
       itemLabel: "eje",
       fields: [
         ICON_FIELD,

@@ -83,7 +83,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "formacion",
       blockKey: "list:datos",
-      title: "Cabecera — tarjetas de datos",
+      title: "Cabecera (tarjetas de datos)",
       itemLabel: "dato",
       fields: [
         { key: "cifra", label: "Cifra grande", type: "text" },
@@ -111,7 +111,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "formacion",
       blockKey: "list:programas",
-      title: "Doctorado — programas",
+      title: "Doctorado (programas)",
       itemLabel: "programa",
       fields: [
         { key: "titulo", label: "Nombre del programa", type: "text" },
@@ -144,7 +144,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "formacion",
       blockKey: "list:ambitos",
-      title: "Doctorado — ámbitos para tesis y trabajos",
+      title: "Doctorado (ámbitos para tesis y trabajos)",
       itemLabel: "ámbito",
       fields: [ICON_FIELD, { key: "texto", label: "Texto", type: "text" }],
       defaultItems: [
@@ -221,7 +221,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "formacion",
       blockKey: "list:jornadas",
-      title: "Seminario Internacional — jornadas",
+      title: "Seminario Internacional (jornadas)",
       itemLabel: "jornada",
       fields: [
         { key: "codigo", label: "Número", type: "text", hint: "p. ej. I, II, III" },
@@ -256,7 +256,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "formacion",
       blockKey: "list:actividades",
-      title: "Profesorado, TFG y TFM — tarjetas",
+      title: "Profesorado, TFG y TFM (tarjetas)",
       itemLabel: "tarjeta",
       fields: [
         ICON_FIELD,
@@ -267,7 +267,7 @@ export const content: PageContentModule = {
           key: "enlace",
           label: "Enlace",
           type: "url",
-          hint: "URL o ruta interna (/contacto); vacío = sin enlace",
+          hint: "URL o ruta interna como /contacto; vacío = sin enlace",
         },
         { key: "acento", label: "Borde superior ámbar", type: "check" },
       ],
@@ -304,7 +304,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "formacion",
       blockKey: "list:movilidad",
-      title: "Estancias y movilidad — tarjetas",
+      title: "Estancias y movilidad (tarjetas)",
       itemLabel: "tarjeta",
       fields: [
         ICON_FIELD,

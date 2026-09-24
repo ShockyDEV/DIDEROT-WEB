@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImageOff, Loader2, Upload } from "lucide-react";
+import { FileText, ImageOff, Loader2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/cn";
 import { ACCEPT_IMAGE_UPLOAD, type UploadFolder } from "@/lib/admin-options";
@@ -185,6 +185,117 @@ export function ImageUploadField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="…o pega una dirección (/uploads/… o https://…)"
+        className={cn(inputClass, "text-[13px] text-gray-600")}
+      />
+    </Field>
+  );
+}
+
+/**
+ * Documento PDF (p. ej. el programa de un evento): se sube a Archivos o se
+ * pega su dirección (/uploads/…, /docs/… o https://…).
+ */
+export function DocumentUploadField({
+  id,
+  label,
+  value,
+  onChange,
+  folder,
+  hint,
+}: Readonly<{
+  id: string;
+  label: React.ReactNode;
+  value: string;
+  onChange: (url: string) => void;
+  folder: UploadFolder;
+  hint?: React.ReactNode;
+}>) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    try {
+      const item = await uploadFile(file, { only: "document", folder });
+      onChange(item.url);
+      toast.success("Documento subido");
+    } catch (err) {
+      toast.error(errorMessage(err, "No se pudo subir el documento"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const fileName = value ? decodeURIComponent(value.split("/").pop() ?? value) : "";
+
+  return (
+    <Field id={id} label={label} hint={hint}>
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            "flex h-16 w-16 flex-none items-center justify-center rounded-md border",
+            value
+              ? "border-gray-200 bg-diderot-pale text-diderot-indigo"
+              : "border-dashed border-gray-300 text-gray-400",
+          )}
+        >
+          <FileText className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <div className="flex min-w-0 flex-col items-start gap-1.5">
+          {value ? (
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="max-w-full truncate text-[13px] font-medium text-diderot-violet hover:underline"
+            >
+              {fileName}
+            </a>
+          ) : null}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => inputRef.current?.click()}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Upload className="h-4 w-4" aria-hidden="true" />
+              )}
+              {uploading ? "Subiendo…" : value ? "Cambiar PDF" : "Subir PDF"}
+            </button>
+            {value ? (
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                className="text-xs text-red-600 hover:underline"
+              >
+                Quitar
+              </button>
+            ) : null}
+          </div>
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,application/pdf"
+          className="hidden"
+          tabIndex={-1}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleFile(file);
+            e.target.value = "";
+          }}
+        />
+      </div>
+      <input
+        id={id}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="…o pega una dirección (/uploads/…, /docs/… o https://…)"
         className={cn(inputClass, "text-[13px] text-gray-600")}
       />
     </Field>

@@ -283,6 +283,7 @@ export const eventInputSchema = z
     location: optionalText("el lugar", 300),
     url: optionalLinkUrl("La web del evento"),
     image: optionalMediaUrl("El cartel"),
+    programUrl: optionalLinkUrl("El programa"),
     // Slug de la noticia que hace de crónica del evento («leer más»).
     newsSlug: z
       .preprocess(

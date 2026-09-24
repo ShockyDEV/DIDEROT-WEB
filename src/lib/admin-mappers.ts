@@ -89,6 +89,7 @@ export async function eventData(d: EventInput) {
     location: d.location ?? null,
     url: d.url ?? null,
     image: d.image ?? null,
+    programUrl: d.programUrl ?? null,
     newsSlug: d.newsSlug ?? null,
     status: d.status,
   };

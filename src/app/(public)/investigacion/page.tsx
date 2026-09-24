@@ -50,7 +50,7 @@ const T = {
     publicacionesTitulo: "Publicaciones del grupo",
     publicacionesTexto: (n: number) =>
       n > 0
-        ? `${n.toLocaleString("es-ES")} referencias —artículos, libros, capítulos y comunicaciones—, con filtros por tipo, año y texto.`
+        ? `${n.toLocaleString("es-ES")} referencias (artículos, libros, capítulos y comunicaciones), con filtros por tipo, año y texto.`
         : "Artículos, libros, capítulos y comunicaciones, con filtros por tipo, año y texto.",
     verPublicaciones: "Ver las publicaciones",
   },
@@ -66,7 +66,7 @@ const T = {
     publicacionesTitulo: "The group's publications",
     publicacionesTexto: (n: number) =>
       n > 0
-        ? `${n.toLocaleString("en-GB")} references — articles, books, chapters and conference papers — with filters by type, year and text.`
+        ? `${n.toLocaleString("en-GB")} references (articles, books, chapters and conference papers), with filters by type, year and text.`
         : "Articles, books, chapters and conference papers, with filters by type, year and text.",
     verPublicaciones: "See the publications",
   },

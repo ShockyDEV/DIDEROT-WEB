@@ -43,7 +43,7 @@ export default async function AdminProjectsPage() {
           <p className="text-sm text-[#92400E]">
             La sección de Proyectos está <strong>oculta en la web pública</strong> (los
             datos se conservan y se pueden seguir editando aquí). Para mostrarla, activa
-            «Investigación — Proyectos» en{" "}
+            «Investigación (Proyectos)» en{" "}
             <Link href="/backstage/visualizacion" className="font-medium underline">
               Visualización
             </Link>

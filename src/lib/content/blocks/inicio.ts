@@ -11,7 +11,7 @@ import { ICON_FIELD, type PageContentModule } from "./types";
 export const content: PageContentModule = {
   blocks: {
     pageSlug: "inicio",
-    label: "Inicio — Portada",
+    label: "Inicio (Portada)",
     blocks: [
       {
         blockKey: "hero-eyebrow",
@@ -75,7 +75,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "inicio",
       blockKey: "list:hitos-hero",
-      title: "Portada — hitos bajo el titular",
+      title: "Portada (hitos bajo el titular)",
       itemLabel: "hito",
       fields: [ICON_FIELD, { key: "texto", label: "Texto", type: "text" }],
       defaultItems: [
@@ -87,7 +87,7 @@ export const content: PageContentModule = {
     {
       pageSlug: "inicio",
       blockKey: "list:accesos-rapidos",
-      title: "Portada — tarjetas de acceso rápido",
+      title: "Portada (tarjetas de acceso rápido)",
       itemLabel: "tarjeta",
       fields: [
         ICON_FIELD,
@@ -97,7 +97,7 @@ export const content: PageContentModule = {
           key: "enlace",
           label: "Enlace",
           type: "url",
-          hint: "ruta interna (/publicaciones, /investigacion#proyectos) o URL externa (https://…)",
+          hint: "ruta interna como /publicaciones o /investigacion#proyectos, o URL externa https://…",
         },
         { key: "destacado", label: "Icono en ámbar (acento)", type: "check" },
       ],

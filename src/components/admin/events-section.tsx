@@ -9,6 +9,7 @@ import { Modal } from "@/components/admin/modal";
 import {
   Field,
   IconButton,
+  DocumentUploadField,
   ImageUploadField,
   inputClass,
   textareaClass,
@@ -16,6 +17,7 @@ import {
 import { errorMessage, sendJson } from "@/components/admin/admin-fetch";
 import { EVENT_TYPES } from "@/lib/admin-options";
 import { cn } from "@/lib/cn";
+import { MADRID_TZ, madridParts, madridToIso } from "@/lib/madrid-time";
 
 export interface EventRow {
   id: string;
@@ -29,6 +31,7 @@ export interface EventRow {
   location: string | null;
   url: string | null;
   image: string | null;
+  programUrl: string | null;
   newsSlug: string | null;
   status: "UPCOMING" | "PAST" | "CANCELLED";
 }
@@ -51,11 +54,13 @@ interface FormState {
   type: string;
   description: string;
   descriptionEn: string;
-  date: string; // yyyy-mm-dd
+  date: string; // yyyy-mm-dd (en Madrid)
+  time: string; // hh:mm (en Madrid) o "" si no se indica
   endDate: string; // yyyy-mm-dd o ""
   location: string;
   url: string;
   image: string;
+  programUrl: string;
   newsSlug: string;
   status: EventRow["status"];
 }
@@ -68,10 +73,12 @@ function emptyForm(): FormState {
     description: "",
     descriptionEn: "",
     date: "",
+    time: "",
     endDate: "",
     location: "",
     url: "",
     image: "",
+    programUrl: "",
     newsSlug: "",
     status: "UPCOMING",
   };
@@ -85,11 +92,13 @@ function toForm(row: EventRow): FormState {
     type: row.type,
     description: row.description ?? "",
     descriptionEn: row.descriptionEn ?? "",
-    date: row.startsAt.slice(0, 10),
-    endDate: row.endsAt?.slice(0, 10) ?? "",
+    date: madridParts(row.startsAt).date,
+    time: madridParts(row.startsAt).time,
+    endDate: row.endsAt ? madridParts(row.endsAt).date : "",
     location: row.location ?? "",
     url: row.url ?? "",
     image: row.image ?? "",
+    programUrl: row.programUrl ?? "",
     newsSlug: row.newsSlug ?? "",
     status: row.status,
   };
@@ -100,14 +109,11 @@ function formatDate(iso: string) {
     day: "numeric",
     month: "short",
     year: "numeric",
-    timeZone: "UTC",
+    timeZone: MADRID_TZ,
   })
     .format(new Date(iso))
     .replace(".", "");
 }
-
-/** Las fechas se guardan a las 09:00 UTC (convención heredada del IUCE). */
-const toIso = (date: string) => new Date(`${date}T09:00:00Z`).toISOString();
 
 export function EventsSection({
   rows,
@@ -156,11 +162,12 @@ export function EventsSection({
         type: form.type,
         description: form.description,
         descriptionEn: form.descriptionEn,
-        startsAt: toIso(form.date),
-        endsAt: form.endDate ? toIso(form.endDate) : null,
+        startsAt: madridToIso(form.date, form.time),
+        endsAt: form.endDate ? madridToIso(form.endDate, "") : null,
         location: form.location,
         url: form.url,
         image: form.image,
+        programUrl: form.programUrl,
         newsSlug: form.newsSlug,
         status: form.status,
       };
@@ -260,7 +267,7 @@ export function EventsSection({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-[13px] text-gray-500">
                     {formatDate(row.startsAt)}
-                    {row.endsAt && row.endsAt.slice(0, 10) !== row.startsAt.slice(0, 10)
+                    {row.endsAt && madridParts(row.endsAt).date !== madridParts(row.startsAt).date
                       ? ` – ${formatDate(row.endsAt)}`
                       : ""}
                   </td>
@@ -326,7 +333,7 @@ export function EventsSection({
                 className={inputClass}
               />
             </Field>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field id="e-type" label="Tipo *">
                 <select
                   id="e-type"
@@ -347,6 +354,15 @@ export function EventsSection({
                   type="date"
                   value={form.date}
                   onChange={(e) => set("date", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field id="e-time" label="Hora de inicio" hint="Opcional (hora de Madrid)">
+                <input
+                  id="e-time"
+                  type="time"
+                  value={form.time}
+                  onChange={(e) => set("time", e.target.value)}
                   className={inputClass}
                 />
               </Field>
@@ -428,6 +444,14 @@ export function EventsSection({
               folder="events"
               hint="Se muestra en la agenda, en el destacado y en los eventos celebrados."
             />
+            <DocumentUploadField
+              id="e-program"
+              label="Programa (PDF, opcional)"
+              value={form.programUrl}
+              onChange={(programUrl) => set("programUrl", programUrl)}
+              folder="events"
+              hint="En la web aparece el enlace «Programa (PDF)» junto al evento."
+            />
             <Field
               id="e-news"
               label="Crónica asociada (noticia, opcional)"
@@ -439,7 +463,7 @@ export function EventsSection({
                 onChange={(e) => set("newsSlug", e.target.value)}
                 className={inputClass}
               >
-                <option value="">— Sin crónica —</option>
+                <option value="">(Sin crónica)</option>
                 {newsOptions.map((n) => (
                   <option key={n.slug} value={n.slug}>
                     {n.title.length > 90 ? `${n.title.slice(0, 90)}…` : n.title}

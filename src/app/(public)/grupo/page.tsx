@@ -259,7 +259,7 @@ export default async function GrupoPage() {
                 {t.presentacion}
               </h2>
               <div
-                className="page-block text-base leading-relaxed text-gray-600"
+                className="page-block hyphens-auto text-justify text-base leading-relaxed text-gray-600"
                 // Bloque editable desde el gestor (grupo:presentacion)
                 dangerouslySetInnerHTML={{ __html: presentacion }}
               />

@@ -229,7 +229,7 @@ export function contactNotifyEmail(opts: {
     ${quote(opts.message)}
   `;
   return {
-    subject: `[Web DIDEROT] ${opts.subject} — ${opts.name}`,
+    subject: `[Web DIDEROT] ${opts.subject} (${opts.name})`,
     html: layout({
       lang: "es",
       preheader: `Mensaje de ${opts.name}: ${opts.subject}`,
@@ -247,8 +247,7 @@ Idioma: ${idioma}
 
 ${opts.message}
 
-—
-Responde directamente a este correo para contestar a ${opts.name}.`,
+(Responde directamente a este correo para contestar a ${opts.name}.)`,
   };
 }
 
@@ -274,18 +273,18 @@ export function contactAutoReplyEmail(opts: {
     const bodyHtml = `
       ${P(`Hello ${escapeHtml(opts.name)},`)}
       ${P("We have received your enquiry and will get back to you as soon as possible. Thank you for writing to us.")}
-      ${label(`Copy of your message — ${escapeHtml(subjectLabel)}`)}
+      ${label(`Copy of your message (${escapeHtml(subjectLabel)})`)}
       ${quote(opts.message)}
     `;
     return {
-      subject: "We have received your message — DIDEROT",
+      subject: "We have received your message (DIDEROT)",
       html: layout({
         lang: "en",
         preheader: "We have received your enquiry and will reply as soon as possible.",
         section: "Contact",
         heading: "We have received your message",
         bodyHtml,
-        footerNote: `Automatic message — please do not reply to this address. Write to us at ${email}.`,
+        footerNote: `Automatic message (please do not reply to this address). Write to us at ${email}.`,
       }),
       text: `Hello ${opts.name},
 
@@ -302,18 +301,18 @@ IUCE · University of Salamanca · ${email}`,
   const bodyHtml = `
     ${P(`Hola ${escapeHtml(opts.name)}:`)}
     ${P("Hemos recibido tu consulta y te responderemos lo antes posible. Gracias por escribirnos.")}
-    ${label(`Copia de tu mensaje — ${escapeHtml(subjectLabel)}`)}
+    ${label(`Copia de tu mensaje (${escapeHtml(subjectLabel)})`)}
     ${quote(opts.message)}
   `;
   return {
-    subject: "Hemos recibido tu mensaje — DIDEROT",
+    subject: "Hemos recibido tu mensaje (DIDEROT)",
     html: layout({
       lang: "es",
       preheader: "Hemos recibido tu consulta; te responderemos lo antes posible.",
       section: "Contacto",
       heading: "Hemos recibido tu mensaje",
       bodyHtml,
-      footerNote: `Correo automático — no respondas a esta dirección. Escríbenos a ${email}.`,
+      footerNote: `Correo automático (no respondas a esta dirección). Escríbenos a ${email}.`,
     }),
     text: `Hola ${opts.name}:
 

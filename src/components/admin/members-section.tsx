@@ -398,7 +398,7 @@ export function MembersSection({ rows }: Readonly<{ rows: MemberRow[] }>) {
 
       {form ? (
         <Modal
-          title={form.id ? `Editar ficha — ${memberCategoryLabel(form.category)}` : "Nuevo miembro"}
+          title={form.id ? `Editar ficha (${memberCategoryLabel(form.category)})` : "Nuevo miembro"}
           onClose={() => setForm(null)}
           size="lg"
         >

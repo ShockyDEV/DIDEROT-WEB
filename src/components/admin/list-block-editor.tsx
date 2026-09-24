@@ -189,7 +189,7 @@ export function ListBlockEditor({
                         {field.hint ? (
                           <span className="font-normal text-gray-500">
                             {" "}
-                            — {field.hint}
+                            ({field.hint})
                           </span>
                         ) : null}
                       </label>

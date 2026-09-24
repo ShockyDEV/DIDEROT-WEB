@@ -20,7 +20,7 @@ const MAIL = `<a href="mailto:${SITE.email}">${SITE.email}</a>`;
 export const content: PageContentModule = {
   blocks: {
     pageSlug: "legal",
-    label: "Páginas legales — aviso legal, privacidad, cookies y accesibilidad",
+    label: "Páginas legales (aviso legal, privacidad, cookies y accesibilidad)",
     blocks: [
       {
         blockKey: "aviso-legal",

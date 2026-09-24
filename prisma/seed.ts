@@ -118,9 +118,18 @@ async function seedAccounts() {
 
 async function seedMembers() {
   let created = 0;
+  let filled = 0;
   for (const m of members) {
     const exists = await prisma.member.findFirst({ where: { name: m.name } });
-    if (exists) continue;
+    if (exists) {
+      // Solo relleno: pone la foto si la ficha no tiene (nunca pisa la subida
+      // desde el panel).
+      if (!exists.photo && m.photo) {
+        await prisma.member.update({ where: { id: exists.id }, data: { photo: m.photo } });
+        filled++;
+      }
+      continue;
+    }
     await prisma.member.create({
       data: {
         name: m.name,
@@ -141,7 +150,9 @@ async function seedMembers() {
     });
     created++;
   }
-  console.log(`✓ Equipo: ${created} creados (${members.length} en la semilla)`);
+  console.log(
+    `✓ Equipo: ${created} creados, ${filled} con foto completada (${members.length} en la semilla)`,
+  );
 }
 
 async function seedProjects() {
@@ -176,15 +187,33 @@ async function seedPublications() {
 
 async function seedEvents() {
   let created = 0;
+  let filled = 0;
   for (const e of events) {
     const exists = await prisma.event.findFirst({ where: { title: e.title } });
-    if (exists) continue;
+    if (exists) {
+      // Solo relleno: completa lo que esté VACÍO (p. ej. el programa añadido
+      // después) sin pisar nada editado desde el panel.
+      const fill: { programUrl?: string; image?: string } = {};
+      if (!exists.programUrl && e.programUrl) fill.programUrl = e.programUrl;
+      if (!exists.image && e.image) fill.image = e.image;
+      if (Object.keys(fill).length > 0) {
+        await prisma.event.update({ where: { id: exists.id }, data: fill });
+        filled++;
+      }
+      continue;
+    }
     await prisma.event.create({
-      data: { ...e, startsAt: new Date(e.startsAt) },
+      data: {
+        ...e,
+        startsAt: new Date(e.startsAt),
+        endsAt: e.endsAt ? new Date(e.endsAt) : null,
+      },
     });
     created++;
   }
-  console.log(`✓ Eventos: ${created} creados (${events.length} en la semilla)`);
+  console.log(
+    `✓ Eventos: ${created} creados, ${filled} completados (${events.length} en la semilla)`,
+  );
 }
 
 async function seedNews() {

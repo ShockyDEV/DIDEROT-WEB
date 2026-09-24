@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ChevronRight,
   Clock,
+  FileText,
   MapPin,
   MessageSquarePlus,
 } from "lucide-react";
@@ -59,6 +60,7 @@ const T = {
     cancelado: "Cancelado",
     celebrado: "Celebrado",
     webEvento: "Web del evento",
+    programa: "Programa (PDF)",
     nuevaVentana: "(se abre en una ventana nueva)",
     leerCronica: "Leer la crónica",
     proximos: "Próximos",
@@ -94,6 +96,7 @@ const T = {
     cancelado: "Cancelled",
     celebrado: "Past",
     webEvento: "Event website",
+    programa: "Programme (PDF)",
     nuevaVentana: "(opens in a new window)",
     leerCronica: "Read the report",
     proximos: "Upcoming",
@@ -390,7 +393,7 @@ export default async function EventosPage({
                           </li>
                         ) : null}
                       </ul>
-                      {featured.url || cronicaHref(featured) ? (
+                      {featured.url || featured.programUrl || cronicaHref(featured) ? (
                         <div className="mt-auto flex flex-wrap items-center gap-3 pt-2">
                           {featured.url ? (
                             <a
@@ -404,6 +407,21 @@ export default async function EventosPage({
                             >
                               {t.webEvento}
                               <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                              <span className="sr-only">{t.nuevaVentana}</span>
+                            </a>
+                          ) : null}
+                          {featured.programUrl ? (
+                            <a
+                              href={featured.programUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={cn(
+                                buttonClassName({ variant: "outline" }),
+                                "gap-1.5",
+                              )}
+                            >
+                              <FileText className="h-4 w-4" aria-hidden="true" />
+                              {t.programa}
                               <span className="sr-only">{t.nuevaVentana}</span>
                             </a>
                           ) : null}
@@ -511,6 +529,20 @@ export default async function EventosPage({
                             <p className="text-xs text-gray-500">
                               {formatEventDate(e.startsAt, e.endsAt, locale)}
                               {metaLine(e) ? ` · ${metaLine(e)}` : ""}
+                              {e.programUrl ? (
+                                <>
+                                  {" · "}
+                                  <a
+                                    href={e.programUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-diderot-violet hover:underline"
+                                  >
+                                    {t.programa}
+                                    <span className="sr-only"> {t.nuevaVentana}</span>
+                                  </a>
+                                </>
+                              ) : null}
                               {cronica ? (
                                 <>
                                   {" · "}
@@ -602,13 +634,29 @@ export default async function EventosPage({
                                   {metaLine(e)}
                                 </p>
                               ) : null}
-                              {cronica ? (
-                                <Link
-                                  href={cronica}
-                                  className="mt-auto inline-flex w-fit items-center gap-1 pt-1 text-sm font-medium text-diderot-violet hover:underline"
-                                >
-                                  {t.leerCronica} →
-                                </Link>
+                              {e.programUrl || cronica ? (
+                                <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm font-medium">
+                                  {e.programUrl ? (
+                                    <a
+                                      href={e.programUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-diderot-violet hover:underline"
+                                    >
+                                      <FileText className="h-4 w-4" aria-hidden="true" />
+                                      {t.programa}
+                                      <span className="sr-only"> {t.nuevaVentana}</span>
+                                    </a>
+                                  ) : null}
+                                  {cronica ? (
+                                    <Link
+                                      href={cronica}
+                                      className="inline-flex items-center gap-1 text-diderot-violet hover:underline"
+                                    >
+                                      {t.leerCronica} →
+                                    </Link>
+                                  ) : null}
+                                </div>
                               ) : null}
                             </div>
                           </article>
