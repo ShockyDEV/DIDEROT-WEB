@@ -1,24 +1,30 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { readJsonBody, withErrorHandling } from "@/lib/admin-http";
 import { slugify } from "@/lib/slugify";
 import { newsInputSchema } from "@/lib/admin-schemas";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { translateNewsFields } from "@/lib/translate";
 
+/** Cuerpo máximo de una noticia (HTML de TipTap con imágenes enlazadas). */
+const NEWS_BODY_LIMIT = 1024 * 1024;
+
 /** Garantiza un slug único añadiendo -2, -3… si ya existe. */
-async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
-  const slug = slugify(base) || "noticia";
+async function uniqueSlug(base: string): Promise<string> {
+  const slug = slugify(base).slice(0, 200) || "noticia";
   let candidate = slug;
   for (let i = 2; ; i++) {
     const existing = await prisma.news.findUnique({
       where: { slug: candidate },
+      select: { id: true },
     });
-    if (!existing || existing.id === excludeId) return candidate;
+    if (!existing) return candidate;
     candidate = `${slug}-${i}`;
   }
 }
 
-export async function GET() {
+export const GET = withErrorHandling("news:list", async () => {
   const guard = await requireAdmin();
   if (guard.response) return guard.response;
 
@@ -30,34 +36,28 @@ export async function GET() {
       slug: true,
       category: true,
       status: true,
-      internal: true,
       publishedAt: true,
     },
   });
   return NextResponse.json({ items });
-}
+});
 
-export async function POST(request: Request) {
-  const guard = await requireAdmin();
+export const POST = withErrorHandling("news:create", async (request: Request) => {
+  const guard = await requireAdmin({ request });
   if (guard.response) return guard.response;
 
-  const body = await request.json().catch(() => null);
-  const parsed = newsInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.errors[0]?.message ?? "Datos no válidos" },
-      { status: 400 },
-    );
-  }
+  const body = await readJsonBody(request, newsInputSchema, NEWS_BODY_LIMIT);
+  if (body.response) return body.response;
 
-  const data = parsed.data;
+  const data = body.data;
+  const content = sanitizeHtml(data.content);
   const slug = await uniqueSlug(data.slug || data.title);
 
   // Auto-traducción EN (patrón mupes); vacío si no hay DEEPL_API_KEY.
   const translated = await translateNewsFields({
     title: data.title,
     excerpt: data.excerpt,
-    content: data.content,
+    content,
   });
 
   const created = await prisma.news.create({
@@ -65,14 +65,13 @@ export async function POST(request: Request) {
       title: data.title,
       slug,
       excerpt: data.excerpt ?? null,
-      content: data.content,
+      content,
       coverImage: data.coverImage ?? null,
       category: data.category,
       status: data.status,
-      internal: data.internal,
       publishedAt: data.publishedAt ? new Date(data.publishedAt) : null,
       ...translated,
     },
   });
   return NextResponse.json({ item: created }, { status: 201 });
-}
+});

@@ -9,8 +9,8 @@ export function generateMetadata(): Metadata {
   return {
     title: en ? "Legal notice" : "Aviso legal",
     description: en
-      ? "Legal notice for the IUCE website, University of Salamanca."
-      : "Aviso legal del sitio web del IUCE, Universidad de Salamanca.",
+      ? "Legal notice for the website of DIDEROT, a Recognised Research Group of the University of Salamanca."
+      : "Aviso legal del sitio web de DIDEROT, Grupo de Investigación Reconocido de la Universidad de Salamanca.",
     robots: { index: false },
   };
 }
@@ -18,7 +18,7 @@ export function generateMetadata(): Metadata {
 export const dynamic = "force-dynamic";
 
 // Textos fijos en ambos idiomas (el contenido largo llega ya traducido
-// desde el servicio de bloques).
+// desde el servicio de bloques: Contenido → Páginas → Páginas legales).
 const T = {
   es: { inicio: "Inicio", titulo: "Aviso legal" },
   en: { inicio: "Home", titulo: "Legal notice" },
@@ -41,7 +41,7 @@ export default async function AvisoLegalPage() {
             ]}
           />
         </div>
-        <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-ink">
+        <h1 className="mb-6 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
           {t.titulo}
         </h1>
         <div

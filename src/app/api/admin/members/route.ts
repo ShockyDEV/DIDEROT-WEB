@@ -1,47 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { readJsonBody, withErrorHandling } from "@/lib/admin-http";
 import { memberInputSchema } from "@/lib/admin-schemas";
+import { memberData } from "@/lib/admin-mappers";
 
-export async function GET() {
+export const GET = withErrorHandling("members:list", async () => {
   const guard = await requireAdmin();
   if (guard.response) return guard.response;
 
   const items = await prisma.member.findMany({
-    orderBy: [{ order: "asc" }, { name: "asc" }],
-    include: { group: { select: { acronym: true } } },
+    orderBy: [{ category: "asc" }, { order: "asc" }, { name: "asc" }],
   });
   return NextResponse.json({ items });
-}
+});
 
-export async function POST(request: Request) {
-  const guard = await requireAdmin();
+export const POST = withErrorHandling("members:create", async (request: Request) => {
+  const guard = await requireAdmin({ request });
   if (guard.response) return guard.response;
 
-  const body = await request.json().catch(() => null);
-  const parsed = memberInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.errors[0]?.message ?? "Datos no válidos" },
-      { status: 400 },
-    );
-  }
-  const d = parsed.data;
+  const body = await readJsonBody(request, memberInputSchema, 64 * 1024);
+  if (body.response) return body.response;
+  const d = body.data;
+
   const created = await prisma.member.create({
     data: {
-      name: d.name,
-      area: d.area || null,
-      email: d.email || null,
-      extension: d.extension || null,
-      role: d.role || null,
-      photo: d.photo || null,
-      portalUrl: d.portalUrl || null,
-      orcid: d.orcid || null,
-      scopus: d.scopus || null,
+      ...(await memberData(d)),
       active: d.active ?? true,
       order: d.order ?? 0,
-      groupId: d.groupId || null,
     },
   });
   return NextResponse.json({ item: created }, { status: 201 });
-}
+});

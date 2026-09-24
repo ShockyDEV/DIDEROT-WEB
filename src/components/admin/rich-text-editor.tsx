@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/cn";
+import { ACCEPT_IMAGE_UPLOAD, type UploadFolder } from "@/lib/admin-options";
+import { errorMessage, uploadFile } from "@/components/admin/admin-fetch";
 
 interface RichTextEditorProps {
   /** HTML inicial. */
@@ -33,6 +35,23 @@ interface RichTextEditorProps {
   /** Notifica el HTML actualizado en cada cambio. */
   onChange: (html: string) => void;
   minHeight?: number;
+  /** Carpeta de Archivos donde se suben las imágenes insertadas. */
+  uploadFolder?: UploadFolder;
+}
+
+/**
+ * ¿Destino de enlace aceptable? http(s), mailto:, tel:, rutas propias y
+ * anclas. Nada de «javascript:» (el servidor lo quitaría igualmente).
+ */
+function isAllowedHref(url: string) {
+  if (/^(\/(?!\/)|#|\?)\S*$/.test(url)) return true;
+  if (/^(mailto|tel):\S+$/i.test(url)) return true;
+  try {
+    const u = new URL(url);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function ToolbarButton({
@@ -70,16 +89,24 @@ function Divider() {
   return <span className="mx-1.5 h-5 w-px bg-gray-200" aria-hidden="true" />;
 }
 
-function Toolbar({ editor }: Readonly<{ editor: Editor }>) {
+function Toolbar({
+  editor,
+  uploadFolder,
+}: Readonly<{ editor: Editor; uploadFolder: UploadFolder }>) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   function setLink() {
     const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("URL del enlace:", previous ?? "https://");
-    if (url === null) return;
+    const input = window.prompt("URL del enlace (vacío para quitarlo):", previous ?? "https://");
+    if (input === null) return;
+    const url = input.trim();
     if (url === "") {
       editor.chain().focus().unsetLink().run();
+      return;
+    }
+    if (!isAllowedHref(url)) {
+      toast.error("Enlace no válido: usa https://…, /ruta, mailto: o tel:");
       return;
     }
     editor.chain().focus().setLink({ href: url }).run();
@@ -87,25 +114,16 @@ function Toolbar({ editor }: Readonly<{ editor: Editor }>) {
 
   /**
    * Botón de imagen: abre el selector de archivos, sube a Archivos
-   * (/api/admin/files) e inserta la imagen en el punto del cursor.
+   * (/api/admin/files, solo imágenes) e inserta la imagen en el cursor.
    */
   async function uploadAndInsert(file: File) {
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/admin/files", {
-        method: "POST",
-        body: form,
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo subir la imagen");
-      editor.chain().focus().setImage({ src: json.item.url }).run();
+      const item = await uploadFile(file, { only: "image", folder: uploadFolder });
+      editor.chain().focus().setImage({ src: item.url }).run();
       toast.success("Imagen subida e insertada");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "No se pudo subir la imagen",
-      );
+      toast.error(errorMessage(err, "No se pudo subir la imagen"));
     } finally {
       setUploading(false);
     }
@@ -259,8 +277,9 @@ function Toolbar({ editor }: Readonly<{ editor: Editor }>) {
       <input
         ref={fileRef}
         type="file"
-        accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
+        accept={ACCEPT_IMAGE_UPLOAD}
         className="hidden"
+        tabIndex={-1}
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) uploadAndInsert(f);
@@ -292,6 +311,7 @@ export function RichTextEditor({
   value,
   onChange,
   minHeight = 260,
+  uploadFolder = "news",
 }: Readonly<RichTextEditorProps>) {
   const editor = useEditor({
     extensions: [
@@ -328,7 +348,7 @@ export function RichTextEditor({
 
   return (
     <div>
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} uploadFolder={uploadFolder} />
       <div className="border border-t-0 border-gray-300 bg-white px-[18px] py-4 text-[14.5px] leading-[1.65] text-gray-700">
         <EditorContent editor={editor} />
       </div>

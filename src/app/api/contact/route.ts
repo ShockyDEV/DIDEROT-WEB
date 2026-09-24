@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
-import { contactSchema } from "@/lib/validations";
+import { contactSchema, HONEYPOT_FIELD } from "@/lib/validations";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { SITE } from "@/lib/site";
 import {
   contactAutoReplyEmail,
   contactNotifyEmail,
@@ -10,13 +11,16 @@ import {
 } from "@/lib/email";
 
 /**
- * Formulario de contacto: valida, registra el mensaje en la BD (bandeja del
- * admin) y lo envía por email a la Secretaría vía Resend, con autorespuesta
- * al remitente. El envío de email es tolerante a fallos: si Resend no está
- * configurado (desarrollo), el mensaje queda registrado igualmente.
+ * Formulario de contacto: valida, registra el mensaje en la BD (bandeja
+ * Mensajes del panel) y lo envía por email al grupo vía Resend, con
+ * autorespuesta al remitente en su idioma. El envío de email es tolerante a
+ * fallos: si Resend no está configurado (desarrollo), el mensaje queda
+ * registrado igualmente y la persona ve el envío como correcto.
+ *
+ * Defensas anti-spam: límite de 5 mensajes por IP cada 15 minutos y un campo
+ * trampa (honeypot) invisible que solo rellenan los robots.
  */
 export async function POST(request: Request) {
-  // Anti-spam: 5 mensajes por IP cada 15 minutos.
   if (!rateLimit(`contact:${clientIp(request)}`, 5, 15 * 60_000)) {
     return NextResponse.json(
       { error: "Demasiados mensajes seguidos. Espera unos minutos." },
@@ -34,6 +38,16 @@ export async function POST(request: Request) {
     );
   }
 
+  // Honeypot relleno → robot. Se responde como si todo hubiera ido bien (no
+  // le damos pistas), pero no se guarda ni se envía nada.
+  if (
+    body &&
+    typeof body === "object" &&
+    String((body as Record<string, unknown>)[HONEYPOT_FIELD] ?? "").trim() !== ""
+  ) {
+    return NextResponse.json({ ok: true });
+  }
+
   const parsed = contactSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -42,7 +56,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, email, subject, message } = parsed.data;
+  const { name, email, subject, message, locale } = parsed.data;
 
   // 1) Registro en la bandeja del panel de administración
   try {
@@ -57,17 +71,23 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2) Email a Secretaría + autorespuesta (si Resend está configurado)
+  // 2) Email al grupo + autorespuesta (si Resend está configurado)
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey && !apiKey.includes("placeholder")) {
     try {
       const resend = new Resend(apiKey);
-      const from = process.env.EMAIL_FROM ?? "IUCE <onboarding@resend.dev>";
-      const to = process.env.CONTACT_TO ?? "iuce@usal.es";
+      const from = process.env.EMAIL_FROM ?? "DIDEROT <onboarding@resend.dev>";
+      const to = process.env.CONTACT_TO || SITE.email;
 
       // El SDK de Resend devuelve los errores de API en `error` (no lanza):
       // los registramos para saber si el envío llegó de verdad a salir.
-      const notifyMail = contactNotifyEmail({ name, email, subject, message });
+      const notifyMail = contactNotifyEmail({
+        name,
+        email,
+        subject,
+        message,
+        locale,
+      });
       const notify = await resend.emails.send({
         from,
         to,
@@ -78,12 +98,12 @@ export async function POST(request: Request) {
         attachments: emailAttachments(),
       });
       if (notify.error) {
-        console.error("[contact] Resend rechazó el aviso a Secretaría:", notify.error);
+        console.error("[contact] Resend rechazó el aviso al grupo:", notify.error);
       } else {
-        console.log(`[contact] Aviso a Secretaría enviado (id ${notify.data?.id})`);
+        console.log(`[contact] Aviso al grupo enviado (id ${notify.data?.id})`);
       }
 
-      const autoMail = contactAutoReplyEmail({ name, subject, message });
+      const autoMail = contactAutoReplyEmail({ name, subject, message, locale });
       const auto = await resend.emails.send({
         from,
         to: email,

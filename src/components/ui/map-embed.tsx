@@ -12,7 +12,9 @@ interface MapEmbedProps {
 
 /**
  * Mapa de Google embebido (sin clave de API: usa el modo output=embed).
- * Señala la sede del IUCE en el Edificio Solís / Facultad de Educación.
+ * Señala la sede del grupo: el IUCE, en el Edificio Solís (Paseo de
+ * Canalejas, 169). En Contacto se carga bajo demanda (MapConsent), para no
+ * pedir nada a Google hasta que la persona lo solicita.
  */
 export function MapEmbed({
   query = DEFAULT_QUERY,

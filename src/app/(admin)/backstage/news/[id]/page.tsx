@@ -1,16 +1,16 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import {
-  NewsEditor,
-  type NewsFormValues,
-} from "@/components/admin/news-editor";
+import { parseId } from "@/lib/admin-http";
+import { NewsEditor, type NewsFormValues } from "@/components/admin/news-editor";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminNewsEditPage({
   params,
 }: Readonly<{ params: { id: string } }>) {
-  const item = await prisma.news.findUnique({ where: { id: params.id } });
+  const id = parseId(params.id);
+  if (!id) notFound();
+  const item = await prisma.news.findUnique({ where: { id } });
   if (!item) notFound();
 
   const initial: NewsFormValues = {
@@ -22,10 +22,7 @@ export default async function AdminNewsEditPage({
     coverImage: item.coverImage ?? "",
     category: item.category,
     status: item.status,
-    internal: item.internal,
-    publishedAt: item.publishedAt
-      ? item.publishedAt.toISOString().slice(0, 10)
-      : "",
+    publishedAt: item.publishedAt ? item.publishedAt.toISOString().slice(0, 10) : "",
   };
 
   return <NewsEditor initial={initial} />;

@@ -9,7 +9,7 @@ import { pick, type Locale } from "@/lib/locale";
 /**
  * Correo con «copiar al portapapeles» (en vez de abrir el cliente de correo).
  * Al pulsar copia la dirección, cambia el icono a un check y muestra un aviso
- * abajo a la derecha. Pensado para contactar rápido con miembros del IUCE.
+ * abajo a la derecha. Pensado para contactar rápido con miembros del grupo.
  */
 export function CopyEmail({
   email,

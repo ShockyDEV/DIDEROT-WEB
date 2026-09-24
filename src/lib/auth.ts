@@ -7,9 +7,19 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { authConfig } from "@/auth.config";
 
 const credentialsSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(1),
+  email: z.string().trim().toLowerCase().email().max(200),
+  password: z.string().min(1).max(256),
 });
+
+/**
+ * Hash de relleno (de una contraseña aleatoria que no se guarda): si el
+ * correo no existe se compara igualmente contra él, para que el tiempo de
+ * respuesta no delate qué correos tienen cuenta en el panel.
+ */
+const DUMMY_HASH = "$2a$12$kSt7NgcKEZ1o88dIyTONM.It1icEPzsbTZz4lWBYZi8EJVDU.ZTkC";
+
+/** Coste de bcrypt vigente: los hashes más débiles se renuevan al entrar. */
+const BCRYPT_COST = 12;
 
 /**
  * NextAuth v5 con provider Credentials (email + contraseña).
@@ -43,10 +53,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return null;
+        const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+        if (!user || !valid) return null;
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        // Cuentas creadas con un coste menor (p. ej. por la semilla): se
+        // aprovecha que ahora se conoce la contraseña para reforzar el hash.
+        if (bcrypt.getRounds(user.passwordHash) < BCRYPT_COST) {
+          await prisma.user
+            .update({
+              where: { id: user.id },
+              data: { passwordHash: await bcrypt.hash(password, BCRYPT_COST) },
+            })
+            .catch(() => undefined);
+        }
 
         return {
           id: user.id,

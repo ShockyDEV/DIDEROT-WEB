@@ -1,37 +1,47 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Search, Trash2, Upload } from "lucide-react";
+import { ExternalLink, Loader2, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/admin/modal";
+import {
+  CheckboxField,
+  Field,
+  IconButton,
+  inputClass,
+  textareaClass,
+} from "@/components/admin/form-fields";
+import { AdminApiError, errorMessage, sendJson } from "@/components/admin/admin-fetch";
+import {
+  ACCEPT_IMAGE_UPLOAD,
+  MEMBER_CATEGORIES,
+  memberCategoryLabel,
+  type MemberCategoryValue,
+} from "@/lib/admin-options";
+import { parseOrcidId } from "@/lib/orcid-import";
 import { cn } from "@/lib/cn";
-
-const inputClass =
-  "h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25";
-const labelClass = "text-[13px] font-medium text-gray-700";
 
 export interface MemberRow {
   id: string;
   name: string;
-  area: string | null;
-  email: string | null;
-  extension: string | null;
+  category: MemberCategoryValue;
   role: string | null;
+  roleEn: string | null;
+  affiliation: string | null;
+  area: string | null;
+  bio: string | null;
+  bioEn: string | null;
+  email: string | null;
   photo: string | null;
   portalUrl: string | null;
   orcid: string | null;
   scopus: string | null;
+  scholar: string | null;
+  website: string | null;
   active: boolean;
   order: number;
-  groupId: string | null;
-  groupAcronym: string | null;
-}
-
-export interface GroupOption {
-  id: string;
-  acronym: string;
 }
 
 function initialsOf(name: string) {
@@ -39,51 +49,105 @@ function initialsOf(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
-interface FormState {
+type FormState = {
   id?: string;
-  name: string;
-  area: string;
-  email: string;
-  extension: string;
-  role: string;
-  photo: string;
-  portalUrl: string;
-  orcid: string;
-  scopus: string;
-  order: number;
-  groupId: string;
-  active: boolean;
+  order: string;
+} & {
+  [K in Exclude<keyof MemberRow, "id" | "order" | "active" | "category">]: string;
+} & { active: boolean; category: MemberCategoryValue };
+
+function emptyForm(category: MemberCategoryValue = "RESEARCHER"): FormState {
+  return {
+    name: "",
+    category,
+    role: "",
+    roleEn: "",
+    affiliation: "",
+    area: "",
+    bio: "",
+    bioEn: "",
+    email: "",
+    photo: "",
+    portalUrl: "",
+    orcid: "",
+    scopus: "",
+    scholar: "",
+    website: "",
+    active: true,
+    order: "0",
+  };
 }
 
-const EMPTY: FormState = {
-  name: "",
-  area: "",
-  email: "",
-  extension: "",
-  role: "",
-  photo: "",
-  portalUrl: "",
-  orcid: "",
-  scopus: "",
-  order: 0,
-  groupId: "",
-  active: true,
-};
+function toForm(row: MemberRow): FormState {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    role: row.role ?? "",
+    roleEn: row.roleEn ?? "",
+    affiliation: row.affiliation ?? "",
+    area: row.area ?? "",
+    bio: row.bio ?? "",
+    bioEn: row.bioEn ?? "",
+    email: row.email ?? "",
+    photo: row.photo ?? "",
+    portalUrl: row.portalUrl ?? "",
+    orcid: row.orcid ?? "",
+    scopus: row.scopus ?? "",
+    scholar: row.scholar ?? "",
+    website: row.website ?? "",
+    active: row.active,
+    order: String(row.order),
+  };
+}
 
-export function MembersSection({
-  rows,
-  groups,
-}: Readonly<{ rows: MemberRow[]; groups: GroupOption[] }>) {
+/**
+ * Equipo del grupo (página «El grupo» → Equipo): fichas agrupadas por
+ * categoría, con foto (recortada a 512×512 en el servidor), perfiles
+ * académicos y semblanza. El ORCID de la ficha es el que se usa para
+ * importar publicaciones.
+ */
+export function MembersSection({ rows }: Readonly<{ rows: MemberRow[] }>) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<"" | MemberCategoryValue>("");
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [gallery, setGallery] = useState<{ url: string; name: string }[] | null>(
-    null,
-  );
+  const [gallery, setGallery] = useState<{ url: string; name: string }[] | null>(null);
   const [galleryLoading, setGalleryLoading] = useState(false);
+  const photoInput = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = query
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "");
+    return rows.filter((r) => {
+      if (category && r.category !== category) return false;
+      if (!q) return true;
+      return [r.name, r.role, r.affiliation, r.area, r.email]
+        .filter(Boolean)
+        .some((v) =>
+          String(v)
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[̀-ͯ]/g, "")
+            .includes(q),
+        );
+    });
+  }, [rows, query, category]);
+
+  const groups = useMemo(
+    () =>
+      MEMBER_CATEGORIES.filter((c) => !category || c.value === category).map((c) => ({
+        ...c,
+        members: filtered.filter((r) => r.category === c.value),
+      })),
+    [filtered, category],
+  );
 
   async function toggleGallery() {
     const next = !galleryOpen;
@@ -93,7 +157,7 @@ export function MembersSection({
       try {
         const res = await fetch("/api/admin/members/photos");
         const json = await res.json().catch(() => ({}));
-        setGallery(json.images ?? []);
+        setGallery(Array.isArray(json.images) ? json.images : []);
       } catch {
         setGallery([]);
       } finally {
@@ -107,53 +171,19 @@ export function MembersSection({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/admin/members/photo", {
-        method: "POST",
-        body: fd,
-      });
+      const res = await fetch("/api/admin/members/photo", { method: "POST", body: fd });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo subir la foto");
+      if (!res.ok) {
+        throw new AdminApiError(json.error ?? "No se pudo subir la foto", res.status, json);
+      }
       setForm((f) => (f ? { ...f, photo: json.photo } : f));
       setGallery(null); // que la galería incluya la recién subida al reabrir
       toast.success("Foto subida");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo subir la foto");
+      toast.error(errorMessage(err, "No se pudo subir la foto"));
     } finally {
       setUploading(false);
     }
-  }
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        (r.area ?? "").toLowerCase().includes(q),
-    );
-  }, [rows, query]);
-
-  // El equipo (quienes tienen cargo: dirección y administración) se gestiona
-  // separado del resto de miembros.
-  const equipo = useMemo(() => filtered.filter((r) => r.role), [filtered]);
-  const miembros = useMemo(() => filtered.filter((r) => !r.role), [filtered]);
-
-  function openEdit(row: MemberRow) {
-    setForm({
-      id: row.id,
-      name: row.name,
-      area: row.area ?? "",
-      email: row.email ?? "",
-      extension: row.extension ?? "",
-      role: row.role ?? "",
-      photo: row.photo ?? "",
-      portalUrl: row.portalUrl ?? "",
-      orcid: row.orcid ?? "",
-      scopus: row.scopus ?? "",
-      order: row.order,
-      groupId: row.groupId ?? "",
-      active: row.active,
-    });
   }
 
   async function handleSave() {
@@ -162,99 +192,97 @@ export function MembersSection({
       toast.error("El nombre es obligatorio");
       return;
     }
+    if (form.orcid.trim() && !parseOrcidId(form.orcid)) {
+      toast.error("El ORCID no es válido (formato 0000-0000-0000-0000)");
+      return;
+    }
+    const order = Number(form.order || 0);
+    if (!Number.isInteger(order) || order < 0) {
+      toast.error("El orden debe ser un número entero positivo");
+      return;
+    }
     setSaving(true);
     try {
-      const payload = {
-        name: form.name,
-        area: form.area || null,
-        email: form.email || null,
-        extension: form.extension || null,
-        role: form.role || null,
-        photo: form.photo || null,
-        portalUrl: form.portalUrl || "",
-        orcid: form.orcid || "",
-        scopus: form.scopus || "",
-        order: form.order,
-        groupId: form.groupId || null,
-        active: form.active,
-      };
-      const res = await fetch(
-        form.id ? `/api/admin/members/${form.id}` : "/api/admin/members",
-        {
-          method: form.id ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo guardar");
-      toast.success("Guardado");
+      const { id, ...rest } = form;
+      const payload = { ...rest, order };
+      if (id) await sendJson(`/api/admin/members/${id}`, "PUT", payload);
+      else await sendJson("/api/admin/members", "POST", payload);
+      toast.success("Ficha guardada");
       setForm(null);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar");
+      toast.error(errorMessage(err, "No se pudo guardar"));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(row: MemberRow) {
-    if (!window.confirm(`¿Eliminar a «${row.name}»?`)) return;
-    const res = await fetch(`/api/admin/members/${row.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      toast.error("No se pudo eliminar");
-      return;
+    if (!window.confirm(`¿Eliminar la ficha de «${row.name}»?`)) return;
+    try {
+      await sendJson(`/api/admin/members/${row.id}`, "DELETE");
+      toast.success("Ficha eliminada");
+      router.refresh();
+    } catch (err) {
+      toast.error(errorMessage(err, "No se pudo eliminar"));
     }
-    toast.success("Miembro eliminado");
-    router.refresh();
   }
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((f) => (f ? { ...f, [key]: value } : f));
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex h-10 w-[300px] items-center gap-2 rounded-md border border-gray-300 bg-white px-3">
-          <Search className="h-[15px] w-[15px] text-gray-500" aria-hidden="true" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nombre o área…"
-            className="min-w-0 flex-1 border-none bg-transparent text-sm text-gray-900 outline-none"
-          />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-[300px]">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre, cargo, afiliación…"
+              aria-label="Buscar en el equipo"
+              className={cn(inputClass, "pl-9")}
+            />
+          </div>
+          <select
+            aria-label="Filtrar por categoría"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as "" | MemberCategoryValue)}
+            className={cn(inputClass, "w-auto")}
+          >
+            <option value="">Todas las categorías</option>
+            {MEMBER_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.heading}
+              </option>
+            ))}
+          </select>
         </div>
-        <Button variant="primary" onClick={() => setForm(EMPTY)}>
-          + Nuevo miembro
+        <Button
+          variant="primary"
+          className="gap-1.5"
+          onClick={() => setForm(emptyForm(category || "RESEARCHER"))}
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Nuevo miembro
         </Button>
       </div>
 
-      {[
-        {
-          titulo: "Equipo de dirección y administración",
-          descripcion:
-            "Miembros con cargo (Directora, Subdirector, Secretaría, personal técnico…). El cargo se asigna al editar la ficha.",
-          subset: equipo,
-          vacio: "Nadie con cargo asignado.",
-        },
-        {
-          titulo: "Miembros",
-          descripcion: null,
-          subset: miembros,
-          vacio: "Sin resultados.",
-        },
-      ].map(({ titulo, descripcion, subset, vacio }) => (
+      {groups.map((group) => (
         <div
-          key={titulo}
+          key={group.value}
           className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         >
-          <div className="p-6">
+          <div className="flex items-baseline justify-between p-6">
             <h3 className="text-base font-semibold text-gray-900">
-              {titulo} ({subset.length})
+              {group.heading} ({group.members.length})
             </h3>
-            {descripcion ? (
-              <p className="mt-1 text-[13px] text-gray-500">{descripcion}</p>
-            ) : null}
+            <p className="text-xs text-gray-500">Ordenados por el campo «Orden»</p>
           </div>
           <table className="w-full border-collapse">
             <thead>
@@ -263,21 +291,21 @@ export function MembersSection({
                   Nombre
                 </th>
                 <th scope="col" className="px-4 py-3 text-left text-[13px] font-medium text-gray-500">
-                  Cargo / Área
+                  Cargo · Afiliación
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-[13px] font-medium text-gray-500">
-                  Email
+                <th scope="col" className="hidden px-4 py-3 text-left text-[13px] font-medium text-gray-500 lg:table-cell">
+                  Perfiles
                 </th>
                 <th scope="col" className="px-4 py-3 text-left text-[13px] font-medium text-gray-500">
                   Estado
                 </th>
-                <th scope="col" className="w-[150px] px-6 py-3 text-left text-[13px] font-medium text-gray-500">
+                <th scope="col" className="w-[96px] px-6 py-3 text-left text-[13px] font-medium text-gray-500">
                   Acciones
                 </th>
               </tr>
             </thead>
             <tbody>
-              {subset.map((row) => (
+              {group.members.map((row) => (
                 <tr key={row.id} className="border-t border-gray-100">
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-3">
@@ -296,55 +324,70 @@ export function MembersSection({
                           {initialsOf(row.name)}
                         </span>
                       )}
-                      <span className="text-sm font-medium text-gray-900">
-                        {row.name}
-                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{row.name}</p>
+                        {row.email ? <p className="text-xs text-gray-500">{row.email}</p> : null}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-gray-600">
-                    {[row.role, row.area].filter(Boolean).join(" · ") || "—"}
+                  <td className="max-w-[320px] px-4 py-3 text-[13px] text-gray-600">
+                    {[row.role, row.affiliation].filter(Boolean).join(" · ") || "—"}
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-gray-500">
-                    {row.email ?? "—"}
+                  <td className="hidden px-4 py-3 text-xs lg:table-cell">
+                    <div className="flex flex-wrap gap-x-2 gap-y-1">
+                      {(
+                        [
+                          ["ORCID", row.orcid],
+                          ["Portal", row.portalUrl],
+                          ["Scopus", row.scopus],
+                          ["Scholar", row.scholar],
+                          ["Web", row.website],
+                        ] as const
+                      )
+                        .filter(([, url]) => url)
+                        .map(([label, url]) => (
+                          <a
+                            key={label}
+                            href={url as string}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 text-diderot-violet hover:underline"
+                          >
+                            {label}
+                            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                          </a>
+                        ))}
+                      {!row.orcid && !row.portalUrl && !row.scopus && !row.scholar && !row.website ? (
+                        <span className="text-gray-400">—</span>
+                      ) : null}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span
                       className={cn(
                         "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        row.active
-                          ? "bg-[#DCFCE7] text-[#15803D]"
-                          : "bg-gray-100 text-gray-700",
+                        row.active ? "bg-[#DCFCE7] text-[#15803D]" : "bg-gray-100 text-gray-700",
                       )}
                     >
-                      {row.active ? "Activo" : "Inactivo"}
+                      {row.active ? "Visible" : "Oculto"}
                     </span>
                   </td>
                   <td className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(row)}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                      >
-                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Eliminar a ${row.name}`}
-                        onClick={() => handleDelete(row)}
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50"
-                      >
+                    <div className="flex gap-1">
+                      <IconButton label={`Editar a ${row.name}`} onClick={() => setForm(toForm(row))}>
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                      </IconButton>
+                      <IconButton label={`Eliminar a ${row.name}`} danger onClick={() => handleDelete(row)}>
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      </button>
+                      </IconButton>
                     </div>
                   </td>
                 </tr>
               ))}
-              {subset.length === 0 ? (
+              {group.members.length === 0 ? (
                 <tr className="border-t border-gray-100">
                   <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
-                    {vacio}
+                    {query ? "Sin resultados en esta categoría." : "Nadie en esta categoría todavía."}
                   </td>
                 </tr>
               ) : null}
@@ -355,80 +398,105 @@ export function MembersSection({
 
       {form ? (
         <Modal
-          title={form.id ? "Editar miembro" : "Nuevo miembro"}
+          title={form.id ? `Editar ficha — ${memberCategoryLabel(form.category)}` : "Nuevo miembro"}
           onClose={() => setForm(null)}
+          size="lg"
         >
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="m-name" className={labelClass}>
-                Nombre y apellidos
-              </label>
-              <input
-                id="m-name"
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className={inputClass}
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field id="m-name" label="Nombre y apellidos *" className="sm:col-span-2">
+                <input
+                  id="m-name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field id="m-order" label="Orden" hint="Menor = antes">
+                <input
+                  id="m-order"
+                  type="number"
+                  min={0}
+                  value={form.order}
+                  onChange={(e) => set("order", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="m-role" className={labelClass}>
-                  Cargo (opcional)
-                </label>
+            <Field id="m-category" label="Categoría *">
+              <select
+                id="m-category"
+                value={form.category}
+                onChange={(e) => set("category", e.target.value as MemberCategoryValue)}
+                className={inputClass}
+              >
+                {MEMBER_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="m-role" label="Cargo (opcional)" hint="p. ej. «Coordinador del grupo»">
                 <input
                   id="m-role"
                   type="text"
                   value={form.role}
-                  placeholder="Directora, Subdirector…"
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  onChange={(e) => set("role", e.target.value)}
                   className={inputClass}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="m-email" className={labelClass}>
-                  Email
-                </label>
+              </Field>
+              <Field id="m-role-en" label="Cargo en inglés" hint="Vacío = traducción automática al guardar">
                 <input
-                  id="m-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="m-ext" className={labelClass}>
-                  Extensión telefónica (opcional)
-                </label>
-                <input
-                  id="m-ext"
+                  id="m-role-en"
                   type="text"
-                  value={form.extension}
-                  placeholder="p. ej. 4634"
-                  onChange={(e) =>
-                    setForm({ ...form, extension: e.target.value })
-                  }
+                  value={form.roleEn}
+                  onChange={(e) => set("roleEn", e.target.value)}
                   className={inputClass}
                 />
-              </div>
+              </Field>
+              <Field id="m-affiliation" label="Institución / afiliación" hint="p. ej. «Universidad de Salamanca»">
+                <input
+                  id="m-affiliation"
+                  type="text"
+                  value={form.affiliation}
+                  onChange={(e) => set("affiliation", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field id="m-area" label="Departamento o área">
+                <input
+                  id="m-area"
+                  type="text"
+                  value={form.area}
+                  onChange={(e) => set("area", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="m-area" className={labelClass}>
-                Área
-              </label>
-              <input
-                id="m-area"
-                type="text"
-                value={form.area}
-                onChange={(e) => setForm({ ...form, area: e.target.value })}
-                className={inputClass}
+            <Field id="m-bio" label="Semblanza breve (texto)">
+              <textarea
+                id="m-bio"
+                rows={3}
+                value={form.bio}
+                onChange={(e) => set("bio", e.target.value)}
+                className={textareaClass}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={labelClass}>Foto</label>
+            </Field>
+            <Field id="m-bio-en" label="Semblanza en inglés" hint="Vacía = traducción automática al guardar">
+              <textarea
+                id="m-bio-en"
+                rows={3}
+                value={form.bioEn}
+                onChange={(e) => set("bioEn", e.target.value)}
+                className={textareaClass}
+              />
+            </Field>
+
+            {/* Foto */}
+            <Field id="m-photo" label="Foto">
               <div className="flex items-center gap-3">
                 {form.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -446,43 +514,42 @@ export function MembersSection({
                   </span>
                 )}
                 <div className="flex flex-col items-start gap-1.5">
-                  <label
-                    className={cn(
-                      "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50",
-                      uploading && "pointer-events-none opacity-60",
-                    )}
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => photoInput.current?.click()}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
                   >
-                    <Upload className="h-4 w-4" aria-hidden="true" />
-                    {uploading
-                      ? "Subiendo…"
-                      : form.photo
-                        ? "Cambiar foto"
-                        : "Subir foto"}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      disabled={uploading}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handlePhotoUpload(f);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Upload className="h-4 w-4" aria-hidden="true" />
+                    )}
+                    {uploading ? "Subiendo…" : form.photo ? "Cambiar foto" : "Subir foto"}
+                  </button>
+                  <input
+                    ref={photoInput}
+                    type="file"
+                    accept={ACCEPT_IMAGE_UPLOAD}
+                    className="hidden"
+                    tabIndex={-1}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void handlePhotoUpload(f);
+                      e.target.value = "";
+                    }}
+                  />
                   <button
                     type="button"
                     onClick={toggleGallery}
                     className="text-left text-xs font-medium text-diderot-violet hover:underline"
                   >
-                    {galleryOpen
-                      ? "Ocultar imágenes subidas"
-                      : "Elegir de las imágenes ya subidas"}
+                    {galleryOpen ? "Ocultar fotos subidas" : "Elegir entre las fotos ya subidas"}
                   </button>
                   {form.photo ? (
                     <button
                       type="button"
-                      onClick={() => setForm({ ...form, photo: "" })}
+                      onClick={() => set("photo", "")}
                       className="text-left text-xs text-red-600 hover:underline"
                     >
                       Quitar foto
@@ -494,9 +561,7 @@ export function MembersSection({
               {galleryOpen ? (
                 <div className="max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-2">
                   {galleryLoading ? (
-                    <p className="p-3 text-center text-xs text-gray-500">
-                      Cargando imágenes…
-                    </p>
+                    <p className="p-3 text-center text-xs text-gray-500">Cargando fotos…</p>
                   ) : gallery && gallery.length > 0 ? (
                     <div className="grid grid-cols-6 gap-2">
                       {gallery.map((img) => (
@@ -505,7 +570,7 @@ export function MembersSection({
                           type="button"
                           title={img.name}
                           onClick={() => {
-                            setForm({ ...form, photo: img.url });
+                            set("photo", img.url);
                             setGalleryOpen(false);
                           }}
                           className={cn(
@@ -516,18 +581,13 @@ export function MembersSection({
                           )}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={img.url}
-                            alt=""
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                          />
+                          <img src={img.url} alt="" loading="lazy" className="h-full w-full object-cover" />
                         </button>
                       ))}
                     </div>
                   ) : (
                     <p className="p-3 text-center text-xs text-gray-500">
-                      No hay imágenes subidas todavía.
+                      No hay fotos subidas todavía.
                     </p>
                   )}
                 </div>
@@ -537,108 +597,101 @@ export function MembersSection({
                 id="m-photo"
                 type="text"
                 value={form.photo}
-                placeholder="…o pega una URL (/uploads/…)"
-                onChange={(e) => setForm({ ...form, photo: e.target.value })}
-                className={inputClass}
+                placeholder="…o pega una dirección (/uploads/… o https://…)"
+                onChange={(e) => set("photo", e.target.value)}
+                className={cn(inputClass, "text-[13px] text-gray-600")}
               />
               <p className="text-xs text-gray-500">
-                Sube una imagen (se recorta a 512×512), elige una ya subida o
-                pega una URL.
+                JPG, PNG, WebP o GIF; se recorta a 512×512 y se eliminan los datos de
+                ubicación de la foto.
               </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="m-portal" className={labelClass}>
-                Perfil en el Portal de Investigación (URL)
-              </label>
-              <input
-                id="m-portal"
-                type="url"
-                value={form.portalUrl}
-                placeholder="https://produccioncientifica.usal.es/investigadores/…"
-                onChange={(e) =>
-                  setForm({ ...form, portalUrl: e.target.value })
-                }
-                className={inputClass}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="m-orcid" className={labelClass}>
-                  ORCID (URL)
-                </label>
+            </Field>
+
+            {/* Contacto y perfiles */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="m-email" label="Correo electrónico">
                 <input
-                  id="m-orcid"
-                  type="url"
-                  value={form.orcid}
-                  placeholder="https://orcid.org/0000-0000-0000-0000"
-                  onChange={(e) => setForm({ ...form, orcid: e.target.value })}
+                  id="m-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => set("email", e.target.value)}
                   className={inputClass}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="m-scopus" className={labelClass}>
-                  Scopus (URL)
-                </label>
+              </Field>
+              <Field
+                id="m-orcid"
+                label="ORCID"
+                hint={
+                  form.orcid.trim() && !parseOrcidId(form.orcid) ? (
+                    <span className="text-red-600">ORCID no válido</span>
+                  ) : (
+                    "El iD o la URL; se usa para importar publicaciones."
+                  )
+                }
+              >
+                <input
+                  id="m-orcid"
+                  type="text"
+                  value={form.orcid}
+                  placeholder="0000-0000-0000-0000"
+                  onChange={(e) => set("orcid", e.target.value)}
+                  className={cn(inputClass, "font-mono text-[13px]")}
+                />
+              </Field>
+              <Field id="m-portal" label="Portal de Producción Científica (URL)">
+                <input
+                  id="m-portal"
+                  type="url"
+                  value={form.portalUrl}
+                  placeholder="https://produccioncientifica.usal.es/investigadores/…"
+                  onChange={(e) => set("portalUrl", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field id="m-scopus" label="Scopus (URL)">
                 <input
                   id="m-scopus"
                   type="url"
                   value={form.scopus}
                   placeholder="https://www.scopus.com/authid/detail.uri?authorId=…"
-                  onChange={(e) => setForm({ ...form, scopus: e.target.value })}
+                  onChange={(e) => set("scopus", e.target.value)}
                   className={inputClass}
                 />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="m-group" className={labelClass}>
-                  Grupo de investigación
-                </label>
-                <select
-                  id="m-group"
-                  value={form.groupId}
-                  onChange={(e) => setForm({ ...form, groupId: e.target.value })}
-                  className={inputClass}
-                >
-                  <option value="">— Sin grupo —</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.acronym}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="m-order" className={labelClass}>
-                  Orden
-                </label>
+              </Field>
+              <Field id="m-scholar" label="Google Scholar (URL)">
                 <input
-                  id="m-order"
-                  type="number"
-                  min={0}
-                  value={form.order}
-                  onChange={(e) =>
-                    setForm({ ...form, order: Number(e.target.value) })
-                  }
+                  id="m-scholar"
+                  type="url"
+                  value={form.scholar}
+                  placeholder="https://scholar.google.com/citations?user=…"
+                  onChange={(e) => set("scholar", e.target.value)}
                   className={inputClass}
                 />
-              </div>
+              </Field>
+              <Field id="m-website" label="Web personal u otro perfil (URL)">
+                <input
+                  id="m-website"
+                  type="url"
+                  value={form.website}
+                  placeholder="https://…"
+                  onChange={(e) => set("website", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
             </div>
-            <label className="flex items-center gap-2.5 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.active}
-                onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                className="h-4 w-4 accent-diderot-indigo"
-              />
-              Miembro activo (visible en la web)
-            </label>
-            <div className="flex items-center gap-3 border-t border-gray-100 pt-4">
-              <Button variant="primary" onClick={handleSave} disabled={saving}>
-                {saving ? "Guardando…" : "Guardar"}
-              </Button>
+
+            <CheckboxField
+              checked={form.active}
+              onChange={(active) => set("active", active)}
+              label="Visible en la web"
+            />
+
+            <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
               <Button variant="ghost" onClick={() => setForm(null)}>
                 Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleSave} disabled={saving}>
+                {saving ? "Guardando…" : "Guardar"}
               </Button>
             </div>
           </div>

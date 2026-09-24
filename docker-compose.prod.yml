@@ -1,0 +1,95 @@
+# Producción de la web de DIDEROT (diderot.usal.es).
+#
+#   docker compose -f docker-compose.prod.yml up -d --build          # app + BD
+#   docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
+#                                   # crea/actualiza el esquema y siembra la BD
+#
+# La app solo escucha en 127.0.0.1:APP_PORT: el acceso público va SIEMPRE por
+# el proxy inverso con HTTPS (Apache o nginx, ver deploy/). La BD no publica
+# ningún puerto y vive en una red interna sin salida a Internet.
+# Variables en .env (plantilla: .env.production.example).
+name: diderot-web
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: diderot-web-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-diderot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:-diderot_web}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    build:
+      context: .
+      target: runner
+    image: diderot-web:latest
+    container_name: diderot-web-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-diderot}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-diderot_web}
+      # Detrás del proxy inverso: NextAuth debe confiar en X-Forwarded-*.
+      AUTH_TRUST_HOST: "true"
+      UPLOADS_DIR: /app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    volumes:
+      - uploads:/app/uploads
+    networks:
+      - backend
+      - frontend
+    # Endurecimiento: sistema de ficheros de solo lectura salvo lo imprescindible.
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=1001,gid=1001
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # Tarea puntual: esquema (prisma db push) + semilla idempotente.
+  migrate:
+    build:
+      context: .
+      target: builder
+    image: diderot-web-tools:latest
+    profiles: ["tools"]
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-diderot}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-diderot_web}
+    command: ["sh", "-c", "npx prisma db push --skip-generate && npx prisma db seed"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+  uploads:
+
+networks:
+  # Red interna sin salida a Internet: solo app ↔ BD.
+  backend:
+    internal: true
+  # Salida de la app (correo con Resend, ORCID, DeepL).
+  frontend:

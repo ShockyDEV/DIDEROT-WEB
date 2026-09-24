@@ -30,37 +30,35 @@ function formatRelative(iso: string) {
     .replace(".", "");
 }
 
-export function MessagesSection({ rows }: Readonly<{ rows: MessageRow[] }>) {
+export function MessagesSection({
+  rows,
+  emailEnabled,
+  forwardTo,
+}: Readonly<{ rows: MessageRow[]; emailEnabled: boolean; forwardTo: string }>) {
   const router = useRouter();
   const [viewing, setViewing] = useState<MessageRow | null>(null);
 
-  async function markReplied(row: MessageRow) {
-    const res = await fetch(`/api/admin/messages/${row.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "REPLIED" }),
-    });
-    if (!res.ok) {
-      toast.error("No se pudo actualizar");
-      return;
+  async function setStatus(row: MessageRow, status: MessageRow["status"]) {
+    try {
+      await sendJson(`/api/admin/messages/${row.id}`, "PUT", { status });
+      toast.success(status === "REPLIED" ? "Marcado como respondido" : "Marcado como pendiente");
+      setViewing(null);
+      router.refresh();
+    } catch (err) {
+      toast.error(errorMessage(err, "No se pudo actualizar"));
     }
-    toast.success("Marcado como respondido");
-    setViewing(null);
-    router.refresh();
   }
 
   async function handleDelete(row: MessageRow) {
     if (!window.confirm(`¿Eliminar el mensaje de ${row.name}?`)) return;
-    const res = await fetch(`/api/admin/messages/${row.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      toast.error("No se pudo eliminar");
-      return;
+    try {
+      await sendJson(`/api/admin/messages/${row.id}`, "DELETE");
+      toast.success("Mensaje eliminado");
+      setViewing(null);
+      router.refresh();
+    } catch (err) {
+      toast.error(errorMessage(err, "No se pudo eliminar"));
     }
-    toast.success("Mensaje eliminado");
-    setViewing(null);
-    router.refresh();
   }
 
   return (
@@ -71,8 +69,9 @@ export function MessagesSection({ rows }: Readonly<{ rows: MessageRow[] }>) {
             Mensajes de contacto ({rows.length})
           </h3>
           <p className="text-xs text-gray-500">
-            Los mensajes del formulario llegan también a iuce@usal.es vía
-            Resend
+            {emailEnabled
+              ? `Los mensajes del formulario llegan también por correo a ${forwardTo}`
+              : "El envío por correo no está configurado (RESEND_API_KEY): los mensajes solo se guardan aquí"}
           </p>
         </div>
         <table className="w-full border-collapse">
@@ -218,12 +217,4 @@ export function MessagesSection({ rows }: Readonly<{ rows: MessageRow[] }>) {
                 href={`mailto:${viewing.email}?subject=${encodeURIComponent(`RE: ${viewing.subject}`)}`}
                 className="text-sm font-medium text-diderot-violet hover:underline"
               >
-                Responder por email →
-              </a>
-            </div>
-          </div>
-        </Modal>
-      ) : null}
-    </div>
-  );
-}
+             

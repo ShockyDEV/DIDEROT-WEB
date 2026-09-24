@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import { isLocalPath } from "@/lib/validations";
 
 interface CoverImageProps {
-  /** Ruta de la portada (p. ej. /uploads/legacy/foto.jpg) o null. */
+  /** Ruta de la portada (p. ej. /uploads/noticias/foto.jpg) o null. */
   src?: string | null;
   alt: string;
   className?: string;
@@ -14,10 +15,13 @@ interface CoverImageProps {
 }
 
 /**
- * Portada de noticia. Si no hay imagen (47 noticias históricas tampoco la
- * tenían en la web antigua), se muestra una portada de marca: degradado
- * suave con el logo del IUCE en filigrana, para que la tarjeta se vea
- * intencionada y no "rota".
+ * Portada de noticia. Si no hay imagen, se muestra una portada de marca:
+ * degradado suave con el logo de DIDEROT en filigrana y un pentagrama de
+ * fondo, para que la tarjeta se vea intencionada y no "rota".
+ *
+ * Las portadas del gestor son rutas locales (/uploads/…, /images/…) y pasan
+ * por next/image; si alguien pega una URL externa, se pinta con un <img>
+ * normal (next/image solo optimiza dominios declarados y lanzaría un error).
  */
 export function CoverImage({
   src,
@@ -27,6 +31,10 @@ export function CoverImage({
   sizes = "(max-width: 1024px) 100vw, 33vw",
   zoom = false,
 }: Readonly<CoverImageProps>) {
+  const zoomClass =
+    zoom &&
+    "transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.05]";
+
   if (!src) {
     return (
       <div
@@ -37,23 +45,30 @@ export function CoverImage({
           className,
         )}
       >
+        {/* El pentagrama va en su propia capa: .staff-lines también usa
+            background-image y taparía el degradado. */}
+        <span className="staff-lines absolute inset-0" />
         <Image
-          src="/images/iuce-logo.png"
+          src="/images/diderot-logo.png"
           alt=""
-          width={800}
-          height={362}
-          className="h-auto w-[42%] max-w-[210px] opacity-[0.18] saturate-[0.6] dark:hidden"
+          width={1023}
+          height={295}
+          className="relative h-auto w-[50%] max-w-[240px] opacity-[0.22] saturate-[0.7] dark:hidden"
         />
         <Image
-          src="/images/iuce-logo-white.webp"
+          src="/images/diderot-logo-white.png"
           alt=""
-          width={640}
-          height={196}
-          className="hidden h-auto w-[46%] max-w-[220px] opacity-[0.22] dark:block"
+          width={1023}
+          height={295}
+          className="relative hidden h-auto w-[50%] max-w-[240px] opacity-[0.2] dark:block"
         />
       </div>
     );
   }
+
+  const local = isLocalPath(src);
+  const external = !local && /^https:\/\//i.test(src);
+
   return (
     <div
       className={cn(
@@ -62,17 +77,23 @@ export function CoverImage({
         className,
       )}
     >
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes={sizes}
-        className={cn(
-          "object-cover",
-          zoom &&
-            "transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.05]",
-        )}
-      />
+      {local ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          className={cn("object-cover", zoomClass)}
+        />
+      ) : external ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className={cn("absolute inset-0 h-full w-full object-cover", zoomClass)}
+        />
+      ) : null}
     </div>
   );
 }

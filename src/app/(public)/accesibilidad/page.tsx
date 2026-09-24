@@ -8,19 +8,19 @@ export const generateMetadata = metadataBilingue(
   {
     title: "Declaración de accesibilidad",
     description:
-      "Declaración de accesibilidad del sitio web del IUCE conforme al RD 1112/2018.",
+      "Declaración de accesibilidad del sitio web de DIDEROT, Grupo de Investigación Reconocido de la Universidad de Salamanca, conforme al RD 1112/2018.",
   },
   {
     title: "Accessibility statement",
     description:
-      "Accessibility statement for the IUCE website in accordance with Royal Decree 1112/2018.",
+      "Accessibility statement for the website of DIDEROT, a Recognised Research Group of the University of Salamanca, in accordance with Royal Decree 1112/2018.",
   },
 );
 
 export const dynamic = "force-dynamic";
 
 // Textos fijos en ambos idiomas (el contenido largo llega ya traducido
-// desde el servicio de bloques).
+// desde el servicio de bloques: Contenido → Páginas → Páginas legales).
 const T = {
   es: {
     inicio: "Inicio",
@@ -51,7 +51,7 @@ export default async function AccesibilidadPage() {
             ]}
           />
         </div>
-        <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-ink">
+        <h1 className="mb-6 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
           {t.titulo}
         </h1>
         <div

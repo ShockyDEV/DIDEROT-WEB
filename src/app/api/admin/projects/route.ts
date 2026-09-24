@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
+import { readJsonBody, withErrorHandling } from "@/lib/admin-http";
 import { projectInputSchema } from "@/lib/admin-schemas";
+import { projectData } from "@/lib/admin-mappers";
 
-export async function GET() {
+export const GET = withErrorHandling("projects:list", async () => {
   const guard = await requireAdmin();
   if (guard.response) return guard.response;
 
@@ -11,35 +13,22 @@ export async function GET() {
     orderBy: [{ endYear: { sort: "desc", nulls: "last" } }, { title: "asc" }],
   });
   return NextResponse.json({ items });
-}
+});
 
-export async function POST(request: Request) {
-  const guard = await requireAdmin();
+export const POST = withErrorHandling("projects:create", async (request: Request) => {
+  const guard = await requireAdmin({ request });
   if (guard.response) return guard.response;
 
-  const body = await request.json().catch(() => null);
-  const parsed = projectInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.errors[0]?.message ?? "Datos no válidos" },
-      { status: 400 },
-    );
-  }
-  const d = parsed.data;
+  const body = await readJsonBody(request, projectInputSchema, 64 * 1024);
+  if (body.response) return body.response;
+  const d = body.data;
+
   const created = await prisma.project.create({
     data: {
-      title: d.title,
-      funder: d.funder || null,
-      ip: d.ip || null,
-      line: d.line || null,
-      scope: d.scope || null,
-      amount: d.amount || null,
-      period: d.period || null,
-      startYear: d.startYear ?? null,
-      endYear: d.endYear ?? null,
+      ...(await projectData(d)),
+      featured: d.featured ?? false,
       active: d.active ?? true,
-      iuceLed: d.iuceLed ?? false,
     },
   });
   return NextResponse.json({ item: created }, { status: 201 });
-}
+});

@@ -1,12 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import {
-  EventsSection,
-  type EventRow,
-} from "@/components/admin/events-section";
+import { EventsSection, type EventRow } from "@/components/admin/events-section";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminEventsPage() {
+export default async function AdminEventsPage({
+  searchParams,
+}: Readonly<{ searchParams: Record<string, string | string[] | undefined> }>) {
   const [events, news] = await Promise.all([
     prisma.event.findMany({ orderBy: { startsAt: "desc" } }),
     // Para el selector de crónica: noticias publicadas, recientes primero.
@@ -21,7 +20,10 @@ export default async function AdminEventsPage() {
   const rows: EventRow[] = events.map((e) => ({
     id: e.id,
     title: e.title,
+    titleEn: e.titleEn,
     type: e.type,
+    description: e.description,
+    descriptionEn: e.descriptionEn,
     startsAt: e.startsAt.toISOString(),
     endsAt: e.endsAt?.toISOString() ?? null,
     location: e.location,
@@ -31,5 +33,11 @@ export default async function AdminEventsPage() {
     status: e.status,
   }));
 
-  return <EventsSection rows={rows} newsOptions={news} />;
+  return (
+    <EventsSection
+      rows={rows}
+      newsOptions={news}
+      openNew={searchParams.accion === "nuevo"}
+    />
+  );
 }

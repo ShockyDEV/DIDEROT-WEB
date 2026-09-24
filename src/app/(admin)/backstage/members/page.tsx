@@ -1,39 +1,33 @@
 import { prisma } from "@/lib/prisma";
-import {
-  MembersSection,
-  type MemberRow,
-} from "@/components/admin/members-section";
+import { MembersSection, type MemberRow } from "@/components/admin/members-section";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMembersPage() {
-  const [members, groups] = await Promise.all([
-    prisma.member.findMany({
-      orderBy: [{ order: "asc" }, { name: "asc" }],
-      include: { group: { select: { acronym: true } } },
-    }),
-    prisma.researchGroup.findMany({
-      orderBy: { acronym: "asc" },
-      select: { id: true, acronym: true },
-    }),
-  ]);
+  const members = await prisma.member.findMany({
+    orderBy: [{ category: "asc" }, { order: "asc" }, { name: "asc" }],
+  });
 
   const rows: MemberRow[] = members.map((m) => ({
     id: m.id,
     name: m.name,
-    area: m.area,
-    email: m.email,
-    extension: m.extension,
+    category: m.category,
     role: m.role,
+    roleEn: m.roleEn,
+    affiliation: m.affiliation,
+    area: m.area,
+    bio: m.bio,
+    bioEn: m.bioEn,
+    email: m.email,
     photo: m.photo,
     portalUrl: m.portalUrl,
     orcid: m.orcid,
     scopus: m.scopus,
+    scholar: m.scholar,
+    website: m.website,
     active: m.active,
     order: m.order,
-    groupId: m.groupId,
-    groupAcronym: m.group?.acronym ?? null,
   }));
 
-  return <MembersSection rows={rows} groups={groups} />;
+  return <MembersSection rows={rows} />;
 }

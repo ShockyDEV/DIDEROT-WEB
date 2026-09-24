@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import {
-  MessagesSection,
-  type MessageRow,
-} from "@/components/admin/messages-section";
+import { SITE } from "@/lib/site";
+import { MessagesSection, type MessageRow } from "@/components/admin/messages-section";
 
 export const dynamic = "force-dynamic";
 
@@ -21,5 +19,10 @@ export default async function AdminMessagesPage() {
     createdAt: m.createdAt.toISOString(),
   }));
 
-  return <MessagesSection rows={rows} />;
+  // Aviso honesto de a dónde llegan (o no) los mensajes por correo.
+  const key = process.env.RESEND_API_KEY?.trim();
+  const emailEnabled = Boolean(key && !key.includes("placeholder"));
+  const forwardTo = process.env.CONTACT_TO?.trim() || SITE.email;
+
+  return <MessagesSection rows={rows} emailEnabled={emailEnabled} forwardTo={forwardTo} />;
 }

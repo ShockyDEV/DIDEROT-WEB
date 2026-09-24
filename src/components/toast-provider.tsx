@@ -3,8 +3,8 @@
 import { Toaster } from "react-hot-toast";
 
 /**
- * Contenedor de notificaciones (toasts) arriba a la derecha, con el estilo del
- * resto de proyectos del IUCE.
+ * Contenedor de notificaciones (toasts) arriba a la derecha, con el mismo
+ * estilo que la web del IUCE, de la que parte esta.
  */
 export function ToastProvider() {
   return (

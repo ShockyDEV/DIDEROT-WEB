@@ -21,7 +21,7 @@ const roundedMap = {
 
 /**
  * Hueco de imagen. Recrea el `<image-slot>` de los prototipos: reserva el
- * espacio con una foto real pendiente de aportar por el IUCE. En producción
+ * espacio con una foto real pendiente de aportar por el grupo. En producción
  * se sustituirá por `next/image` con la imagen subida desde el gestor.
  */
 export function ImagePlaceholder({

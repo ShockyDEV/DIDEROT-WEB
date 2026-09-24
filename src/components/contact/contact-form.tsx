@@ -4,11 +4,16 @@ import { useState } from "react";
 import { MailCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { CONTACT_SUBJECTS } from "@/lib/validations";
+import {
+  CONTACT_SUBJECTS,
+  CONTACT_SUBJECT_EN,
+  HONEYPOT_FIELD,
+  type ContactSubject,
+} from "@/lib/validations";
 import { withLocale, type Locale } from "@/lib/locale";
 
 const inputClass =
-  "h-[42px] rounded-md border border-gray-300 bg-surface-card px-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25";
+  "h-[42px] rounded-md border border-gray-300 bg-surface-card px-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-[color-mix(in_srgb,var(--diderot-violet)_30%,transparent)]";
 
 const labelClass = "text-sm font-medium text-gray-700";
 
@@ -23,21 +28,12 @@ function Required() {
 
 // Textos fijos del formulario en ambos idiomas. Los valores del select se
 // envían siempre en español (son los que valida la API); solo cambia la
-// etiqueta visible.
-const SUBJECT_LABELS_EN: Record<(typeof CONTACT_SUBJECTS)[number], string> = {
-  "Formación del profesorado": "Teacher training",
-  "Investigación y grupos": "Research and groups",
-  Doctorado: "PhD programme",
-  "Reserva de espacios": "Room booking",
-  "Revista EKS": "EKS journal",
-  Otro: "Other",
-};
-
+// etiqueta visible (CONTACT_SUBJECT_EN).
 const T = {
   es: {
     ariaForm: "Formulario de contacto",
     escribenos: "Escríbenos",
-    plazo: "Te responderemos en un plazo de 2–3 días hábiles.",
+    plazo: "Te responderemos lo antes posible.",
     nombre: "Nombre y apellidos",
     correo: "Correo electrónico",
     asunto: "Asunto",
@@ -49,17 +45,20 @@ const T = {
     enviar: "Enviar mensaje",
     enviando: "Enviando…",
     copia: "Recibirás copia en tu correo",
-    exitoToast: "Mensaje enviado. Te responderemos en 2–3 días hábiles.",
-    errorGenerico: "No se pudo enviar el mensaje",
+    exitoToast: "Mensaje enviado. Te responderemos lo antes posible.",
+    errorGenerico: "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+    errorLimite: "Demasiados mensajes seguidos. Espera unos minutos.",
+    errorDatos: "Revisa los campos del formulario.",
     enviadoTitulo: "Mensaje enviado",
     enviadoTexto:
-      "Gracias por escribirnos. La Secretaría del IUCE te responderá en un plazo de 2–3 días hábiles. Recibirás una copia en tu correo.",
+      "Gracias por escribirnos. El equipo de DIDEROT te responderá lo antes posible. Recibirás una copia en tu correo.",
     otroMensaje: "Enviar otro mensaje",
+    trampa: "No rellenes este campo",
   },
   en: {
     ariaForm: "Contact form",
     escribenos: "Write to us",
-    plazo: "We will reply within 2–3 working days.",
+    plazo: "We will get back to you as soon as possible.",
     nombre: "Full name",
     correo: "Email",
     asunto: "Subject",
@@ -71,29 +70,41 @@ const T = {
     enviar: "Send message",
     enviando: "Sending…",
     copia: "You will receive a copy by email",
-    exitoToast: "Message sent. We will reply within 2–3 working days.",
-    errorGenerico: "The message could not be sent",
+    exitoToast: "Message sent. We will get back to you as soon as possible.",
+    errorGenerico: "The message could not be sent. Please try again.",
+    errorLimite: "Too many messages in a row. Please wait a few minutes.",
+    errorDatos: "Please check the form fields.",
     enviadoTitulo: "Message sent",
     enviadoTexto:
-      "Thank you for writing to us. The IUCE Secretariat will reply within 2–3 working days. You will receive a copy by email.",
+      "Thank you for writing to us. The DIDEROT team will get back to you as soon as possible. You will receive a copy by email.",
     otroMensaje: "Send another message",
+    trampa: "Do not fill in this field",
   },
 } as const;
 
+/** Error con el mensaje ya listo para mostrar al usuario. */
+class ContactError extends Error {}
+
 /**
  * Formulario «Escríbenos» de la página de contacto. Envía a /api/contact,
- * que registra el mensaje y lo remite a la Secretaría por email.
+ * que registra el mensaje y lo remite al grupo por email.
  */
 export function ContactForm({
-  privacyUrl = "https://www.usal.es/proteccion-de-datos",
+  privacyUrl = "/privacidad",
   locale = "es",
-}: Readonly<{ privacyUrl?: string; locale?: Locale }>) {
+  defaultSubject,
+}: Readonly<{
+  privacyUrl?: string;
+  locale?: Locale;
+  /** Asunto preseleccionado (p. ej. desde /contacto?asunto=doctorado). */
+  defaultSubject?: ContactSubject;
+}>) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const t = T[locale];
-  // Enlace del aviso de privacidad: las rutas internas (p. ej. /aviso-legal)
+  // Enlace de la política de privacidad: las rutas internas (/privacidad)
   // llevan el prefijo de idioma; las URL externas se dejan tal cual.
-  const rawPrivacyUrl = privacyUrl || "https://www.usal.es/proteccion-de-datos";
+  const rawPrivacyUrl = privacyUrl || "/privacidad";
   const privacyHref = rawPrivacyUrl.startsWith("/")
     ? withLocale(rawPrivacyUrl, locale)
     : rawPrivacyUrl;
@@ -114,17 +125,25 @@ export function ContactForm({
           subject: data.get("subject"),
           message: data.get("message"),
           gdpr: data.get("gdpr") === "on",
+          locale,
+          [HONEYPOT_FIELD]: data.get(HONEYPOT_FIELD) ?? "",
         }),
       });
-      const json = await res.json().catch(() => ({}));
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        throw new Error(json.error ?? t.errorGenerico);
+        // La API responde en español: en inglés se traduce por código.
+        if (res.status === 429) throw new ContactError(t.errorLimite);
+        if (locale === "es" && json.error) throw new ContactError(json.error);
+        throw new ContactError(
+          res.status === 400 ? t.errorDatos : t.errorGenerico,
+        );
       }
       setSent(true);
       form.reset();
       toast.success(t.exitoToast);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t.errorGenerico);
+      // Fallos de red (fetch lanza TypeError) → mensaje genérico.
+      toast.error(err instanceof ContactError ? err.message : t.errorGenerico);
     } finally {
       setSending(false);
     }
@@ -154,7 +173,7 @@ export function ContactForm({
     <form
       aria-label={t.ariaForm}
       onSubmit={handleSubmit}
-      className="flex flex-col gap-[18px] rounded-xl border border-gray-200 bg-surface-card p-8 shadow-sm"
+      className="relative flex flex-col gap-[18px] rounded-xl border border-gray-200 bg-surface-card p-8 shadow-sm"
     >
       <div>
         <h2 className="mb-1 text-xl font-bold text-gray-900">
@@ -174,6 +193,8 @@ export function ContactForm({
             name="name"
             type="text"
             required
+            minLength={2}
+            maxLength={120}
             autoComplete="name"
             className={inputClass}
           />
@@ -188,6 +209,7 @@ export function ContactForm({
             name="email"
             type="email"
             required
+            maxLength={200}
             autoComplete="email"
             className={inputClass}
           />
@@ -199,10 +221,16 @@ export function ContactForm({
           {t.asunto}
           <Required />
         </label>
-        <select id="c-asunto" name="subject" required className={inputClass}>
+        <select
+          id="c-asunto"
+          name="subject"
+          required
+          defaultValue={defaultSubject ?? CONTACT_SUBJECTS[0]}
+          className={inputClass}
+        >
           {CONTACT_SUBJECTS.map((s) => (
             <option key={s} value={s}>
-              {locale === "en" ? SUBJECT_LABELS_EN[s] : s}
+              {locale === "en" ? CONTACT_SUBJECT_EN[s] : s}
             </option>
           ))}
         </select>
@@ -219,7 +247,25 @@ export function ContactForm({
           rows={6}
           required
           minLength={10}
-          className="resize-y rounded-md border border-gray-300 bg-surface-card p-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
+          maxLength={5000}
+          className="resize-y rounded-md border border-gray-300 bg-surface-card p-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-[color-mix(in_srgb,var(--diderot-violet)_30%,transparent)]"
+        />
+      </div>
+
+      {/* Campo trampa (honeypot): fuera de la pantalla, del orden de
+          tabulación y del árbol de accesibilidad. Solo lo rellenan robots. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-[10000px] top-auto h-px w-px overflow-hidden"
+      >
+        <label htmlFor="c-web">{t.trampa}</label>
+        <input
+          id="c-web"
+          name={HONEYPOT_FIELD}
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          defaultValue=""
         />
       </div>
 
@@ -229,7 +275,7 @@ export function ContactForm({
           name="gdpr"
           type="checkbox"
           required
-          className="mt-[3px] h-4 w-4 accent-diderot-indigo"
+          className="mt-[3px] h-4 w-4 flex-none accent-diderot-indigo"
         />
         <label
           htmlFor="c-rgpd"
@@ -240,7 +286,7 @@ export function ContactForm({
             href={privacyHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-diderot-violet hover:underline"
+            className="text-diderot-violet underline-offset-2 hover:underline"
           >
             {t.gdprPolitica}
           </a>
@@ -249,7 +295,7 @@ export function ContactForm({
         </label>
       </div>
 
-      <div className="flex items-center gap-3.5 pt-1.5">
+      <div className="flex flex-wrap items-center gap-3.5 pt-1.5">
         <Button type="submit" size="lg" disabled={sending}>
           {sending ? t.enviando : t.enviar}
         </Button>

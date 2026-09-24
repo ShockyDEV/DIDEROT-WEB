@@ -3,21 +3,21 @@
  *
  *   npm run db:backup
  *
- * Motivo: el volumen Docker local ha demostrado poder perderse o «viajar en
- * el tiempo» tras cuelgues de Docker Desktop (9/10-sep-2026: una
- * reconstrucción entera fue a parar a un disco efímero y al día siguiente
- * reapareció el volumen antiguo). Los scripts idempotentes reconstruyen casi
- * todo, pero las ediciones hechas SOLO desde el panel viven únicamente en la
- * BD: este volcado es su red de seguridad. Ejecutar antes de tocar Docker y
- * después de sesiones largas de edición. Se conservan los 14 más recientes.
+ * Las ediciones hechas desde el panel viven únicamente en la BD: este
+ * volcado es su red de seguridad. Ejecutar antes de tocar Docker y después de
+ * sesiones largas de edición. Se conservan los 14 más recientes.
+ *
+ * En producción el contenedor es diderot-web-db (ver docker-compose.prod.yml):
+ *   DB_CONTAINER=diderot-web-db npm run db:backup
+ * (o, sin Node en el host, scripts/backup-prod.sh).
  */
 const { execSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const CONTAINER = "iuce-web-postgres";
-const DB_USER = "iuce";
-const DB_NAME = "iuce_web";
+const CONTAINER = process.env.DB_CONTAINER ?? "diderot-web-postgres";
+const DB_USER = process.env.DB_USER ?? "diderot";
+const DB_NAME = process.env.DB_NAME ?? "diderot_web";
 const KEEP = 14;
 
 const dir = path.join(__dirname, "..", "backups");

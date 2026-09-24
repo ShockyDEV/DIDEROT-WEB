@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "diderot-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "-p", "3200"],
+      "port": 3200
+    },
+    {
       "name": "iuce-referencia",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "C:/Users/USUARIO/Desktop/IUCE/iuce-web", "run", "dev", "--", "-p", "3100"],

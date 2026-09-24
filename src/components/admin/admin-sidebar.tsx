@@ -5,49 +5,48 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
+  BookOpen,
   Calendar,
   ExternalLink,
   Eye,
   FileText,
   FlaskConical,
-  FolderLock,
   FolderOpen,
   Inbox,
-  KeyRound,
   LayoutDashboard,
   LogOut,
-  Microscope,
   Newspaper,
   Settings,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-const NAV_GROUPS = [
+interface NavItem {
+  label: string;
+  icon: typeof LayoutDashboard;
+  href: string;
+  /** Contador opcional (p. ej. mensajes sin responder). */
+  badge?: "messages";
+}
+
+const NAV_GROUPS: Array<{ title: string | null; items: NavItem[] }> = [
   {
     title: null,
-    items: [
-      { label: "Dashboard", icon: LayoutDashboard, href: "/backstage" },
-      { label: "Noticias", icon: Newspaper, href: "/backstage/news" },
-    ],
+    items: [{ label: "Dashboard", icon: LayoutDashboard, href: "/backstage" }],
   },
   {
     title: "Contenido",
     items: [
+      { label: "Noticias", icon: Newspaper, href: "/backstage/news" },
       { label: "Páginas", icon: FileText, href: "/backstage/pages" },
-      { label: "Visualización", icon: Eye, href: "/backstage/visualizacion" },
       { label: "Archivos", icon: FolderOpen, href: "/backstage/files" },
     ],
   },
   {
-    title: "Instituto",
+    title: "Investigación",
     items: [
-      { label: "Equipo y miembros", icon: Users, href: "/backstage/members" },
-      {
-        label: "Grupos de investigación",
-        icon: Microscope,
-        href: "/backstage/groups",
-      },
+      { label: "Equipo", icon: Users, href: "/backstage/members" },
+      { label: "Publicaciones", icon: BookOpen, href: "/backstage/publications" },
       { label: "Proyectos", icon: FlaskConical, href: "/backstage/projects" },
     ],
   },
@@ -55,27 +54,15 @@ const NAV_GROUPS = [
     title: "Actividad",
     items: [
       { label: "Eventos", icon: Calendar, href: "/backstage/events" },
-      { label: "Mensajes de contacto", icon: Inbox, href: "/backstage/messages" },
-    ],
-  },
-  {
-    title: "Área de miembros",
-    items: [
-      {
-        label: "Usuarios autorizados",
-        icon: KeyRound,
-        href: "/backstage/intranet/users",
-      },
-      {
-        label: "Documentos internos",
-        icon: FolderLock,
-        href: "/backstage/intranet/files",
-      },
+      { label: "Mensajes", icon: Inbox, href: "/backstage/messages", badge: "messages" },
     ],
   },
   {
     title: "Sistema",
-    items: [{ label: "Configuración", icon: Settings, href: "/backstage/settings" }],
+    items: [
+      { label: "Visualización", icon: Eye, href: "/backstage/visualizacion" },
+      { label: "Configuración", icon: Settings, href: "/backstage/settings" },
+    ],
   },
 ];
 
@@ -84,23 +71,22 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ newMessages = 0 }: Readonly<{ newMessages?: number }>) {
   const pathname = usePathname();
 
   return (
     <aside className="fixed bottom-0 left-0 top-0 z-30 flex w-[260px] flex-col border-r border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-6 py-[18px]">
-        <Link href="/backstage" className="flex flex-col gap-0.5">
+        <Link href="/backstage" className="flex flex-col gap-1">
           <Image
-            src="/images/iuce-logo.png"
-            alt="IUCE"
-            width={800}
-            height={362}
+            src="/images/diderot-logo.png"
+            alt="DIDEROT"
+            width={1023}
+            height={295}
+            priority
             className="h-[30px] w-auto self-start"
           />
-          <span className="text-[11px] text-gray-500">
-            Panel de administración
-          </span>
+          <span className="text-[11px] text-gray-500">Panel de administración</span>
         </Link>
       </div>
 
@@ -119,6 +105,7 @@ export function AdminSidebar() {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(pathname, item.href);
+                const count = item.badge === "messages" ? newMessages : 0;
                 return (
                   <Link
                     key={item.href}
@@ -132,7 +119,15 @@ export function AdminSidebar() {
                     )}
                   >
                     <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                    {item.label}
+                    <span className="flex-1">{item.label}</span>
+                    {count > 0 ? (
+                      <span
+                        className="min-w-[20px] rounded-full bg-diderot-amber px-1.5 py-px text-center text-[11px] font-semibold text-white"
+                        aria-label={`${count} sin responder`}
+                      >
+                        {count > 99 ? "99+" : count}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}

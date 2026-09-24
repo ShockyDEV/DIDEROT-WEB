@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 import { slugify } from "@/lib/slugify";
 
 /**
@@ -100,7 +101,8 @@ export async function saveUpload(
     throw new UploadError("El archivo supera los 25 MB", 413);
   }
 
-  const ext = path.extname(file.name).toLowerCase();
+  const rawExt = path.extname(file.name); // «.PNG» tal cual, para recortar el nombre
+  const ext = rawExt.toLowerCase();
   const allowed = ALLOWED_UPLOADS[ext];
   if (!allowed || (options.only && !options.only.includes(allowed.kind))) {
     throw new UploadError(
@@ -121,22 +123,47 @@ export async function saveUpload(
     );
   }
 
+  // Las imágenes (salvo GIF, por la animación) se recodifican: se eliminan
+  // los metadatos EXIF (p. ej. la ubicación GPS de una foto hecha con el
+  // móvil), se neutralizan ficheros «políglota» y se acotan a 2000 px.
+  const data = allowed.kind === "image" && ext !== ".gif" ? await reencodeImage(buffer, ext) : buffer;
+
   // Nombre seguro y único generado por el servidor.
-  const base = slugify(path.basename(file.name, ext)).slice(0, 60) || "archivo";
+  const base = slugify(path.basename(file.name, rawExt)).slice(0, 60) || "archivo";
   const filename = `${base}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}${ext === ".jpeg" ? ".jpg" : ext}`;
   const subdir = options.subdir ? slugify(options.subdir) : "";
 
   const dir = path.join(UPLOADS_DIR, subdir);
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), buffer);
+  await writeFile(path.join(dir, filename), data);
 
   return {
     url: `/uploads/${subdir ? `${subdir}/` : ""}${filename}`,
     originalName: file.name,
     mimeType: allowed.mime,
-    size: file.size,
+    size: data.length,
     kind: allowed.kind,
   };
+}
+
+const MAX_IMAGE_PX = 2000;
+
+async function reencodeImage(buffer: Buffer, ext: string): Promise<Buffer> {
+  try {
+    const img = sharp(buffer, { failOn: "error" })
+      .rotate() // orientación según EXIF antes de descartarlo
+      .resize({
+        width: MAX_IMAGE_PX,
+        height: MAX_IMAGE_PX,
+        fit: "inside",
+        withoutEnlargement: true,
+      });
+    if (ext === ".png") return await img.png({ compressionLevel: 9 }).toBuffer();
+    if (ext === ".webp") return await img.webp({ quality: 86 }).toBuffer();
+    return await img.jpeg({ quality: 86, mozjpeg: true }).toBuffer();
+  } catch {
+    throw new UploadError("La imagen está dañada o no se puede procesar", 415);
+  }
 }
 
 /**

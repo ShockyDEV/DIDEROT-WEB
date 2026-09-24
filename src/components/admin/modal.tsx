@@ -1,30 +1,46 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 interface ModalProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** Ancho: md (formularios cortos), lg (fichas), xl (vista previa ORCID). */
+  size?: "md" | "lg" | "xl";
 }
 
+const WIDTHS = {
+  md: "max-w-[560px]",
+  lg: "max-w-[760px]",
+  xl: "max-w-[1100px]",
+} as const;
+
 /**
- * Diálogo modal sencillo del panel de administración (crear/editar registros
- * y ver mensajes). Cierra con Escape o clic en el fondo.
+ * Diálogo modal del panel de administración (crear/editar registros y ver
+ * mensajes). Cierra con Escape o clic en el fondo y bloquea el scroll de la
+ * página mientras está abierto.
  */
-export function Modal({ title, onClose, children }: Readonly<ModalProps>) {
+export function Modal({ title, onClose, children, size = "md" }: Readonly<ModalProps>) {
+  // El listener lee siempre el onClose más reciente sin re-suscribirse en
+  // cada render (los padres suelen pasar una función en línea).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     }
     document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = previous;
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div
@@ -36,10 +52,13 @@ export function Modal({ title, onClose, children }: Readonly<ModalProps>) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[85vh] w-full max-w-[560px] overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-md"
+        className={cn(
+          "max-h-[88vh] w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-md",
+          WIDTHS[size],
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
           <h3 className="text-base font-semibold text-gray-900">{title}</h3>
           <button
             type="button"

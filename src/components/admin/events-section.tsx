@@ -1,21 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Upload } from "lucide-react";
+import { ImageOff, Pencil, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/admin/modal";
+import {
+  Field,
+  IconButton,
+  ImageUploadField,
+  inputClass,
+  textareaClass,
+} from "@/components/admin/form-fields";
+import { errorMessage, sendJson } from "@/components/admin/admin-fetch";
+import { EVENT_TYPES } from "@/lib/admin-options";
 import { cn } from "@/lib/cn";
-
-const inputClass =
-  "h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25";
-const labelClass = "text-[13px] font-medium text-gray-700";
 
 export interface EventRow {
   id: string;
   title: string;
+  titleEn: string | null;
   type: string;
+  description: string | null;
+  descriptionEn: string | null;
   startsAt: string; // ISO
   endsAt: string | null;
   location: string | null;
@@ -30,10 +38,7 @@ export interface NewsOption {
   title: string;
 }
 
-const STATUS_STYLES: Record<
-  EventRow["status"],
-  { label: string; cls: string }
-> = {
+const STATUS_STYLES: Record<EventRow["status"], { label: string; cls: string }> = {
   UPCOMING: { label: "Próximo", cls: "bg-[#DBEAFE] text-[#1D4ED8]" },
   PAST: { label: "Celebrado", cls: "bg-gray-100 text-gray-700" },
   CANCELLED: { label: "Cancelado", cls: "bg-[#FEF2F2] text-[#B42318]" },
@@ -42,8 +47,12 @@ const STATUS_STYLES: Record<
 interface FormState {
   id?: string;
   title: string;
+  titleEn: string;
   type: string;
+  description: string;
+  descriptionEn: string;
   date: string; // yyyy-mm-dd
+  endDate: string; // yyyy-mm-dd o ""
   location: string;
   url: string;
   image: string;
@@ -51,54 +60,75 @@ interface FormState {
   status: EventRow["status"];
 }
 
-const EMPTY: FormState = {
-  title: "",
-  type: "Congreso",
-  date: "",
-  location: "",
-  url: "",
-  image: "",
-  newsSlug: "",
-  status: "UPCOMING",
-};
+function emptyForm(): FormState {
+  return {
+    title: "",
+    titleEn: "",
+    type: "Seminario",
+    description: "",
+    descriptionEn: "",
+    date: "",
+    endDate: "",
+    location: "",
+    url: "",
+    image: "",
+    newsSlug: "",
+    status: "UPCOMING",
+  };
+}
+
+function toForm(row: EventRow): FormState {
+  return {
+    id: row.id,
+    title: row.title,
+    titleEn: row.titleEn ?? "",
+    type: row.type,
+    description: row.description ?? "",
+    descriptionEn: row.descriptionEn ?? "",
+    date: row.startsAt.slice(0, 10),
+    endDate: row.endsAt?.slice(0, 10) ?? "",
+    location: row.location ?? "",
+    url: row.url ?? "",
+    image: row.image ?? "",
+    newsSlug: row.newsSlug ?? "",
+    status: row.status,
+  };
+}
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("es-ES", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   })
     .format(new Date(iso))
     .replace(".", "");
 }
 
+/** Las fechas se guardan a las 09:00 UTC (convención heredada del IUCE). */
+const toIso = (date: string) => new Date(`${date}T09:00:00Z`).toISOString();
+
 export function EventsSection({
   rows,
   newsOptions,
-}: Readonly<{ rows: EventRow[]; newsOptions: NewsOption[] }>) {
+  openNew = false,
+}: Readonly<{ rows: EventRow[]; newsOptions: NewsOption[]; openNew?: boolean }>) {
   const router = useRouter();
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
-  async function handleImageUpload(file: File) {
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/files", { method: "POST", body: fd });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo subir la imagen");
-      setForm((f) => (f ? { ...f, image: json.item?.url ?? "" } : f));
-      toast.success("Imagen subida");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "No se pudo subir la imagen",
-      );
-    } finally {
-      setUploading(false);
-    }
-  }
+  // «Nuevo evento» desde el Dashboard (?accion=nuevo): una vez, y URL limpia.
+  const opened = useRef(false);
+  useEffect(() => {
+    if (!openNew || opened.current) return;
+    opened.current = true;
+    setForm(emptyForm());
+    router.replace("/backstage/events", { scroll: false });
+  }, [openNew, router]);
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((f) => (f ? { ...f, [key]: value } : f));
 
   async function handleSave() {
     if (!form) return;
@@ -106,40 +136,41 @@ export function EventsSection({
       toast.error("Título y fecha son obligatorios");
       return;
     }
-    if (!form.image.trim()) {
-      toast.error(
-        "Cada evento necesita una imagen: súbela o pega su URL antes de guardar",
-      );
+    if (form.endDate && form.endDate < form.date) {
+      toast.error("La fecha de fin no puede ser anterior a la de inicio");
+      return;
+    }
+    if (
+      !form.image.trim() &&
+      !window.confirm(
+        "Este evento no tiene cartel ni imagen: en la web se verá un marcador en su lugar. ¿Guardar igualmente?",
+      )
+    ) {
       return;
     }
     setSaving(true);
     try {
       const payload = {
         title: form.title,
+        titleEn: form.titleEn,
         type: form.type,
-        startsAt: new Date(`${form.date}T09:00:00Z`).toISOString(),
-        endsAt: null,
-        location: form.location || null,
-        url: form.url || "",
-        image: form.image.trim(),
-        newsSlug: form.newsSlug || null,
+        description: form.description,
+        descriptionEn: form.descriptionEn,
+        startsAt: toIso(form.date),
+        endsAt: form.endDate ? toIso(form.endDate) : null,
+        location: form.location,
+        url: form.url,
+        image: form.image,
+        newsSlug: form.newsSlug,
         status: form.status,
       };
-      const res = await fetch(
-        form.id ? `/api/admin/events/${form.id}` : "/api/admin/events",
-        {
-          method: form.id ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo guardar");
-      toast.success("Guardado");
+      if (form.id) await sendJson(`/api/admin/events/${form.id}`, "PUT", payload);
+      else await sendJson("/api/admin/events", "POST", payload);
+      toast.success("Evento guardado");
       setForm(null);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar");
+      toast.error(errorMessage(err, "No se pudo guardar"));
     } finally {
       setSaving(false);
     }
@@ -147,30 +178,32 @@ export function EventsSection({
 
   async function handleDelete(row: EventRow) {
     if (!window.confirm(`¿Eliminar el evento «${row.title}»?`)) return;
-    const res = await fetch(`/api/admin/events/${row.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      toast.error("No se pudo eliminar");
-      return;
+    try {
+      await sendJson(`/api/admin/events/${row.id}`, "DELETE");
+      toast.success("Evento eliminado");
+      router.refresh();
+    } catch (err) {
+      toast.error(errorMessage(err, "No se pudo eliminar"));
     }
-    toast.success("Evento eliminado");
-    router.refresh();
   }
+
+  const typeOptions: string[] =
+    form && form.type && !(EVENT_TYPES as readonly string[]).includes(form.type)
+      ? [...EVENT_TYPES, form.type]
+      : [...EVENT_TYPES];
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-end">
-        <Button variant="primary" onClick={() => setForm(EMPTY)}>
-          + Nuevo evento
+        <Button variant="primary" className="gap-1.5" onClick={() => setForm(emptyForm())}>
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Nuevo evento
         </Button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="p-6">
-          <h3 className="text-base font-semibold text-gray-900">
-            Eventos ({rows.length})
-          </h3>
+          <h3 className="text-base font-semibold text-gray-900">Eventos ({rows.length})</h3>
         </div>
         <table className="w-full border-collapse">
           <thead>
@@ -184,13 +217,13 @@ export function EventsSection({
               <th scope="col" className="px-4 py-3 text-left text-[13px] font-medium text-gray-500">
                 Fecha
               </th>
-              <th scope="col" className="px-4 py-3 text-left text-[13px] font-medium text-gray-500">
+              <th scope="col" className="hidden px-4 py-3 text-left text-[13px] font-medium text-gray-500 lg:table-cell">
                 Lugar
               </th>
               <th scope="col" className="px-4 py-3 text-left text-[13px] font-medium text-gray-500">
                 Estado
               </th>
-              <th scope="col" className="w-[110px] px-6 py-3 text-left text-[13px] font-medium text-gray-500">
+              <th scope="col" className="w-[96px] px-6 py-3 text-left text-[13px] font-medium text-gray-500">
                 Acciones
               </th>
             </tr>
@@ -200,18 +233,38 @@ export function EventsSection({
               const status = STATUS_STYLES[row.status];
               return (
                 <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-6 py-3 text-sm font-medium text-gray-900">
-                    {row.title}
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-3">
+                      {row.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={row.image}
+                          alt=""
+                          className="h-10 w-14 flex-none rounded border border-gray-200 object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="flex h-10 w-14 flex-none items-center justify-center rounded border border-dashed border-gray-300 text-gray-400"
+                          title="Sin cartel"
+                        >
+                          <ImageOff className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                      )}
+                      <span className="text-sm font-medium text-gray-900">{row.title}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex rounded-full bg-diderot-pale px-2.5 py-0.5 text-xs font-medium text-diderot-indigo">
                       {row.type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-gray-500">
+                  <td className="whitespace-nowrap px-4 py-3 text-[13px] text-gray-500">
                     {formatDate(row.startsAt)}
+                    {row.endsAt && row.endsAt.slice(0, 10) !== row.startsAt.slice(0, 10)
+                      ? ` – ${formatDate(row.endsAt)}`
+                      : ""}
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-gray-600">
+                  <td className="hidden px-4 py-3 text-[13px] text-gray-600 lg:table-cell">
                     {row.location ?? "—"}
                   </td>
                   <td className="px-4 py-3">
@@ -226,34 +279,12 @@ export function EventsSection({
                   </td>
                   <td className="px-6 py-3">
                     <div className="flex gap-1">
-                      <button
-                        type="button"
-                        aria-label="Editar"
-                        onClick={() =>
-                          setForm({
-                            id: row.id,
-                            title: row.title,
-                            type: row.type,
-                            date: row.startsAt.slice(0, 10),
-                            location: row.location ?? "",
-                            url: row.url ?? "",
-                            image: row.image ?? "",
-                            newsSlug: row.newsSlug ?? "",
-                            status: row.status,
-                          })
-                        }
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                      >
+                      <IconButton label="Editar" onClick={() => setForm(toForm(row))}>
                         <Pencil className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Eliminar"
-                        onClick={() => handleDelete(row)}
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50"
-                      >
+                      </IconButton>
+                      <IconButton label="Eliminar" danger onClick={() => handleDelete(row)}>
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      </button>
+                      </IconButton>
                     </div>
                   </td>
                 </tr>
@@ -274,166 +305,138 @@ export function EventsSection({
         <Modal
           title={form.id ? "Editar evento" : "Nuevo evento"}
           onClose={() => setForm(null)}
+          size="lg"
         >
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="e-title" className={labelClass}>
-                Título
-              </label>
+            <Field id="e-title" label="Título *">
               <input
                 id="e-title"
                 type="text"
                 value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                onChange={(e) => set("title", e.target.value)}
                 className={inputClass}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="e-type" className={labelClass}>
-                  Tipo
-                </label>
+            </Field>
+            <Field id="e-title-en" label="Título en inglés" hint="Vacío = traducción automática al guardar">
+              <input
+                id="e-title-en"
+                type="text"
+                value={form.titleEn}
+                onChange={(e) => set("titleEn", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field id="e-type" label="Tipo *">
                 <select
                   id="e-type"
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  onChange={(e) => set("type", e.target.value)}
                   className={inputClass}
                 >
-                  <option>Congreso</option>
-                  <option>Seminario</option>
-                  <option>Jornada</option>
+                  {typeOptions.map((t) => (
+                    <option key={t} value={t}>
+                      {(EVENT_TYPES as readonly string[]).includes(t) ? t : `${t} (antiguo: elige otro)`}
+                    </option>
+                  ))}
                 </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="e-date" className={labelClass}>
-                  Fecha
-                </label>
+              </Field>
+              <Field id="e-date" label="Fecha *">
                 <input
                   id="e-date"
                   type="date"
                   value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  onChange={(e) => set("date", e.target.value)}
                   className={inputClass}
                 />
-              </div>
+              </Field>
+              <Field id="e-end" label="Fecha de fin" hint="Solo si dura varios días">
+                <input
+                  id="e-end"
+                  type="date"
+                  value={form.endDate}
+                  min={form.date || undefined}
+                  onChange={(e) => set("endDate", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="e-location" className={labelClass}>
-                  Lugar
-                </label>
+            <Field id="e-description" label="Descripción breve (texto)">
+              <textarea
+                id="e-description"
+                rows={3}
+                value={form.description}
+                onChange={(e) => set("description", e.target.value)}
+                className={textareaClass}
+              />
+            </Field>
+            <Field
+              id="e-description-en"
+              label="Descripción en inglés"
+              hint="Vacía = traducción automática al guardar"
+            >
+              <textarea
+                id="e-description-en"
+                rows={3}
+                value={form.descriptionEn}
+                onChange={(e) => set("descriptionEn", e.target.value)}
+                className={textareaClass}
+              />
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="e-location" label="Lugar">
                 <input
                   id="e-location"
                   type="text"
                   value={form.location}
-                  onChange={(e) =>
-                    setForm({ ...form, location: e.target.value })
-                  }
+                  onChange={(e) => set("location", e.target.value)}
                   className={inputClass}
                 />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="e-status" className={labelClass}>
-                  Estado
-                </label>
+              </Field>
+              <Field
+                id="e-status"
+                label="Estado"
+                hint="«Próximo» o «celebrado» se calcula con las fechas; hace falta sobre todo para «Cancelado»."
+              >
                 <select
                   id="e-status"
                   value={form.status}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      status: e.target.value as EventRow["status"],
-                    })
-                  }
+                  onChange={(e) => set("status", e.target.value as EventRow["status"])}
                   className={inputClass}
                 >
                   <option value="UPCOMING">Próximo</option>
                   <option value="PAST">Celebrado</option>
                   <option value="CANCELLED">Cancelado</option>
                 </select>
-                <p className="text-xs text-gray-500">
-                  En la web, «próximo» o «celebrado» se calcula solo a partir
-                  de las fechas; este campo únicamente hace falta para
-                  «Cancelado».
-                </p>
-              </div>
+              </Field>
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="e-url" className={labelClass}>
-                Web del evento (opcional)
-              </label>
+            <Field id="e-url" label="Web del evento (opcional)">
               <input
                 id="e-url"
-                type="url"
+                type="text"
                 placeholder="https://…"
                 value={form.url}
-                onChange={(e) => setForm({ ...form, url: e.target.value })}
+                onChange={(e) => set("url", e.target.value)}
                 className={inputClass}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={labelClass}>Imagen del evento (obligatoria)</label>
-              <div className="flex items-center gap-3">
-                {form.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={form.image}
-                    alt=""
-                    className="h-16 w-24 flex-none rounded-md border border-gray-200 object-cover"
-                  />
-                ) : (
-                  <span className="flex h-16 w-24 flex-none items-center justify-center rounded-md border border-dashed border-gray-300 text-[11px] text-gray-400">
-                    Sin imagen
-                  </span>
-                )}
-                <label
-                  className={cn(
-                    "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50",
-                    uploading && "pointer-events-none opacity-60",
-                  )}
-                >
-                  <Upload className="h-4 w-4" aria-hidden="true" />
-                  {uploading
-                    ? "Subiendo…"
-                    : form.image
-                      ? "Cambiar imagen"
-                      : "Subir imagen"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="hidden"
-                    disabled={uploading}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleImageUpload(f);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-              </div>
-              <input
-                id="e-image"
-                type="text"
-                value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
-                placeholder="…o pega una URL (/uploads/…)"
-                className={inputClass}
-              />
-              <p className="text-xs text-gray-500">
-                Se muestra en la agenda, en el destacado y junto a los eventos
-                celebrados; no se puede guardar un evento sin imagen.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="e-news" className={labelClass}>
-                Crónica asociada (noticia, opcional)
-              </label>
+            </Field>
+            <ImageUploadField
+              id="e-image"
+              label="Cartel o imagen del evento"
+              value={form.image}
+              onChange={(image) => set("image", image)}
+              folder="events"
+              hint="Se muestra en la agenda, en el destacado y en los eventos celebrados."
+            />
+            <Field
+              id="e-news"
+              label="Crónica asociada (noticia, opcional)"
+              hint="En la web, el evento mostrará «Leer la crónica» con el enlace a esa noticia."
+            >
               <select
                 id="e-news"
                 value={form.newsSlug}
-                onChange={(e) =>
-                  setForm({ ...form, newsSlug: e.target.value })
-                }
+                onChange={(e) => set("newsSlug", e.target.value)}
                 className={inputClass}
               >
                 <option value="">— Sin crónica —</option>
@@ -443,17 +446,13 @@ export function EventsSection({
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500">
-                En la web pública, el evento mostrará «Leer la crónica» con el
-                enlace a esa noticia.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 border-t border-gray-100 pt-4">
-              <Button variant="primary" onClick={handleSave} disabled={saving}>
-                {saving ? "Guardando…" : "Guardar"}
-              </Button>
+            </Field>
+            <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
               <Button variant="ghost" onClick={() => setForm(null)}>
                 Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleSave} disabled={saving}>
+                {saving ? "Guardando…" : "Guardar"}
               </Button>
             </div>
           </div>

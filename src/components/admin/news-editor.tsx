@@ -3,17 +3,16 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, FolderOpen, Languages } from "lucide-react";
+import { ArrowLeft, Check, Languages, Loader2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { inputClass, labelClass, textareaClass } from "@/components/admin/form-fields";
+import { errorMessage, sendJson, uploadFile } from "@/components/admin/admin-fetch";
+import { ACCEPT_IMAGE_UPLOAD } from "@/lib/admin-options";
 import { NEWS_CATEGORIES } from "@/lib/content/news";
 import { slugify } from "@/lib/slugify";
 import { cn } from "@/lib/cn";
-
-const inputClass =
-  "h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25";
-const labelClass = "text-[13px] font-medium text-gray-700";
 
 export interface NewsFormValues {
   id?: string;
@@ -24,10 +23,10 @@ export interface NewsFormValues {
   coverImage: string;
   category: string;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  /** Noticia interna: solo visible en la intranet, nunca en la web pública. */
-  internal: boolean;
   publishedAt: string; // yyyy-mm-dd o ""
 }
+
+const CATEGORIES = NEWS_CATEGORIES as readonly string[];
 
 const EMPTY: NewsFormValues = {
   title: "",
@@ -35,23 +34,23 @@ const EMPTY: NewsFormValues = {
   excerpt: "",
   content: "<p></p>",
   coverImage: "",
-  category: NEWS_CATEGORIES[0],
+  category: CATEGORIES[0] ?? "",
   status: "DRAFT",
-  internal: false,
   publishedAt: "",
 };
 
 /**
  * Editor de noticia (alta y edición). El slug se genera automáticamente a
  * partir del título mientras el usuario no lo haya tocado a mano (patrón
- * mupes). Guarda contra /api/admin/news.
+ * mupes). Guarda contra /api/admin/news; las imágenes (del cuerpo y la
+ * portada) se suben a Archivos.
  */
-export function NewsEditor({
-  initial,
-}: Readonly<{ initial?: NewsFormValues }>) {
+export function NewsEditor({ initial }: Readonly<{ initial?: NewsFormValues }>) {
   const router = useRouter();
   const [values, setValues] = useState<NewsFormValues>(initial ?? EMPTY);
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const coverInput = useRef<HTMLInputElement>(null);
   // El slug deja de autogenerarse cuando el usuario lo edita a mano.
   const slugTouched = useRef(Boolean(initial?.id));
 
@@ -77,10 +76,12 @@ export function NewsEditor({
     return list;
   }, [contentImages, values.coverImage]);
 
-  function update<K extends keyof NewsFormValues>(
-    key: K,
-    value: NewsFormValues[K],
-  ) {
+  // Una noticia migrada puede tener una categoría que ya no existe.
+  const categoryOptions = CATEGORIES.includes(values.category)
+    ? CATEGORIES
+    : [...CATEGORIES, values.category];
+
+  function update<K extends keyof NewsFormValues>(key: K, value: NewsFormValues[K]) {
     setValues((v) => ({ ...v, [key]: value }));
   }
 
@@ -92,9 +93,26 @@ export function NewsEditor({
     }));
   }
 
+  async function handleCoverUpload(file: File) {
+    setUploadingCover(true);
+    try {
+      const item = await uploadFile(file, { only: "image", folder: "news" });
+      update("coverImage", item.url);
+      toast.success("Portada subida");
+    } catch (err) {
+      toast.error(errorMessage(err, "No se pudo subir la imagen"));
+    } finally {
+      setUploadingCover(false);
+    }
+  }
+
   async function handleSave() {
     if (values.title.trim().length < 3) {
       toast.error("El título es obligatorio");
+      return;
+    }
+    if (!CATEGORIES.includes(values.category)) {
+      toast.error("Elige una categoría de la lista");
       return;
     }
     setSaving(true);
@@ -102,32 +120,23 @@ export function NewsEditor({
       const payload = {
         title: values.title,
         slug: values.slug,
-        excerpt: values.excerpt || null,
+        excerpt: values.excerpt,
         content: values.content,
-        coverImage: values.coverImage || null,
+        coverImage: values.coverImage,
         category: values.category,
         status: values.status,
-        internal: values.internal,
         publishedAt: values.publishedAt
           ? new Date(`${values.publishedAt}T12:00:00Z`).toISOString()
           : null,
       };
-      const res = await fetch(
-        isNew ? "/api/admin/news" : `/api/admin/news/${values.id}`,
-        {
-          method: isNew ? "POST" : "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "No se pudo guardar");
+      if (isNew) await sendJson("/api/admin/news", "POST", payload);
+      else await sendJson(`/api/admin/news/${values.id}`, "PUT", payload);
 
       toast.success("Guardado");
       router.push("/backstage/news");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar");
+      toast.error(errorMessage(err, "No se pudo guardar"));
     } finally {
       setSaving(false);
     }
@@ -138,10 +147,7 @@ export function NewsEditor({
       <div>
         <Link
           href="/backstage/news"
-          className={cn(
-            buttonClassName({ variant: "ghost", size: "sm" }),
-            "gap-2",
-          )}
+          className={cn(buttonClassName({ variant: "ghost", size: "sm" }), "gap-2")}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Volver
@@ -170,7 +176,7 @@ export function NewsEditor({
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="n-slug" className={labelClass}>
-                Slug
+                Slug (dirección: /noticias/…)
               </label>
               <input
                 id="n-slug"
@@ -194,7 +200,7 @@ export function NewsEditor({
               rows={3}
               value={values.excerpt}
               onChange={(e) => update("excerpt", e.target.value)}
-              className="resize-y rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
+              className={textareaClass}
             />
           </div>
 
@@ -210,8 +216,8 @@ export function NewsEditor({
           <div className="flex flex-col gap-2">
             <span className={labelClass}>Imagen de portada</span>
             <p className="text-xs text-gray-500">
-              Marca cuál de las imágenes del contenido será la cabecera de la
-              noticia. Se mostrará arriba y no se repetirá dentro del texto.
+              Marca cuál de las imágenes del contenido será la cabecera de la noticia
+              (se mostrará arriba y no se repetirá dentro del texto) o sube una aparte.
             </p>
             {coverCandidates.length > 0 ? (
               <div className="flex flex-wrap gap-3">
@@ -221,15 +227,9 @@ export function NewsEditor({
                     <button
                       key={url}
                       type="button"
-                      onClick={() =>
-                        update("coverImage", selected ? "" : url)
-                      }
+                      onClick={() => update("coverImage", selected ? "" : url)}
                       aria-pressed={selected}
-                      title={
-                        selected
-                          ? "Portada actual — clic para quitarla"
-                          : "Usar como portada"
-                      }
+                      title={selected ? "Portada actual — clic para quitarla" : "Usar como portada"}
                       className={cn(
                         "relative h-[84px] w-[112px] overflow-hidden rounded-md border-2 bg-gray-50 transition-all",
                         selected
@@ -267,30 +267,45 @@ export function NewsEditor({
               </div>
             ) : (
               <p className="text-xs text-gray-500">
-                Aún no hay imágenes en el contenido. Insértalas con el botón de
-                imagen del editor y aquí podrás marcar la portada.
+                Aún no hay imágenes en el contenido. Insértalas con el botón de imagen
+                del editor o sube una portada aparte.
               </p>
             )}
             <div className="mt-1 flex items-center gap-2">
               <input
                 id="n-cover"
                 type="text"
+                aria-label="Dirección de la imagen de portada"
                 value={values.coverImage}
                 onChange={(e) => update("coverImage", e.target.value)}
-                placeholder="o pega la URL de una imagen (/uploads/…)"
-                className={cn(
-                  inputClass,
-                  "min-w-0 flex-1 text-[13px] text-gray-600",
-                )}
+                placeholder="o pega la dirección de una imagen (/uploads/…)"
+                className={cn(inputClass, "min-w-0 flex-1 text-[13px] text-gray-600")}
               />
-              <Link
-                href="/backstage/files"
-                aria-label="Elegir archivo"
-                title="Elegir archivo (Archivos)"
-                className="flex h-10 w-10 flex-none items-center justify-center rounded-md border border-gray-300 bg-white text-gray-500 transition-colors hover:bg-gray-50"
+              <button
+                type="button"
+                disabled={uploadingCover}
+                onClick={() => coverInput.current?.click()}
+                className="inline-flex h-10 flex-none items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
               >
-                <FolderOpen className="h-4 w-4" aria-hidden="true" />
-              </Link>
+                {uploadingCover ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Upload className="h-4 w-4" aria-hidden="true" />
+                )}
+                {uploadingCover ? "Subiendo…" : "Subir portada"}
+              </button>
+              <input
+                ref={coverInput}
+                type="file"
+                accept={ACCEPT_IMAGE_UPLOAD}
+                className="hidden"
+                tabIndex={-1}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleCoverUpload(f);
+                  e.target.value = "";
+                }}
+              />
               {values.coverImage ? (
                 <button
                   type="button"
@@ -315,9 +330,9 @@ export function NewsEditor({
                 onChange={(e) => update("category", e.target.value)}
                 className={inputClass}
               >
-                {NEWS_CATEGORIES.map((c) => (
+                {categoryOptions.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {CATEGORIES.includes(c) ? c : `${c} (antigua: elige otra)`}
                   </option>
                 ))}
               </select>
@@ -329,9 +344,7 @@ export function NewsEditor({
               <select
                 id="n-status"
                 value={values.status}
-                onChange={(e) =>
-                  update("status", e.target.value as NewsFormValues["status"])
-                }
+                onChange={(e) => update("status", e.target.value as NewsFormValues["status"])}
                 className={inputClass}
               >
                 <option value="PUBLISHED">Publicada</option>
@@ -353,28 +366,7 @@ export function NewsEditor({
             </div>
           </div>
 
-          {/* Noticia interna (solo intranet) */}
-          <label
-            htmlFor="n-internal"
-            className="flex cursor-pointer items-start gap-3 rounded-md border border-gray-200 bg-gray-50 px-4 py-3"
-          >
-            <input
-              id="n-internal"
-              type="checkbox"
-              checked={values.internal}
-              onChange={(e) => update("internal", e.target.checked)}
-              className="mt-[3px] h-4 w-4 accent-diderot-indigo"
-            />
-            <span className="text-[13px] leading-relaxed text-gray-700">
-              <span className="font-semibold">
-                Noticia interna (solo intranet).
-              </span>{" "}
-              No aparecerá en la web pública: solo la verán los miembros del
-              IUCE dentro de la intranet.
-            </span>
-          </label>
-
-          <div className="flex items-center gap-3 border-t border-gray-100 pt-4">
+          <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4">
             <Button variant="primary" onClick={handleSave} disabled={saving}>
               {saving ? "Guardando…" : "Guardar cambios"}
             </Button>
@@ -383,7 +375,8 @@ export function NewsEditor({
             </Link>
             <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
               <Languages className="h-[13px] w-[13px]" aria-hidden="true" />
-              Se traduce automáticamente al inglés al guardar
+              Se traduce automáticamente al inglés al guardar (si la traducción está
+              configurada)
             </span>
           </div>
         </div>

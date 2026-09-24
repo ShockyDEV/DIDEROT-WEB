@@ -1,88 +1,134 @@
 import { metadataBilingue } from "@/lib/metadata";
-import { Clock, Compass, Mail, MapPin, Phone } from "lucide-react";
+import { AtSign, Compass, Mail, MapPin, UserRound } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
-import { MapEmbed } from "@/components/ui/map-embed";
 import { ContactForm } from "@/components/contact/contact-form";
+import { MapConsent } from "@/components/contact/map-consent";
 import { Reveal } from "@/components/ui/reveal";
 import { getBlock, getBlockText } from "@/lib/content-blocks-service";
 import { withLocale } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
-
 import { assertVisible } from "@/lib/page-visibility";
+import { CONTACT_SUBJECT_KEYS } from "@/lib/validations";
 
 export const generateMetadata = metadataBilingue(
   {
     title: "Contacto",
     description:
-      "Contacta con la Secretaría del IUCE: formación, investigación, doctorado y uso de espacios. Paseo de Canalejas 169, Salamanca.",
+      "Contacta con DIDEROT, Grupo de Investigación Reconocido de la Universidad de Salamanca: colaboración en investigación, doctorado, transferencia, eventos y medios. IUCE, Edificio Solís, Paseo de Canalejas 169, Salamanca.",
   },
   {
     title: "Contact",
     description:
-      "Get in touch with the IUCE Secretariat: training, research, doctoral studies and use of facilities. Paseo de Canalejas 169, Salamanca.",
+      "Get in touch with DIDEROT, a Recognised Research Group of the University of Salamanca: research collaboration, PhD, knowledge transfer, events and media. IUCE, Solís Building, Paseo de Canalejas 169, Salamanca.",
   },
 );
 
 export const dynamic = "force-dynamic";
 
 // Textos fijos de la página en ambos idiomas (los datos editables —dirección,
-// teléfonos, horario, cómo llegar— llegan ya traducidos del servicio de bloques).
+// coordinación, correo, redes, cómo llegar— llegan ya traducidos del
+// servicio de bloques).
 const T = {
   es: {
     inicio: "Inicio",
     contacto: "Contacto",
-    titulo: "Contacta con el IUCE",
+    titulo: "Contacta con DIDEROT",
     direccion: "Dirección",
-    telefono: "Teléfono",
+    coordinacion: "Coordinación del grupo",
     correo: "Correo electrónico",
-    horario: "Horario de Secretaría",
-    mapaTitle: "Mapa — Edificio Solís, Paseo de Canalejas 169, Salamanca",
-    reservaPregunta: "¿Necesitas un aula o una sala? Usa el sistema de",
-    reservaEnlace: "reserva de espacios ↗",
+    redes: "Redes sociales",
+    mapaTitle: "Mapa — Edificio Solís (IUCE), Paseo de Canalejas 169, Salamanca",
     comoLlegar: "Cómo llegar",
   },
   en: {
     inicio: "Home",
     contacto: "Contact",
-    titulo: "Contact the IUCE",
+    titulo: "Contact DIDEROT",
     direccion: "Address",
-    telefono: "Phone",
+    coordinacion: "Group coordinator",
     correo: "Email",
-    horario: "Secretariat opening hours",
-    mapaTitle: "Map — Solís Building, Paseo de Canalejas 169, Salamanca",
-    reservaPregunta: "Need a classroom or a meeting room? Use the",
-    reservaEnlace: "room booking system ↗",
+    redes: "Social media",
+    mapaTitle: "Map — Solís Building (IUCE), Paseo de Canalejas 169, Salamanca",
     comoLlegar: "How to find us",
   },
 } as const;
 
-export default async function ContactoPage() {
+/** Sede del grupo para el mapa (búsqueda de Google Maps). */
+const MAP_QUERY = "Edificio Solís, Paseo de Canalejas 169, 37008 Salamanca";
+
+/** Dirección de correo con forma válida (lo que llega del panel es texto libre). */
+const EMAIL_RE = /^[^\s@<>"'()]+@[^\s@<>"'()]+\.[a-z]{2,}$/i;
+
+interface PageProps {
+  searchParams: { asunto?: string };
+}
+
+interface Dato {
+  icon: LucideIcon;
+  title: string;
+  /** HTML de un bloque del gestor… */
+  html?: string;
+  /** …o contenido ya maquetado. */
+  node?: React.ReactNode;
+}
+
+export default async function ContactoPage({
+  searchParams,
+}: Readonly<PageProps>) {
   await assertVisible("contacto");
 
   const locale = getLocale();
   const t = T[locale];
   const href = (path: string) => withLocale(path, locale);
   // Todos los textos de datos salen del gestor (Contenido → Páginas → Contacto).
-  const [intro, direccion, telefonos, horario, urlPrivacidad, comoLlegar] =
-    await Promise.all([
-      getBlock("contacto", "intro"),
-      getBlock("contacto", "direccion"),
-      getBlock("contacto", "telefonos"),
-      getBlock("contacto", "horario"),
-      getBlockText("contacto", "url-privacidad"),
-      getBlock("contacto", "como-llegar"),
-    ]);
+  const [
+    intro,
+    direccion,
+    coordinacion,
+    correo,
+    redes,
+    urlPrivacidad,
+    comoLlegar,
+  ] = await Promise.all([
+    getBlock("contacto", "intro"),
+    getBlock("contacto", "direccion"),
+    getBlock("contacto", "coordinacion"),
+    getBlockText("contacto", "correo"),
+    getBlock("contacto", "redes"),
+    getBlockText("contacto", "url-privacidad"),
+    getBlock("contacto", "como-llegar"),
+  ]);
 
-  const datos = [
-    { icon: MapPin, title: t.direccion, html: direccion },
-    { icon: Phone, title: t.telefono, html: telefonos },
-    {
-      icon: Mail,
-      title: t.correo,
-      html: `<p><a href="mailto:iuce@usal.es">iuce@usal.es</a></p>`,
-    },
-    { icon: Clock, title: t.horario, html: horario },
+  // Asunto preseleccionado desde otras páginas (/contacto?asunto=doctorado).
+  const defaultSubject = CONTACT_SUBJECT_KEYS[searchParams.asunto ?? ""];
+
+  // Un bloque vaciado en el panel (solo etiquetas o espacios) oculta su dato.
+  const lleno = (html: string) => html.replace(/<[^>]*>|&nbsp;|\s/g, "") !== "";
+  const email = EMAIL_RE.test(correo) ? correo : null;
+
+  const candidatos: Array<Dato | null> = [
+    lleno(direccion) ? { icon: MapPin, title: t.direccion, html: direccion } : null,
+    lleno(coordinacion)
+      ? { icon: UserRound, title: t.coordinacion, html: coordinacion }
+      : null,
+    email
+      ? {
+          icon: Mail,
+          title: t.correo,
+          node: (
+            <a
+              href={`mailto:${email}`}
+              className="break-all text-diderot-violet hover:underline"
+            >
+              {email}
+            </a>
+          ),
+        }
+      : null,
+    lleno(redes) ? { icon: AtSign, title: t.redes, html: redes } : null,
   ];
+  const datos = candidatos.filter((d): d is Dato => d !== null);
 
   return (
     <>
@@ -100,7 +146,7 @@ export default async function ContactoPage() {
           <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-diderot-amber">
             {t.contacto}
           </p>
-          <h1 className="mb-3.5 text-4xl font-bold leading-tight tracking-tight text-ink">
+          <h1 className="mb-3.5 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
             {t.titulo}
           </h1>
           <div
@@ -121,44 +167,45 @@ export default async function ContactoPage() {
                   <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-md bg-diderot-pale text-ink">
                     <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900">
                       {d.title}
                     </p>
-                    <div
-                      className="page-block mt-0.5 text-sm leading-normal text-gray-600"
-                      dangerouslySetInnerHTML={{ __html: d.html }}
-                    />
+                    {d.html ? (
+                      <div
+                        className="page-block mt-0.5 text-sm leading-normal text-gray-600"
+                        dangerouslySetInnerHTML={{ __html: d.html }}
+                      />
+                    ) : (
+                      <div className="mt-0.5 text-sm leading-normal text-gray-600">
+                        {d.node}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
 
-            <MapEmbed className="h-[280px]" title={t.mapaTitle} />
-
-            <div className="rounded-md border border-gray-200 border-l-[3px] border-l-diderot-amber bg-surface-card px-[18px] py-3.5">
-              <p className="text-sm leading-relaxed text-gray-600">
-                {t.reservaPregunta}{" "}
-                <a
-                  href="https://reservas.iuce.usal.es"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-diderot-violet hover:underline"
-                >
-                  {t.reservaEnlace}
-                </a>
-              </p>
-            </div>
+            <MapConsent
+              query={MAP_QUERY}
+              title={t.mapaTitle}
+              locale={locale}
+              className="h-[280px]"
+            />
           </Reveal>
 
           <Reveal from="right" delay={120}>
-            <ContactForm privacyUrl={urlPrivacidad} locale={locale} />
+            <ContactForm
+              privacyUrl={urlPrivacidad}
+              locale={locale}
+              defaultSubject={defaultSubject}
+            />
           </Reveal>
         </div>
       </section>
 
-      {/* Cómo llegar (transporte y plano de las instalaciones) */}
-      {comoLlegar ? (
+      {/* Cómo llegar (transporte) */}
+      {lleno(comoLlegar) ? (
         <section className="border-t border-gray-200 bg-surface-card">
           <div className="mx-auto max-w-6xl px-6 py-14">
             <div className="mb-5 flex items-center gap-3">

@@ -1,28 +1,190 @@
 /**
- * Últimos artículos de la dirección del IUCE, leídos de la API PÚBLICA de
- * ORCID (pub.orcid.org, sin clave). Cada respuesta se cachea 24 horas con el
- * `revalidate` de fetch, de modo que la banda de Publicaciones se renueva
- * sola cuando la dirección publica algo nuevo, sin cron ni edición manual.
+ * Cliente de la API PÚBLICA de ORCID (pub.orcid.org v3.0, sin credenciales)
+ * para importar publicaciones desde el panel (Publicaciones → Importar desde
+ * ORCID). Solo lectura de datos públicos; la conversión a publicaciones y la
+ * deduplicación son funciones puras en orcid-import.ts.
  *
- * Si ORCID no responde, algún miembro no tiene ORCID o no hay resultados,
- * se devuelve null y la página cae a la lista editable del panel
- * (investigacion · list:publicaciones), que queda como reserva.
+ * Por cada ORCID se hacen: 1 petición de obras (/works), 1 de datos
+ * personales (/personal-details, para escribir bien el nombre del titular)
+ * y 1 por cada 100 obras para el detalle en bloque (/works/{pc1,pc2…}),
+ * que es donde vienen los autores. Cada petición tiene su timeout
+ * (AbortController) y el resultado se guarda 10 minutos en memoria para que
+ * «vista previa → importar» no descargue todo dos veces.
  */
-import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/lib/locale";
-
-const CARGOS_DIRECCION = ["Directora", "Subdirector", "Secretario Académico"];
-const CARGO_EN: Record<string, string> = {
-  Directora: "Director",
-  Subdirector: "Deputy Director",
-  "Secretario Académico": "Academic Secretary",
-};
+import {
+  ownerFromPersonalDetails,
+  preferredSummary,
+  type OrcidBulkResponse,
+  type OrcidOwner,
+  type OrcidPersonalDetails,
+  type OrcidWork,
+  type OrcidWorksResponse,
+} from "@/lib/orcid-import";
 
 const ORCID_API = "https://pub.orcid.org/v3.0";
-const FETCH_OPTS = {
-  headers: { Accept: "application/json" },
-  next: { revalidate: 86400 }, // 24 h
-} as const;
+const TIMEOUT_MS = 10_000;
+/** Máximo de put-codes por petición de detalle en bloque (límite de ORCID). */
+const BULK_SIZE = 100;
+/** Tope de obras por ORCID (protege al servidor de perfiles enormes). */
+const MAX_WORKS = 600;
+const CACHE_TTL_MS = 10 * 60_000;
+const CACHE_MAX = 50;
+
+/** Error de ORCID con un mensaje apto para mostrarlo en el panel. */
+export class OrcidError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+async function orcidGet<T>(path: string): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(`${ORCID_API}${path}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    if (res.status === 404) {
+      throw new OrcidError("Ese ORCID iD no existe o no tiene datos públicos", 404);
+    }
+    if (!res.ok) {
+      throw new OrcidError(`ORCID respondió con un error (${res.status})`, 502);
+    }
+    return (await res.json()) as T;
+  } catch (err) {
+    if (err instanceof OrcidError) throw err;
+    if (controller.signal.aborted) {
+      throw new OrcidError("ORCID no respondió a tiempo; inténtalo de nuevo", 504);
+    }
+    throw new OrcidError("No se pudo conectar con ORCID", 502);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export interface OrcidRecord {
+  orcid: string;
+  owner: OrcidOwner;
+  works: OrcidWorksResponse;
+  /** Detalle de cada obra por put-code (puede faltar alguno). */
+  details: Map<number, OrcidWork>;
+  /** true si el perfil tenía más obras que MAX_WORKS. */
+  truncated: boolean;
+}
+
+const cache = new Map<string, { at: number; record: OrcidRecord }>();
+
+function chunks<T>(list: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  return out;
+}
+
+/**
+ * Obras públicas de un ORCID iD (ya validado) con su detalle. Lanza
+ * OrcidError si la lista de obras no se puede obtener; si falla el detalle o
+ * los datos personales, sigue con lo que haya (autores = titular).
+ */
+export async function fetchOrcidRecord(
+  orcid: string,
+  fallbackName: string | null = null,
+): Promise<OrcidRecord> {
+  const hit = cache.get(orcid);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+    return {
+      ...hit.record,
+      owner: { ...hit.record.owner, fallbackName: fallbackName ?? hit.record.owner.fallbackName },
+    };
+  }
+
+  const [works, personal] = await Promise.all([
+    orcidGet<OrcidWorksResponse>(`/${orcid}/works`),
+    orcidGet<OrcidPersonalDetails>(`/${orcid}/personal-details`).catch(() => null),
+  ]);
+
+  const groups = works.group ?? [];
+  const truncated = groups.length > MAX_WORKS;
+  const kept: OrcidWorksResponse = { group: groups.slice(0, MAX_WORKS) };
+
+  const putCodes = (kept.group ?? [])
+    .map((g) => preferredSummary(g)?.["put-code"])
+    .filter((pc): pc is number => typeof pc === "number");
+
+  const details = new Map<number, OrcidWork>();
+  for (const part of chunks(putCodes, BULK_SIZE)) {
+    try {
+      const bulk = await orcidGet<OrcidBulkResponse>(`/${orcid}/works/${part.join(",")}`);
+      // La respuesta no respeta el orden pedido: se indexa por put-code.
+      for (const item of bulk.bulk ?? []) {
+        const pc = item.work?.["put-code"];
+        if (item.work && typeof pc === "number") details.set(pc, item.work);
+      }
+    } catch {
+      // Sin detalle: las obras se importan con los datos del resumen.
+    }
+  }
+
+  const record: OrcidRecord = {
+    orcid,
+    owner: ownerFromPersonalDetails(orcid, personal, fallbackName),
+    works: kept,
+    details,
+    truncated,
+  };
+
+  if (cache.size >= CACHE_MAX) {
+    const oldest = [...cache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+    if (oldest) cache.delete(oldest[0]);
+  }
+  cache.set(orcid, { at: Date.now(), record });
+  return record;
+}
+
+export interface OrcidFetchResult {
+  orcid: string;
+  record: OrcidRecord | null;
+  /** Mensaje para el panel si no se pudo leer ese ORCID. */
+  error: string | null;
+}
+
+/**
+ * Varios ORCID a la vez, de 3 en 3 (ORCID limita las peticiones por
+ * segundo). Los fallos de uno no impiden leer los demás.
+ */
+export async function fetchOrcidRecords(
+  sources: ReadonlyArray<{ orcid: string; name: string | null }>,
+  concurrency = 3,
+): Promise<OrcidFetchResult[]> {
+  const results: OrcidFetchResult[] = new Array(sources.length);
+  let next = 0;
+  async function worker() {
+    while (next < sources.length) {
+      const i = next++;
+      const { orcid, name } = sources[i];
+      try {
+        results[i] = { orcid, record: await fetchOrcidRecord(orcid, name), error: null };
+      } catch (err) {
+        results[i] = {
+          orcid,
+          record: null,
+          error: err instanceof OrcidError ? err.message : "No se pudo consultar ORCID",
+        };
+      }
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, sources.length) }, () => worker()),
+  );
+  return results;
+}
+
+/* ── Compatibilidad ─────────────────────────────────────────────────────── */
 
 export interface ArticuloDireccion {
   eyebrow: string;
@@ -32,145 +194,15 @@ export interface ArticuloDireccion {
   enlace: string;
 }
 
-/* Formas mínimas de la respuesta de ORCID que se consumen. */
-interface OrcidDatePart {
-  value?: string;
-}
-interface OrcidWorkSummary {
-  "put-code"?: number;
-  title?: { title?: { value?: string } };
-  "journal-title"?: { value?: string };
-  url?: { value?: string };
-  "publication-date"?: {
-    year?: OrcidDatePart;
-    month?: OrcidDatePart;
-    day?: OrcidDatePart;
-  };
-  "external-ids"?: {
-    "external-id"?: Array<{
-      "external-id-type"?: string;
-      "external-id-value"?: string;
-      "external-id-url"?: { value?: string };
-    }>;
-  };
-}
-interface OrcidWorks {
-  group?: Array<{ "work-summary"?: OrcidWorkSummary[] }>;
-}
-interface OrcidWorkDetail {
-  contributors?: {
-    contributor?: Array<{ "credit-name"?: { value?: string } }>;
-  };
-}
-
-/** Extrae el identificador 0000-0000-0000-0000 de la URL guardada en la ficha. */
-function orcidIdFrom(url: string | null): string | null {
-  const m = /(\d{4}-\d{4}-\d{4}-[\dX]{4})/.exec(url ?? "");
-  return m ? m[1] : null;
-}
-
-/** Última obra publicada de un ORCID (título, revista, enlace, autores, año). */
-async function latestWorkFor(orcidId: string): Promise<{
-  titulo: string;
-  revista: string;
-  enlace: string;
-  autores: string;
-  year: number;
-} | null> {
-  const res = await fetch(`${ORCID_API}/${orcidId}/works`, {
-    ...FETCH_OPTS,
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!res.ok) return null;
-  const json = (await res.json()) as OrcidWorks;
-  const summaries = (json.group ?? []).flatMap((g) => g["work-summary"] ?? []);
-  const dated = summaries
-    .map((s) => {
-      const d = s["publication-date"];
-      const year = Number(d?.year?.value ?? 0);
-      const month = Number(d?.month?.value ?? 1);
-      const day = Number(d?.day?.value ?? 1);
-      return { s, year, key: year * 10000 + month * 100 + day };
-    })
-    .filter((x) => x.year > 0)
-    .sort((a, b) => b.key - a.key);
-  const top = dated[0];
-  if (!top) return null;
-
-  const s = top.s;
-  const titulo = s.title?.title?.value ?? "";
-  if (!titulo) return null;
-  const revista = s["journal-title"]?.value ?? "";
-  const ids = s["external-ids"]?.["external-id"] ?? [];
-  const doi = ids.find((i) => i["external-id-type"] === "doi");
-  const enlace =
-    doi?.["external-id-url"]?.value ??
-    (doi?.["external-id-value"]
-      ? `https://doi.org/${doi["external-id-value"]}`
-      : (s.url?.value ?? `https://orcid.org/${orcidId}`));
-
-  // Los autores solo están en el detalle de la obra.
-  let autores = "";
-  const putCode = s["put-code"];
-  if (putCode !== undefined) {
-    try {
-      const det = await fetch(`${ORCID_API}/${orcidId}/work/${putCode}`, {
-        ...FETCH_OPTS,
-        signal: AbortSignal.timeout(8000),
-      });
-      if (det.ok) {
-        const w = (await det.json()) as OrcidWorkDetail;
-        const names = (w.contributors?.contributor ?? [])
-          .map((c) => c["credit-name"]?.value)
-          .filter((n): n is string => Boolean(n));
-        if (names.length > 0) {
-          autores =
-            names.length > 6
-              ? `${names.slice(0, 6).join("; ")} et al.`
-              : names.join("; ");
-        }
-      }
-    } catch {
-      // sin autores: la tarjeta se muestra igual
-    }
-  }
-  return { titulo, revista, enlace, autores, year: top.year };
-}
-
 /**
- * Un artículo (el más reciente) por cada miembro de la dirección con ORCID,
- * en el orden institucional. null si no se pudo obtener ninguno.
+ * @deprecated Heredado de la web del IUCE («últimos artículos de la
+ * dirección», que buscaba cargos del IUCE). En DIDEROT la producción
+ * científica sale de la tabla Publication (panel → Publicaciones). Devuelve
+ * siempre null, que la página trata como «usar su lista de reserva»; se
+ * mantiene solo mientras /investigacion siga importándolo.
  */
 export async function getArticulosDireccion(
-  locale: Locale,
+  _locale: Locale,
 ): Promise<ArticuloDireccion[] | null> {
-  try {
-    const direccion = await prisma.member.findMany({
-      where: { active: true, role: { in: CARGOS_DIRECCION } },
-      select: { role: true, orcid: true },
-    });
-    const ordenada = CARGOS_DIRECCION.flatMap((cargo) => {
-      const m = direccion.find((d) => d.role === cargo);
-      return m ? [{ cargo, orcid: m.orcid }] : [];
-    });
-
-    const items: ArticuloDireccion[] = [];
-    for (const d of ordenada) {
-      const id = orcidIdFrom(d.orcid);
-      if (!id) continue;
-      const w = await latestWorkFor(id);
-      if (!w) continue;
-      const cargo = locale === "en" ? (CARGO_EN[d.cargo] ?? d.cargo) : d.cargo;
-      items.push({
-        eyebrow: `${cargo} · ${w.year}`,
-        titulo: w.titulo,
-        autores: w.autores,
-        revista: w.revista,
-        enlace: w.enlace,
-      });
-    }
-    return items.length > 0 ? items : null;
-  } catch {
-    return null;
-  }
+  return null;
 }

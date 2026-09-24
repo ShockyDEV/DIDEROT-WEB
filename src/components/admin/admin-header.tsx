@@ -9,16 +9,14 @@ const TITLES: Array<[prefix: string, title: string]> = [
   ["/backstage/news/", "Editar noticia"],
   ["/backstage/news", "Noticias"],
   ["/backstage/pages", "Contenido de páginas"],
-  ["/backstage/visualizacion", "Visualización"],
-  ["/backstage/members", "Equipo y miembros"],
-  ["/backstage/groups", "Grupos de investigación"],
-  ["/backstage/projects", "Proyectos de investigación"],
-  ["/backstage/events", "Eventos"],
   ["/backstage/files", "Archivos"],
+  ["/backstage/members", "Equipo"],
+  ["/backstage/publications", "Publicaciones"],
+  ["/backstage/projects", "Proyectos"],
+  ["/backstage/events", "Eventos"],
   ["/backstage/messages", "Mensajes de contacto"],
+  ["/backstage/visualizacion", "Visualización"],
   ["/backstage/settings", "Configuración"],
-  ["/backstage/intranet/users", "Área de miembros — Usuarios autorizados"],
-  ["/backstage/intranet/files", "Área de miembros — Documentos internos"],
   ["/backstage", "Dashboard"],
 ];
 
@@ -33,17 +31,16 @@ interface AdminHeaderProps {
   userRole: string;
 }
 
-export function AdminHeader({
-  userName,
-  userEmail,
-  userRole,
-}: Readonly<AdminHeaderProps>) {
+export function AdminHeader({ userName, userEmail, userRole }: Readonly<AdminHeaderProps>) {
   const pathname = usePathname();
-  const title = TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "Admin";
+  const title = TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "Panel";
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
-      <h1 className="text-[17px] font-semibold text-gray-900">{title}</h1>
+      <h1 className="text-[17px] font-semibold text-gray-900">
+        {title}
+        <span className="ml-2 text-[13px] font-normal text-gray-500">· DIDEROT</span>
+      </h1>
       <div className="flex-1" />
       <div className="text-right">
         <p className="text-[13px] font-medium text-gray-700">{userName}</p>

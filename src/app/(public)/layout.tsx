@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/layout/site-header";
 import { InstitutionalFooter } from "@/components/layout/institutional-footer";
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { getHiddenPaths } from "@/lib/page-visibility";
 import { getLocale } from "@/lib/locale-server";
 import { pick } from "@/lib/locale";
@@ -26,6 +27,8 @@ export default async function PublicLayout({
       <SiteHeader hiddenPaths={hiddenPaths} />
       <main id="contenido">{children}</main>
       <InstitutionalFooter />
+      {/* Analítica propia sin cookies (panel → Dashboard). */}
+      <PageViewTracker />
     </>
   );
 }

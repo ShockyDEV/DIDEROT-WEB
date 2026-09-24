@@ -1,191 +1,222 @@
 /**
- * Semilla de la base de datos con el contenido real de los prototipos
- * (docs/design). Es idempotente: usa upsert/creación condicional, así que
- * puede ejecutarse varias veces sin duplicar datos.
+ * Semilla de la base de datos de DIDEROT con contenido REAL:
+ *  - equipo (Portal de Producción Científica de la USAL, grupo 12132),
+ *  - proyectos (portal + memoria del IUCE),
+ *  - publicaciones (portal: producción del grupo + tesis dirigidas),
+ *  - eventos (carteles del Seminario Internacional) y noticias iniciales,
+ *  - cuentas de administración.
+ * Detalle de fuentes en prisma/data/*.
  *
- * Ejecutar con: npm run db:seed
+ * Es IDEMPOTENTE y de SOLO RELLENO: crea lo que falta y nunca sobrescribe lo
+ * que ya existe (lo editado desde el panel manda). Ejecutar con:
+ *   npm run db:seed
  *
- * La cuenta SUPER_ADMIN inicial se controla con las variables de entorno
- * ADMIN_EMAIL / ADMIN_PASSWORD (con valores de desarrollo por defecto).
+ * Cuentas: ADMIN_EMAIL / ADMIN_PASSWORD (SUPER_ADMIN del grupo) y
+ * TECH_ADMIN_EMAIL / TECH_ADMIN_PASSWORD (SUPER_ADMIN técnico). En
+ * producción es OBLIGATORIO fijar contraseñas propias (≥ 12 caracteres): el
+ * seed se niega a crear cuentas con las contraseñas de desarrollo.
  */
-import { PrismaClient } from "@prisma/client";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { PrismaClient, type PublicationType } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
-import { news } from "../src/lib/content/news";
-import { featuredEvent, pastEvents, upcomingEvents } from "../src/lib/content/events";
-import { groups } from "../src/lib/content/groups";
-import { members } from "../src/lib/content/members";
+import {
+  members,
+  orcidUrl,
+  portalUrl,
+  scholarUrl,
+  scopusUrl,
+} from "./data/members";
+import { projects } from "./data/projects";
+import { events } from "./data/events";
+import { news } from "./data/news";
 
 const prisma = new PrismaClient();
 
-async function main() {
-  // --- Cuenta SUPER_ADMIN inicial -----------------------------------------
-  const adminEmail = process.env.ADMIN_EMAIL ?? "iuce@usal.es";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "iuce-admin-2026";
-  const passwordHash = await bcrypt.hash(adminPassword, 10);
+const DEV_ADMIN_PASSWORD = "diderot-admin-dev";
 
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {},
-    create: {
-      email: adminEmail,
-      name: "Administración IUCE",
-      passwordHash,
-      role: "SUPER_ADMIN",
-    },
-  });
-  console.log(`✓ Usuario SUPER_ADMIN: ${adminEmail}`);
+interface PublicationSeed {
+  title: string;
+  authors: string;
+  year: number;
+  type: PublicationType;
+  venue: string | null;
+  details: string | null;
+  doi: string | null;
+  url: string | null;
+  abstract: string | null;
+  openAccess: boolean;
+  featured: boolean;
+  published: boolean;
+  source: string;
+}
 
-  // La cuenta técnica del Instituto SIEMPRE está de alta como SUPER_ADMIN.
-  // Si ya existe se garantiza el rol sin tocar su contraseña.
-  const techEmail = "iuce.tecnico@usal.es";
-  const techHash = await bcrypt.hash(
-    process.env.TECH_ADMIN_PASSWORD ?? adminPassword,
-    10,
-  );
-  await prisma.user.upsert({
-    where: { email: techEmail },
-    update: { role: "SUPER_ADMIN" },
-    create: {
-      email: techEmail,
-      name: "Enrique González Gutiérrez (técnico)",
-      passwordHash: techHash,
-      role: "SUPER_ADMIN",
-    },
-  });
-  console.log(`✓ Usuario SUPER_ADMIN técnico: ${techEmail}`);
-
-  // --- Lista blanca inicial de la intranet ----------------------------------
-  const intranetEmails = [
-    { email: "iuce@usal.es", name: "Administración IUCE" },
-    { email: "iuce.tecnico@usal.es", name: "Enrique González Gutiérrez (técnico)" },
-    { email: "enriquemico8@gmail.com", name: "Enrique (técnico)" },
-  ];
-  for (const u of intranetEmails) {
-    await prisma.intranetUser.upsert({
-      where: { email: u.email },
-      update: { active: true },
-      create: { email: u.email, name: u.name, active: true },
-    });
+function resolvePassword(envName: string, fallback?: string): string {
+  const value = process.env[envName] ?? fallback;
+  const isProd = process.env.NODE_ENV === "production";
+  if (!value) {
+    throw new Error(`Falta ${envName}`);
   }
-  console.log(`✓ ${intranetEmails.length} usuarios autorizados de intranet`);
+  if (isProd && (value === DEV_ADMIN_PASSWORD || value.length < 12)) {
+    throw new Error(
+      `${envName}: en producción la contraseña debe ser propia y tener al menos 12 caracteres`,
+    );
+  }
+  return value;
+}
 
-  // --- Noticias -------------------------------------------------------------
+async function seedAccounts() {
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "diderot@usal.es").toLowerCase();
+  // La contraseña solo se exige si hay que CREAR la cuenta: así la semilla
+  // se puede repetir tras borrar las contraseñas del .env.
+  const adminPassword = () =>
+    resolvePassword(
+      "ADMIN_PASSWORD",
+      process.env.NODE_ENV === "production" ? undefined : DEV_ADMIN_PASSWORD,
+    );
+  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (!existingAdmin) {
+    await prisma.user.create({
+      data: {
+        email: adminEmail,
+        name: "Administración DIDEROT",
+        passwordHash: await bcrypt.hash(adminPassword(), 12),
+        role: "SUPER_ADMIN",
+      },
+    });
+    console.log(`✓ Cuenta SUPER_ADMIN creada: ${adminEmail}`);
+  } else {
+    console.log(`· Cuenta SUPER_ADMIN ya existente: ${adminEmail} (contraseña sin tocar)`);
+  }
+
+  // Cuenta técnica: siempre SUPER_ADMIN; si ya existe solo se garantiza el rol.
+  const techEmail = process.env.TECH_ADMIN_EMAIL?.toLowerCase();
+  if (techEmail && techEmail !== adminEmail) {
+    const existingTech = await prisma.user.findUnique({ where: { email: techEmail } });
+    if (existingTech) {
+      if (existingTech.role !== "SUPER_ADMIN") {
+        await prisma.user.update({ where: { email: techEmail }, data: { role: "SUPER_ADMIN" } });
+      }
+      console.log(`· Cuenta técnica ya existente: ${techEmail}`);
+    } else {
+      const techPassword = resolvePassword(
+        "TECH_ADMIN_PASSWORD",
+        process.env.ADMIN_PASSWORD ?? (process.env.NODE_ENV === "production" ? undefined : DEV_ADMIN_PASSWORD),
+      );
+      await prisma.user.create({
+        data: {
+          email: techEmail,
+          name: "Soporte técnico",
+          passwordHash: await bcrypt.hash(techPassword, 12),
+          role: "SUPER_ADMIN",
+        },
+      });
+      console.log(`✓ Cuenta técnica SUPER_ADMIN creada: ${techEmail}`);
+    }
+  }
+}
+
+async function seedMembers() {
+  let created = 0;
+  for (const m of members) {
+    const exists = await prisma.member.findFirst({ where: { name: m.name } });
+    if (exists) continue;
+    await prisma.member.create({
+      data: {
+        name: m.name,
+        category: m.category,
+        role: m.role,
+        roleEn: m.roleEn,
+        affiliation: m.affiliation,
+        area: m.area,
+        email: m.email,
+        photo: m.photo,
+        portalUrl: portalUrl(m.portalId),
+        orcid: m.orcid ? orcidUrl(m.orcid) : undefined,
+        scopus: m.scopus ? scopusUrl(m.scopus) : undefined,
+        scholar: m.scholar ? scholarUrl(m.scholar) : undefined,
+        order: m.order,
+        active: true,
+      },
+    });
+    created++;
+  }
+  console.log(`✓ Equipo: ${created} creados (${members.length} en la semilla)`);
+}
+
+async function seedProjects() {
+  let created = 0;
+  for (const p of projects) {
+    const exists = await prisma.project.findFirst({
+      where: p.reference
+        ? { OR: [{ reference: p.reference }, { title: p.title }] }
+        : { title: p.title },
+    });
+    if (exists) continue;
+    await prisma.project.create({ data: { ...p, active: true, featured: p.featured ?? false } });
+    created++;
+  }
+  console.log(`✓ Proyectos: ${created} creados (${projects.length} en la semilla)`);
+}
+
+async function seedPublications() {
+  const file = path.join(__dirname, "data", "publications.json");
+  const pubs = JSON.parse(readFileSync(file, "utf8")) as PublicationSeed[];
+  let created = 0;
+  for (const p of pubs) {
+    const exists = p.doi
+      ? await prisma.publication.findUnique({ where: { doi: p.doi } })
+      : await prisma.publication.findFirst({ where: { title: p.title, year: p.year } });
+    if (exists) continue;
+    await prisma.publication.create({ data: p });
+    created++;
+  }
+  console.log(`✓ Publicaciones: ${created} creadas (${pubs.length} en la semilla)`);
+}
+
+async function seedEvents() {
+  let created = 0;
+  for (const e of events) {
+    const exists = await prisma.event.findFirst({ where: { title: e.title } });
+    if (exists) continue;
+    await prisma.event.create({
+      data: { ...e, startsAt: new Date(e.startsAt) },
+    });
+    created++;
+  }
+  console.log(`✓ Eventos: ${created} creados (${events.length} en la semilla)`);
+}
+
+async function seedNews() {
+  let created = 0;
   for (const n of news) {
-    await prisma.news.upsert({
-      where: { slug: n.slug },
-      update: {},
-      create: {
-        title: n.title,
-        slug: n.slug,
-        excerpt: n.excerpt,
-        content: n.content,
-        category: n.category,
+    const exists = await prisma.news.findUnique({ where: { slug: n.slug } });
+    if (exists) continue;
+    await prisma.news.create({
+      data: {
+        ...n,
         status: "PUBLISHED",
         publishedAt: new Date(n.publishedAt),
       },
     });
+    created++;
   }
-  console.log(`✓ ${news.length} noticias`);
+  console.log(`✓ Noticias: ${created} creadas (${news.length} en la semilla)`);
+}
 
-  // --- Grupos de investigación ----------------------------------------------
-  const groupIds = new Map<string, string>();
-  for (const g of groups) {
-    const existing = await prisma.researchGroup.findFirst({
-      where: { acronym: g.acronym },
-    });
-    const row = existing
-      ? // Refresca la traducción EN en grupos ya sembrados (idempotente).
-        await prisma.researchGroup.update({
-          where: { id: existing.id },
-          data: { nameEn: g.nameEn ?? existing.nameEn },
-        })
-      : await prisma.researchGroup.create({
-          data: {
-            acronym: g.acronym,
-            name: g.name,
-            nameEn: g.nameEn,
-            lead: g.lead,
-            url: g.url,
-            logo: g.logo,
-            chip: g.chip,
-          },
-        });
-    groupIds.set(g.acronym, row.id);
-  }
-  console.log(`✓ ${groups.length} grupos de investigación`);
-
-  // --- Miembros ---------------------------------------------------------------
-  for (const m of members) {
-    const existing = await prisma.member.findFirst({
-      where: { name: m.name },
-    });
-    if (!existing) {
-      await prisma.member.create({
-        data: {
-          name: m.name,
-          area: m.area,
-          email: m.email,
-          role: m.role,
-          order: m.order,
-          groupId: m.group ? groupIds.get(m.group) : undefined,
-        },
-      });
-    }
-  }
-  console.log(`✓ ${members.length} miembros`);
-
-  // --- Eventos ------------------------------------------------------------------
-  const allEvents = [
-    {
-      title: featuredEvent.title,
-      titleEn: featuredEvent.titleEn,
-      type: featuredEvent.type,
-      startsAt: new Date(featuredEvent.startsAt),
-      location: featuredEvent.location,
-      url: featuredEvent.url,
-      status: "UPCOMING" as const,
-    },
-    ...upcomingEvents.map((e) => ({
-      title: e.title,
-      titleEn: e.titleEn,
-      type: e.type,
-      startsAt: new Date(e.startsAt),
-      location: e.location,
-      url: e.url,
-      status: e.status,
-    })),
-    ...pastEvents.map((e) => ({
-      title: e.title,
-      titleEn: e.titleEn,
-      type: e.type,
-      startsAt: new Date(e.startsAt),
-      location: e.location,
-      url: e.url,
-      status: e.status,
-    })),
-  ];
-  for (const e of allEvents) {
-    const existing = await prisma.event.findFirst({
-      where: { title: e.title },
-    });
-    if (existing) {
-      // Refresca la traducción EN en eventos ya sembrados (idempotente).
-      await prisma.event.update({
-        where: { id: existing.id },
-        data: { titleEn: e.titleEn ?? existing.titleEn },
-      });
-    } else {
-      await prisma.event.create({ data: e });
-    }
-  }
-  console.log(`✓ ${allEvents.length} eventos`);
-
+async function main() {
+  await seedAccounts();
+  await seedMembers();
+  await seedProjects();
+  await seedPublications();
+  await seedEvents();
+  await seedNews();
   console.log("Seed completado.");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error(e instanceof Error ? e.message : e);
     process.exit(1);
   })
   .finally(async () => {
