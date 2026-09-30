@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { buttonClassName } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { SoundWave } from "@/components/ui/sound-wave";
 import { SiteHeader } from "@/components/layout/site-header";
 import { InstitutionalFooter } from "@/components/layout/institutional-footer";
@@ -59,46 +60,36 @@ export default function NotFound() {
           {/* Firma sonora sobre un pentagrama (decorativo). */}
           <div
             aria-hidden="true"
-            className="staff-lines mx-auto mb-7 flex h-[70px] max-w-[420px] items-center justify-center"
+            className="staff-lines mx-auto mb-8 flex h-[70px] max-w-[420px] items-center justify-center"
           >
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-diderot-indigo text-diderot-gold shadow-sm">
-              <SoundWave bars={5} />
-            </span>
+            <SoundWave bars={5} className="scale-150 text-diderot-gold" />
           </div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-            {t.error}
-          </p>
-          <h1 className="mb-3 text-balance text-4xl font-bold tracking-tight text-ink">
+          <Eyebrow className="mb-3">{t.error}</Eyebrow>
+          <h1 className="mb-3 text-balance text-4xl font-semibold tracking-tight text-ink sm:text-[44px]">
             {t.titulo}
           </h1>
-          <p className="mx-auto mb-2 max-w-[55ch] text-lg leading-relaxed text-gray-700">
+          <p className="mx-auto mb-2 max-w-[55ch] font-serif text-xl italic leading-snug text-gray-700">
             {t.lema}
           </p>
           <p className="mx-auto mb-8 max-w-[60ch] text-base leading-relaxed text-gray-600">
             {t.ayuda}
           </p>
-          <nav aria-label={t.secciones} className="mb-9">
-            <ul className="flex flex-wrap items-center justify-center gap-2">
+          <nav aria-label={t.secciones} className="mb-10">
+            <ul className="flex list-none flex-wrap items-center justify-center gap-x-6 gap-y-2 p-0">
               {t.enlaces.map((e) => (
                 <li key={e.href}>
-                  <Link
-                    href={href(e.href)}
-                    className="flex h-[34px] items-center rounded-full border border-gray-300 bg-surface-card px-4 text-sm font-medium text-gray-600 transition-colors hover:border-brand-400 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
-                  >
+                  <Link href={href(e.href)} className="link-sub text-[15px] font-medium">
                     {e.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </nav>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
             <Link href={href("/")} className={buttonClassName({ size: "lg" })}>
               {t.irPortada}
             </Link>
-            <Link
-              href={href("/noticias")}
-              className={buttonClassName({ variant: "outline", size: "lg" })}
-            >
+            <Link href={href("/noticias")} className="link-sub text-[15px] font-medium">
               {t.verNoticias}
             </Link>
           </div>

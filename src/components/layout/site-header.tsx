@@ -90,17 +90,18 @@ function LanguageToggleView({
 }: Readonly<{ basePath: string; locale: Locale; qs: string }>) {
   const hrefFor = (l: Locale) =>
     withLocale(basePath, l) + (qs ? `?${qs}` : "");
+  // Selector tipográfico: «ES / EN» con el idioma activo subrayado en ámbar.
   const linkClass = (active: boolean) =>
     cn(
-      "inline-flex h-6 min-w-[24px] items-center justify-center rounded px-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet",
+      "inline-flex h-6 min-w-[24px] items-center justify-center rounded-sm px-0.5 underline-offset-[5px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet",
       active
-        ? "text-gray-800"
-        : "font-normal text-gray-500 hover:text-gray-700",
+        ? "font-semibold text-ink underline decoration-diderot-gold decoration-2"
+        : "font-normal text-gray-500 hover:text-ink",
     );
   return (
     <nav
       aria-label={pick(locale, "Idioma", "Language")}
-      className="text-xs font-semibold"
+      className="flex items-center gap-1 text-[13px] tracking-wide"
     >
       <a
         href={hrefFor("es")}
@@ -111,8 +112,8 @@ function LanguageToggleView({
         ES
       </a>
       {/* Separador decorativo: el lector de pantalla no debe leerlo. */}
-      <span aria-hidden="true" className="font-normal text-gray-300">
-        ·
+      <span aria-hidden="true" className="text-gray-300">
+        /
       </span>
       <a
         href={hrefFor("en")}

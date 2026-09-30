@@ -1,22 +1,23 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { ArrowUpRight, Search, Star, XCircle } from "lucide-react";
+import { ArrowUpRight, Search, Star } from "lucide-react";
+import { buttonClassName } from "@/components/ui/button";
+import { Gota } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/cn";
 import type { Locale } from "@/lib/locale";
 import type { PublicProject } from "@/lib/projects-service";
 
 const PAGE_SIZE = 12;
 
-// Colores por ámbito (los del IUCE), con variante translúcida en oscuro para
-// no deslumbrar sobre la tarjeta. Contraste AA en ambos temas.
-const SCOPE_STYLES: Record<string, string> = {
-  Europeo: "bg-[#DBEAFE] text-[#1D4ED8] dark:bg-blue-900/40 dark:text-blue-300",
-  Internacional: "bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-900/40 dark:text-teal-300",
-  Nacional: "bg-[#FEE2E2] text-[#B91C1C] dark:bg-red-900/40 dark:text-red-300",
-  Autonómico: "bg-[#FEF3C7] text-[#A16207] dark:bg-amber-900/40 dark:text-amber-300",
-  Institucional: "bg-diderot-pale text-ink",
-  Local: "bg-gray-100 text-gray-700",
+// Color de la gota que marca cada ámbito (texto + marcador, sin píldora).
+const SCOPE_COLORS: Record<string, string> = {
+  Europeo: "text-[#1D4ED8] dark:text-blue-300",
+  Internacional: "text-[#0F766E] dark:text-teal-300",
+  Nacional: "text-[#B91C1C] dark:text-red-300",
+  Autonómico: "text-[#A16207] dark:text-amber-300",
+  Institucional: "text-diderot-violet",
+  Local: "text-gray-500",
 };
 
 /**
@@ -64,6 +65,7 @@ const T = {
     fichaPortal: "Ficha en el Portal",
     logoDe: (n: string) => `Logotipo de ${n}`,
     mostrarMas: "Mostrar más",
+    restante: "restante",
     restantes: "restantes",
   },
   en: {
@@ -95,6 +97,7 @@ const T = {
     fichaPortal: "Research Portal record",
     logoDe: (n: string) => `${n} logo`,
     mostrarMas: "Show more",
+    restante: "remaining",
     restantes: "remaining",
   },
 } as const;
@@ -113,7 +116,7 @@ function normalize(s: string): string {
 const PORTAL = "https://produccioncientifica.usal.es/";
 
 const enlaceClass =
-  "inline-flex min-h-6 items-center gap-1 rounded text-sm font-medium text-diderot-violet hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card";
+  "link-sub inline-flex min-h-6 items-center gap-1 rounded-sm text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card";
 
 /**
  * Título sin el acrónimo inicial cuando ya se muestra aparte
@@ -136,14 +139,6 @@ function periodo(p: PublicProject): string | null {
   if (p.endYear || p.startYear) return String(p.endYear ?? p.startYear);
   return p.period;
 }
-
-const chipClass = (active: boolean) =>
-  cn(
-    "h-9 rounded-full border px-4 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card",
-    active
-      ? "border-diderot-indigo bg-diderot-indigo text-white"
-      : "border-gray-300 bg-surface-card text-gray-600 hover:border-brand-400 hover:text-gray-900",
-  );
 
 /**
  * Explorador de proyectos: búsqueda instantánea (título, acrónimo,
@@ -215,7 +210,9 @@ export function ProjectsExplorer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects, query, estado, scope, orden, currentYear, locale]);
 
-  const shown = filtered.slice(0, visible);
+  // Si solo quedarían unos pocos detrás del «Mostrar más», se enseñan ya.
+  const shown = filtered.slice(0, filtered.length - visible <= 3 ? filtered.length : visible);
+  const restantes = filtered.length - shown.length;
   const activos = projects.filter(enCurso).length;
   const hayFiltros =
     query.trim() !== "" || estado !== "todos" || scope !== "todos";
@@ -242,7 +239,7 @@ export function ProjectsExplorer({
             }}
             placeholder={t.placeholder}
             aria-label={t.buscarAria}
-            className="h-11 w-full rounded-full border border-gray-300 bg-surface-card pl-10 pr-4 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
+            className="h-11 w-full rounded-md border border-gray-300 bg-surface-card pl-10 pr-4 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
           />
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -257,7 +254,7 @@ export function ProjectsExplorer({
                 setOrden(e.target.value as Orden);
                 resetPage();
               }}
-              className="h-9 rounded-full border border-gray-300 bg-surface-card px-3 text-sm text-gray-700 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
+              className="h-9 rounded-md border border-gray-300 bg-surface-card px-3 text-sm text-gray-700 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
             >
               <option value="recientes">{t.ordenRecientes}</option>
               <option value="antiguos">{t.ordenAntiguos}</option>
@@ -265,21 +262,20 @@ export function ProjectsExplorer({
             </select>
           </div>
           <p className="text-sm text-gray-500" aria-live="polite">
-            <strong className="text-gray-900">{filtered.length}</strong>{" "}
+            <strong className="tabular-nums text-gray-900">{filtered.length}</strong>{" "}
             {filtered.length === 1 ? t.proyecto : t.proyectos}
             {!hayFiltros && activos > 0 ? (
               <span>
-                {" "}
-                · {activos} {t.enCursoContador}
+                , <span className="tabular-nums">{activos}</span> {t.enCursoContador}
               </span>
             ) : null}
           </p>
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        <div role="group" aria-label={t.estadoAria} className="flex flex-wrap gap-2">
+      {/* Filtros: pestañas de texto con el indicador que se traza debajo */}
+      <div className="tabs mb-8 items-end">
+        <div role="group" aria-label={t.estadoAria} className="flex flex-wrap gap-x-5">
           {(
             [
               ["todos", t.chipTodos],
@@ -295,7 +291,7 @@ export function ProjectsExplorer({
                 setEstado(value);
                 resetPage();
               }}
-              className={chipClass(estado === value)}
+              className="tab"
             >
               {label}
             </button>
@@ -303,8 +299,8 @@ export function ProjectsExplorer({
         </div>
         {scopes.length > 1 ? (
           <>
-            <span className="mx-1 hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
-            <div role="group" aria-label={t.ambitoAria} className="flex flex-wrap gap-2">
+            <span className="mb-2.5 hidden h-4 w-px self-end bg-gray-300 sm:block" aria-hidden="true" />
+            <div role="group" aria-label={t.ambitoAria} className="flex flex-wrap gap-x-5">
               <button
                 type="button"
                 aria-pressed={scope === "todos"}
@@ -312,7 +308,7 @@ export function ProjectsExplorer({
                   setScope("todos");
                   resetPage();
                 }}
-                className={chipClass(scope === "todos")}
+                className="tab"
               >
                 {t.todosAmbitos}
               </button>
@@ -325,8 +321,9 @@ export function ProjectsExplorer({
                     setScope(scope === s ? "todos" : s);
                     resetPage();
                   }}
-                  className={chipClass(scope === s)}
+                  className="tab"
                 >
+                  <Gota className={SCOPE_COLORS[s] ?? "text-gray-500"} />
                   {scopeLabel(s)}
                 </button>
               ))}
@@ -342,9 +339,8 @@ export function ProjectsExplorer({
               setScope("todos");
               resetPage();
             }}
-            className="inline-flex h-9 items-center gap-1.5 rounded px-2 text-[13px] font-medium text-diderot-violet hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
+            className="link-sub mb-2 ml-auto self-end rounded-sm text-[13px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
           >
-            <XCircle className="h-4 w-4" aria-hidden="true" />
             {t.limpiarFiltros}
           </button>
         ) : null}
@@ -352,51 +348,49 @@ export function ProjectsExplorer({
 
       {/* Resultados */}
       {shown.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center text-sm text-gray-500">
-          {t.vacio}
-        </p>
+        <p className="note border-y border-gray-200 py-10 text-center text-base">{t.vacio}</p>
       ) : (
-        <ul className="grid list-none grid-cols-1 gap-5 p-0 md:grid-cols-2">
-          {shown.map((p) => {
+        <ul className="grid list-none grid-cols-1 gap-x-10 gap-y-12 p-0 md:grid-cols-2">
+          {shown.map((p, i) => {
             const vigente = enCurso(p);
             const fechas = periodo(p);
+            // Con un número impar de fichas, la última ocupa las dos columnas
+            // en lugar de quedarse huérfana.
+            const ultimaSola = i === shown.length - 1 && shown.length % 2 === 1;
             return (
-              <li key={p.id}>
+              <li key={p.id} className={cn(ultimaSola && "md:col-span-2")}>
                 <article
                   className={cn(
-                    "card-lift flex h-full flex-col rounded-xl border border-gray-200 bg-surface-card p-6 shadow-sm hover:border-brand-400 hover:shadow-md",
-                    p.featured && "border-t-[3px] border-t-diderot-amber",
+                    "flex h-full flex-col pt-5",
+                    p.featured ? "border-t-2 border-diderot-gold" : "border-t border-gray-300",
                   )}
                 >
-                  <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                  {/* Ámbito, estado y destacado: texto con marcador, sin píldoras */}
+                  <p className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
                     {p.scope ? (
-                      <span
-                        className={cn(
-                          "whitespace-nowrap rounded-full px-2.5 py-[3px] text-[11px] font-semibold",
-                          SCOPE_STYLES[p.scope] ?? "bg-gray-100 text-gray-700",
-                        )}
-                      >
+                      <span className="status">
+                        <Gota className={SCOPE_COLORS[p.scope] ?? "text-gray-500"} />
                         {scopeLabel(p.scope)}
                       </span>
                     ) : null}
                     {vigente ? (
-                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#DCFCE7] px-2.5 py-[3px] text-[11px] font-semibold text-[#15803D] dark:bg-emerald-900/40 dark:text-emerald-300">
-                        <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+                      <span className="status">
+                        <Gota className="text-[#15803D] dark:text-emerald-300" />
                         {t.enCursoBadge}
                       </span>
                     ) : null}
                     {p.featured ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-diderot-amber">
-                        <Star className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+                      <span className="status text-diderot-amber">
+                        <Star className="h-3.5 w-3.5 self-center fill-current" aria-hidden="true" />
                         {t.destacado}
                       </span>
                     ) : null}
-                  </div>
+                  </p>
 
                   {p.image ? (
                     // Placa blanca fija: los logotipos deben verse igual en
                     // tema claro y oscuro (como los de grupos en el IUCE).
-                    <div className="mb-3 flex h-14 w-fit max-w-full items-center rounded-md bg-white px-3 ring-1 ring-gray-200">
+                    <div className="mb-3 flex h-14 w-fit max-w-full items-center rounded bg-white px-3 ring-1 ring-gray-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={p.image}
@@ -415,7 +409,7 @@ export function ProjectsExplorer({
                     ) : null}
                     <span
                       className={cn(
-                        "block font-semibold leading-snug text-gray-900",
+                        "block max-w-[60ch] font-semibold leading-snug text-gray-900",
                         p.acronym ? "mt-0.5 text-[15px]" : "text-base",
                       )}
                     >
@@ -424,7 +418,7 @@ export function ProjectsExplorer({
                   </h3>
 
                   {p.summary ? (
-                    <p className="mt-2.5 text-sm leading-relaxed text-gray-600">
+                    <p className="mt-2.5 max-w-[75ch] text-sm leading-relaxed text-gray-600">
                       {p.summary}
                     </p>
                   ) : null}
@@ -433,13 +427,13 @@ export function ProjectsExplorer({
                     <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-[13px] leading-snug">
                       {p.funder ? (
                         <>
-                          <dt className="text-gray-500">{t.financiacion}</dt>
+                          <dt className="data-label">{t.financiacion}</dt>
                           <dd className="text-gray-700">{p.funder}</dd>
                         </>
                       ) : null}
                       {p.ip ? (
                         <>
-                          <dt className="text-gray-500">
+                          <dt className="data-label">
                             <abbr title={t.ipTitle} className="no-underline">
                               {t.ip}
                             </abbr>
@@ -449,7 +443,7 @@ export function ProjectsExplorer({
                       ) : null}
                       {p.reference ? (
                         <>
-                          <dt className="text-gray-500">{t.referencia}</dt>
+                          <dt className="data-label">{t.referencia}</dt>
                           <dd className="break-all text-gray-700">{p.reference}</dd>
                         </>
                       ) : null}
@@ -457,9 +451,9 @@ export function ProjectsExplorer({
                   ) : null}
 
                   {fechas || p.url || p.portalUrl ? (
-                    <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5">
+                    <div className="mt-auto flex flex-wrap items-baseline justify-between gap-3 pt-5">
                       {fechas ? (
-                        <span className="whitespace-nowrap rounded-full bg-diderot-pale px-3 py-1 text-xs font-medium text-ink">
+                        <span className="whitespace-nowrap font-serif text-lg italic tabular-nums text-gray-600">
                           {fechas}
                         </span>
                       ) : (
@@ -495,9 +489,9 @@ export function ProjectsExplorer({
           <button
             type="button"
             onClick={() => setVisible((v) => v + PAGE_SIZE)}
-            className="h-11 rounded-full border border-gray-300 bg-surface-card px-6 text-sm font-medium text-gray-700 transition-colors hover:border-brand-400 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
+            className={buttonClassName({ variant: "outline" })}
           >
-            {t.mostrarMas} ({filtered.length - shown.length} {t.restantes})
+            {t.mostrarMas} ({restantes} {restantes === 1 ? t.restante : t.restantes})
           </button>
         </div>
       ) : null}

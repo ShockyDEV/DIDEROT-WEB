@@ -82,16 +82,20 @@ const config: Config = {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
       },
+      // Instrument Sans (titulares y texto) e Instrument Serif (acento, sobre
+      // todo en cursiva). Variables definidas en globals.css (next/font).
       fontFamily: {
-        sans: [
-          "system-ui",
-          "-apple-system",
-          "Segoe UI",
-          "Roboto",
-          "Helvetica Neue",
-          "Arial",
-          "sans-serif",
-        ],
+        sans: ["var(--font-sans)"],
+        serif: ["var(--font-serif)"],
+      },
+      // Esquinas pequeñas y coherentes en toda la web: lg/xl/2xl no vuelven a
+      // dar esquinas blandas. Los botones usan la forma de gota (.btn-gota).
+      borderRadius: {
+        md: "0.25rem",
+        lg: "0.25rem",
+        xl: "0.25rem",
+        "2xl": "0.25rem",
+        "3xl": "0.25rem",
       },
       maxWidth: {
         "6xl": "72rem",

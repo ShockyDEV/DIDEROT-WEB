@@ -21,7 +21,7 @@ export const content: PageContentModule = {
       {
         blockKey: "direccion",
         title: "Contacto — dirección postal",
-        defaultContent: `<p>Instituto Universitario de Ciencias de la Educación (IUCE)<br>Edificio Solís · Paseo de Canalejas, 169<br>37008 Salamanca</p>`,
+        defaultContent: `<p>Instituto Universitario de Ciencias de la Educación (IUCE)<br>Edificio Solís, Paseo de Canalejas, 169<br>37008 Salamanca</p>`,
       },
       {
         blockKey: "coordinacion",
@@ -60,7 +60,7 @@ export const content: PageContentModule = {
   ],
   blocksEn: {
     "contacto:intro": `<p>Write to us to collaborate on research, to do your doctoral thesis or your bachelor's or master's thesis with the group, to discuss a knowledge transfer project, to propose an activity or with a media request.</p>`,
-    "contacto:direccion": `<p>University Institute of Education Sciences (IUCE)<br>Solís Building · Paseo de Canalejas, 169<br>37008 Salamanca (Spain)</p>`,
+    "contacto:direccion": `<p>University Institute of Education Sciences (IUCE)<br>Solís Building, Paseo de Canalejas, 169<br>37008 Salamanca (Spain)</p>`,
     "contacto:como-llegar": `<p>The group is based at the University Institute of Education Sciences (IUCE), in the Solís Building, within the Education Campus (Paseo de Canalejas, 169).</p>
 <ul><li><strong>By train:</strong> Vialia station (Paseo de la Estación, s/n) offers direct connections to Madrid, Ávila and Valladolid. Timetables and tickets at renfe.com.</li>
 <li><strong>By coach:</strong> the Bus Station (Avda. Filiberto Villalobos, 71-85) connects Salamanca with the main cities through ALSA and Avanza; Avanza runs a direct service to Madrid-Barajas airport.</li>

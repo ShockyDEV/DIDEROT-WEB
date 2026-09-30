@@ -1,14 +1,11 @@
 import { metadataBilingue } from "@/lib/metadata";
 import Link from "next/link";
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Newspaper,
-  Search,
-} from "lucide-react";
-import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { ArrowRight, Search } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 import { CoverImage } from "@/components/news/cover-image";
+import { NewsMeta, NewsTeaser } from "@/components/news/news-teaser";
+import { buttonClassName } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
 import { NEWS_CATEGORIES, categoryLabel } from "@/lib/content/news";
 import { getPublishedNews } from "@/lib/news-service";
 import { getBlock } from "@/lib/content-blocks-service";
@@ -41,7 +38,7 @@ const T = {
   es: {
     inicio: "Inicio",
     noticias: "Noticias",
-    actualidad: "Actualidad",
+    actualidad: "Actualidad del grupo",
     filtrarCategoria: "Filtrar por categoría",
     todas: "Todas",
     buscarEnNoticias: "Buscar en las noticias",
@@ -60,14 +57,14 @@ const T = {
       "Aquí irá apareciendo la actualidad del grupo. Mientras tanto, puedes consultar la agenda de eventos.",
     verEventos: "Ver los eventos",
     paginacion: "Paginación de noticias",
-    paginaAnterior: "Página anterior",
-    paginaSiguiente: "Página siguiente",
-    pagina: "Página",
+    anterior: "Anterior",
+    siguiente: "Siguiente",
+    pagina: (n: number) => `Página ${n}`,
   },
   en: {
     inicio: "Home",
     noticias: "News",
-    actualidad: "News",
+    actualidad: "The group's news",
     filtrarCategoria: "Filter by category",
     todas: "All",
     buscarEnNoticias: "Search the news",
@@ -86,9 +83,9 @@ const T = {
       "The group's news will appear here. In the meantime, you can check the events agenda.",
     verEventos: "See the events",
     paginacion: "News pagination",
-    paginaAnterior: "Previous page",
-    paginaSiguiente: "Next page",
-    pagina: "Page",
+    anterior: "Previous",
+    siguiente: "Next",
+    pagina: (n: number) => `Page ${n}`,
   },
 } as const;
 
@@ -120,27 +117,8 @@ function normalize(s: string): string {
     .toLowerCase();
 }
 
-/** Números de página a mostrar: 1 … (p-1) p (p+1) … total, sin repetidos. */
-function pageNumbers(current: number, total: number): Array<number | "…"> {
-  const wanted = new Set<number>([1, 2, current - 1, current, current + 1, total - 1, total]);
-  const list = [...wanted].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
-  const out: Array<number | "…"> = [];
-  let prev = 0;
-  for (const n of list) {
-    if (n - prev > 1) out.push("…");
-    out.push(n);
-    prev = n;
-  }
-  return out;
-}
-
-const chipClass = (active: boolean) =>
-  cn(
-    "flex h-[34px] items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card",
-    active
-      ? "border-diderot-indigo bg-diderot-indigo text-white"
-      : "border-gray-300 bg-surface-card text-gray-600 hover:border-brand-400 hover:text-ink",
-  );
+const campoClass =
+  "h-10 rounded-md border border-gray-300 bg-surface-card text-sm outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25";
 
 export default async function NoticiasPage({
   searchParams,
@@ -160,7 +138,7 @@ export default async function NoticiasPage({
     getBlock("noticias", "intro"),
   ]);
 
-  // Chips: solo las categorías que tienen alguna noticia (en el orden
+  // Pestañas: solo las categorías que tienen alguna noticia (en el orden
   // oficial y, al final, las antiguas que ya no estén en la lista), para no
   // ofrecer filtros que llevan a una página vacía.
   const presentes = new Set(todas.map((n) => n.category));
@@ -214,199 +192,149 @@ export default async function NoticiasPage({
 
   return (
     <>
-      {/* Cabecera */}
-      <section className="border-b border-gray-200 bg-surface-card">
-        <div className="mx-auto max-w-6xl px-6 pb-8 pt-12">
-          <div className="mb-3.5">
-            <Breadcrumb
-              items={[
-                { label: t.inicio, href: href("/") },
-                { label: t.noticias },
-              ]}
-            />
-          </div>
-          <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-            {t.actualidad}
-          </p>
-          <h1 className="mb-3.5 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
-            {t.noticias}
-          </h1>
-          <div
-            className={cn(
-              "page-block max-w-[70ch] text-base leading-relaxed text-gray-600",
-              hayNoticias && "mb-6",
-            )}
-            dangerouslySetInnerHTML={{ __html: intro }}
-          />
-
-          {hayNoticias && categorias.length > 1 ? (
-            <nav
-              className="flex flex-wrap gap-2"
-              aria-label={t.filtrarCategoria}
+      <PageHeader
+        breadcrumb={[{ label: t.inicio, href: href("/") }, { label: t.noticias }]}
+        eyebrow={t.actualidad}
+        title={t.noticias}
+        intro={intro}
+        className={hayNoticias ? "pb-8" : undefined}
+      >
+        {hayNoticias && categorias.length > 1 ? (
+          <nav className="tabs mt-8" aria-label={t.filtrarCategoria}>
+            <Link
+              href={localizedPageHref({ ...filtros, categoria: null }, 1)}
+              aria-current={!categoria ? "page" : undefined}
+              className="tab"
             >
+              {t.todas}
+            </Link>
+            {categorias.map((c) => (
               <Link
-                href={localizedPageHref({ ...filtros, categoria: null }, 1)}
-                aria-current={!categoria ? "page" : undefined}
-                className={chipClass(!categoria)}
+                key={c}
+                href={localizedPageHref({ ...filtros, categoria: c }, 1)}
+                aria-current={categoria === c ? "page" : undefined}
+                className="tab"
               >
-                {t.todas}
+                {catLabel(c)}
               </Link>
-              {categorias.map((c) => (
-                <Link
-                  key={c}
-                  href={localizedPageHref({ ...filtros, categoria: c }, 1)}
-                  aria-current={categoria === c ? "page" : undefined}
-                  className={chipClass(categoria === c)}
-                >
-                  {catLabel(c)}
-                </Link>
-              ))}
-            </nav>
-          ) : null}
+            ))}
+          </nav>
+        ) : null}
 
-          {/* Búsqueda en las noticias: formulario GET, funciona sin JS */}
-          {hayNoticias ? (
-            <form
-              method="get"
-              action={withLocale("/noticias", locale)}
-              className="mt-4 flex flex-wrap items-center gap-2.5"
-              role="search"
-              aria-label={t.buscarEnNoticias}
-            >
-              {categoria ? (
-                <input type="hidden" name="categoria" value={categoria} />
-              ) : null}
-              <div className="relative w-full sm:w-[320px]">
-                <Search
-                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
-                  aria-hidden="true"
-                />
-                <input
-                  type="search"
-                  name="q"
-                  defaultValue={q}
-                  maxLength={100}
-                  placeholder={t.placeholder}
-                  aria-label={t.textoABuscar}
-                  className="h-10 w-full rounded-full border border-gray-300 bg-surface-card pl-10 pr-4 text-sm text-gray-900 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-[color-mix(in_srgb,var(--diderot-violet)_30%,transparent)]"
-                />
-              </div>
-              {anios.length > 1 ? (
-                <select
-                  name="anio"
-                  defaultValue={anioParam ?? ""}
-                  aria-label={t.filtrarAnio}
-                  className="h-10 rounded-full border border-gray-300 bg-surface-card px-3.5 text-sm text-gray-700 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-[color-mix(in_srgb,var(--diderot-violet)_30%,transparent)]"
-                >
-                  <option value="">{t.todosLosAnios}</option>
-                  {anios.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              <button
-                type="submit"
-                className="h-10 rounded-full bg-diderot-indigo px-5 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
+        {/* Búsqueda en las noticias: formulario GET, funciona sin JS */}
+        {hayNoticias ? (
+          <form
+            method="get"
+            action={withLocale("/noticias", locale)}
+            className="mt-5 flex flex-wrap items-center gap-2.5"
+            role="search"
+            aria-label={t.buscarEnNoticias}
+          >
+            {categoria ? <input type="hidden" name="categoria" value={categoria} /> : null}
+            <div className="relative min-w-0 flex-1 basis-[220px] sm:w-[320px] sm:flex-none">
+              <Search
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                name="q"
+                defaultValue={q}
+                maxLength={100}
+                placeholder={t.placeholder}
+                aria-label={t.textoABuscar}
+                className={cn(campoClass, "w-full pl-10 pr-4 text-gray-900")}
+              />
+            </div>
+            {anios.length > 1 ? (
+              <select
+                name="anio"
+                defaultValue={anioParam ?? ""}
+                aria-label={t.filtrarAnio}
+                className={cn(campoClass, "px-3.5 text-gray-700")}
               >
-                {t.buscar}
-              </button>
-              {q || anioParam ? (
-                <Link
-                  href={localizedPageHref({ categoria, q: "", anio: null }, 1)}
-                  className="text-sm font-medium text-diderot-violet hover:underline"
-                >
-                  {t.limpiar}
-                </Link>
-              ) : null}
-              {q || anioParam ? (
-                <p
-                  className="w-full text-xs text-gray-500 sm:w-auto"
-                  role="status"
-                >
-                  <strong className="text-gray-900">{all.length}</strong>{" "}
-                  {all.length === 1 ? t.resultado : t.resultados}
-                </p>
-              ) : null}
-            </form>
-          ) : null}
-        </div>
-      </section>
+                <option value="">{t.todosLosAnios}</option>
+                {anios.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+            <button type="submit" className={buttonClassName()}>
+              {t.buscar}
+            </button>
+            {q || anioParam ? (
+              <Link
+                href={localizedPageHref({ categoria, q: "", anio: null }, 1)}
+                className="link-sub ml-1 text-sm font-medium"
+              >
+                {t.limpiar}
+              </Link>
+            ) : null}
+            {q || anioParam ? (
+              <p className="w-full text-xs text-gray-500 sm:w-auto" role="status">
+                <strong className="tabular-nums text-gray-900">{all.length}</strong>{" "}
+                {all.length === 1 ? t.resultado : t.resultados}
+              </p>
+            ) : null}
+          </form>
+        ) : null}
+      </PageHeader>
 
       {!hayNoticias ? (
         /* Sin noticias (o sin BD): estado vacío */
         <section>
           <div className="mx-auto max-w-6xl px-6 py-14">
-            <Reveal from="scale">
-              <div className="staff-lines flex flex-col items-center gap-3 rounded-xl border border-dashed border-gray-300 bg-surface-card px-6 py-14 text-center">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-diderot-pale text-ink">
-                  <Newspaper className="h-6 w-6" aria-hidden="true" />
-                </span>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {t.sinNoticiasTitulo}
-                </h2>
-                <p className="max-w-[52ch] text-sm leading-relaxed text-gray-600">
-                  {t.sinNoticiasTexto}
-                </p>
-                <Link
-                  href={href("/eventos")}
-                  className="mt-1 text-sm font-medium text-diderot-violet hover:underline"
-                >
-                  {t.verEventos} →
-                </Link>
-              </div>
-            </Reveal>
+            <div className="staff-lines border-y border-gray-200 px-6 py-14 text-center">
+              <h2 className="text-xl font-semibold text-gray-900">{t.sinNoticiasTitulo}</h2>
+              <p className="mx-auto mt-2 max-w-[52ch] text-[15px] leading-relaxed text-gray-600">
+                {t.sinNoticiasTexto}
+              </p>
+              <Link href={href("/eventos")} className="link-sub mt-4 inline-block text-sm font-medium">
+                {t.verEventos}
+              </Link>
+            </div>
           </div>
         </section>
       ) : (
         <>
-          {/* Destacada */}
+          {/* Destacada: imagen grande y texto al lado, sin caja */}
           {featured && currentPage === 1 ? (
             <section>
-              <div className="mx-auto max-w-6xl px-6 pb-3 pt-12">
-                <Reveal from="scale">
+              <div className="mx-auto max-w-6xl px-6 pb-4 pt-12">
+                <Reveal>
                   <Link
                     href={href(`/noticias/${featured.slug}`)}
-                    className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
+                    className="group grid items-center gap-8 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-4 focus-visible:ring-offset-surface-page lg:grid-cols-[1.25fr_1fr] lg:gap-12"
                   >
-                    <article className="card-lift grid overflow-hidden rounded-xl border border-gray-200 bg-surface-card shadow-sm hover:border-brand-400 hover:shadow-md lg:grid-cols-[1.2fr_1fr]">
-                      <CoverImage
-                        src={featured.coverImage}
-                        alt={featured.photoLabel}
-                        sizes="(max-width: 1024px) 100vw, 55vw"
-                        zoom
-                        className="min-h-[300px] w-full"
+                    <CoverImage
+                      src={featured.coverImage}
+                      alt={featured.photoLabel}
+                      sizes="(max-width: 1024px) 100vw, 55vw"
+                      zoom
+                      className="aspect-[1200/630] w-full rounded"
+                    />
+                    <div className="flex flex-col gap-3">
+                      <NewsMeta
+                        category={catLabel(featured.category)}
+                        date={featured.dateDisplay}
+                        dateTime={featured.publishedAt}
                       />
-                      <div className="flex flex-col gap-3 p-8">
-                        <div className="flex items-center gap-2.5 text-xs">
-                          <span className="rounded-full bg-diderot-pale px-3 py-[3px] font-medium text-ink">
-                            {catLabel(featured.category)}
-                          </span>
-                          <time
-                            dateTime={featured.publishedAt}
-                            className="text-gray-500"
-                          >
-                            {featured.dateDisplay}
-                          </time>
-                        </div>
-                        <h2 className="text-balance text-2xl font-bold leading-snug text-ink">
-                          {featured.title}
-                        </h2>
-                        {featured.excerpt ? (
-                          <p className="text-base leading-relaxed text-gray-600">
-                            {featured.excerpt}
-                          </p>
-                        ) : null}
-                        <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-diderot-violet">
-                          {t.leerNoticia}
-                          <ArrowRight
-                            className="h-[15px] w-[15px] transition-transform motion-safe:group-hover:translate-x-0.5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </div>
-                    </article>
+                      <h2 className="text-balance text-2xl font-semibold leading-snug text-ink sm:text-[30px]">
+                        <span className="link-trace">{featured.title}</span>
+                      </h2>
+                      {featured.excerpt ? (
+                        <p className="text-[17px] leading-relaxed text-gray-600">{featured.excerpt}</p>
+                      ) : null}
+                      <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-diderot-violet">
+                        {t.leerNoticia}
+                        <ArrowRight
+                          className="h-[15px] w-[15px] transition-transform motion-safe:group-hover:translate-x-0.5"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </div>
                   </Link>
                 </Reveal>
               </div>
@@ -415,48 +343,35 @@ export default async function NoticiasPage({
 
           {/* Rejilla de noticias */}
           <section>
-            <div className="mx-auto max-w-6xl px-6 pb-6 pt-7">
+            <div
+              className={cn(
+                "mx-auto max-w-6xl px-6 pb-6",
+                featured && currentPage === 1 ? "pt-10" : "pt-12",
+              )}
+            >
               {feed.length === 0 ? (
                 featured ? null : (
-                  <p className="py-12 text-center text-sm text-gray-500">
-                    {t.sinResultados}
-                  </p>
+                  <p className="note py-12 text-center text-base">{t.sinResultados}</p>
                 )
               ) : (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  className={cn(
+                    "grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3",
+                    featured && currentPage === 1 && "border-t border-gray-200 pt-10",
+                  )}
+                >
                   {feed.map((n, i) => (
                     <Reveal key={n.slug} delay={(i % 3) * 80} className="h-full">
-                      <Link
+                      <NewsTeaser
                         href={href(`/noticias/${n.slug}`)}
-                        className="group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
-                      >
-                        <article className="card-lift flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-surface-card shadow-sm hover:border-brand-400 hover:shadow-md">
-                          <CoverImage
-                            src={n.coverImage}
-                            alt={n.photoLabel}
-                            zoom
-                            className="h-[170px] w-full"
-                          />
-                          <div className="flex flex-col gap-2 px-5 pb-5 pt-[18px]">
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="rounded-full bg-diderot-pale px-2.5 py-0.5 font-medium text-ink">
-                                {catLabel(n.category)}
-                              </span>
-                              <time dateTime={n.publishedAt} className="text-gray-500">
-                                {n.dateDisplay}
-                              </time>
-                            </div>
-                            <h3 className="text-base font-semibold leading-snug text-gray-900">
-                              {n.title}
-                            </h3>
-                            {n.excerpt ? (
-                              <p className="line-clamp-3 text-sm leading-normal text-gray-600">
-                                {n.excerpt}
-                              </p>
-                            ) : null}
-                          </div>
-                        </article>
-                      </Link>
+                        title={n.title}
+                        excerpt={n.excerpt}
+                        category={catLabel(n.category)}
+                        date={n.dateDisplay}
+                        dateTime={n.publishedAt}
+                        coverImage={n.coverImage}
+                        photoLabel={n.photoLabel}
+                      />
                     </Reveal>
                   ))}
                 </div>
@@ -466,74 +381,12 @@ export default async function NoticiasPage({
 
           {/* Paginación */}
           {totalPages > 1 ? (
-            <nav
-              aria-label={t.paginacion}
-              className="mx-auto flex max-w-6xl items-center justify-center gap-1.5 px-6 pb-16 pt-2"
-            >
-              {currentPage > 1 ? (
-                <Link
-                  href={localizedPageHref(filtros, currentPage - 1)}
-                  aria-label={t.paginaAnterior}
-                  className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-600 transition-colors hover:bg-gray-50"
-                >
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-300"
-                >
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                </span>
-              )}
-
-              {pageNumbers(currentPage, totalPages).map((p, i) =>
-                p === "…" ? (
-                  <span
-                    key={`gap-${i}`}
-                    aria-hidden="true"
-                    className="px-1 text-sm text-gray-500"
-                  >
-                    …
-                  </span>
-                ) : p === currentPage ? (
-                  <span
-                    key={p}
-                    aria-current="page"
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-diderot-indigo bg-diderot-indigo text-sm font-semibold text-white"
-                  >
-                    <span className="sr-only">{t.pagina} </span>
-                    {p}
-                  </span>
-                ) : (
-                  <Link
-                    key={p}
-                    href={localizedPageHref(filtros, p)}
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                  >
-                    <span className="sr-only">{t.pagina} </span>
-                    {p}
-                  </Link>
-                ),
-              )}
-
-              {currentPage < totalPages ? (
-                <Link
-                  href={localizedPageHref(filtros, currentPage + 1)}
-                  aria-label={t.paginaSiguiente}
-                  className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-600 transition-colors hover:bg-gray-50"
-                >
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-300"
-                >
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </span>
-              )}
-            </nav>
+            <Pagination
+              current={currentPage}
+              total={totalPages}
+              hrefFor={(p) => localizedPageHref(filtros, p)}
+              labels={{ nav: t.paginacion, prev: t.anterior, next: t.siguiente, page: t.pagina }}
+            />
           ) : (
             <div className="pb-10" />
           )}

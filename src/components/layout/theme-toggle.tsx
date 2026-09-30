@@ -30,7 +30,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label="Cambiar entre modo claro y oscuro"
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
+      className="flex h-9 w-9 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-diderot-pale hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
     >
       {/* Antes de montar, evita el desajuste de hidratación mostrando el icono
           neutro de luna; tras montar refleja el tema real. */}

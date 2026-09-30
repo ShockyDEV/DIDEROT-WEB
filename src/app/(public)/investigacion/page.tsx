@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { ArrowRight, FileMusic, Music2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { metadataBilingue } from "@/lib/metadata";
-import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { PageHeader } from "@/components/layout/page-header";
 import { SectionSubnav } from "@/components/layout/section-subnav";
 import { buttonClassName } from "@/components/ui/button";
+import { Eyebrow, Gota } from "@/components/ui/eyebrow";
 import { Reveal } from "@/components/ui/reveal";
 import { ProjectsExplorer } from "@/components/investigacion/projects-explorer";
 import { getBlock, getListBlock } from "@/lib/content-blocks-service";
-import { iconFor } from "@/lib/icon-map";
 import { cn } from "@/lib/cn";
 import { getPublicProjects } from "@/lib/projects-service";
 import { countPublishedPublications } from "@/lib/publications-service";
@@ -43,7 +43,8 @@ const T = {
     titulo: "La investigación de DIDEROT",
     lineas: "Líneas de investigación",
     proyectos: "Proyectos",
-    lineasDelEje: "Líneas de investigación",
+    resumen: (ejes: number, lineas: number) =>
+      `${ejes} ${ejes === 1 ? "eje" : "ejes"} y ${lineas} ${lineas === 1 ? "línea oficial" : "líneas oficiales"} de investigación`,
     sinProyectos:
       "Todavía no hay proyectos publicados. Muy pronto podrás consultarlos aquí.",
     produccion: "Producción científica",
@@ -60,7 +61,8 @@ const T = {
     titulo: "Research at DIDEROT",
     lineas: "Research lines",
     proyectos: "Projects",
-    lineasDelEje: "Research lines",
+    resumen: (ejes: number, lineas: number) =>
+      `${ejes} ${ejes === 1 ? "area" : "areas"} and ${lineas} official research ${lineas === 1 ? "line" : "lines"}`,
     sinProyectos: "No projects have been published yet. They will be listed here soon.",
     produccion: "Scientific output",
     publicacionesTitulo: "The group's publications",
@@ -115,91 +117,68 @@ export default async function InvestigacionPage() {
     ...(proyectosVisibles ? [{ id: "proyectos", label: t.proyectos }] : []),
   ];
 
+  // Antetítulo informativo: cuántos ejes y líneas oficiales hay (datos de la
+  // propia lista, sin cifras inventadas).
+  const sublineasDe = (l: (typeof lineas)[number]) =>
+    String(l.sublineas ?? "")
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  const totalSublineas = lineas.reduce((n, l) => n + sublineasDe(l).length, 0);
+
   return (
     <>
-      {/* Cabecera */}
-      <section className="border-b border-gray-200 bg-surface-card">
-        <div className="mx-auto max-w-6xl px-6 pt-12">
-          <div className="mb-3.5">
-            <Breadcrumb
-              items={[
-                { label: t.inicio, href: href("/") },
-                { label: t.investigacion },
-              ]}
-            />
-          </div>
-          <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-            {t.investigacion}
-          </p>
-          <h1 className="mb-3.5 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
-            {t.titulo}
-          </h1>
-          <div
-            className="page-block max-w-[75ch] text-base leading-relaxed text-gray-600"
-            // Bloque editable desde el gestor (investigacion:intro)
-            dangerouslySetInnerHTML={{ __html: intro }}
-          />
-          <div className="mt-7">
-            <SectionSubnav items={subnav} />
-          </div>
+      <PageHeader
+        breadcrumb={[{ label: t.inicio, href: href("/") }, { label: t.investigacion }]}
+        eyebrow={lineas.length > 0 ? t.resumen(lineas.length, totalSublineas) : undefined}
+        title={t.titulo}
+        intro={intro}
+      >
+        <div className="mt-8">
+          <SectionSubnav items={subnav} />
         </div>
-      </section>
+      </PageHeader>
 
       {/* Líneas de investigación: ejes con sus líneas oficiales */}
       <section id="lineas" className="scroll-mt-20">
         <div className="mx-auto max-w-6xl px-6 py-14">
-          <div className="mb-7">
-            <h2 className="mb-1.5 text-2xl font-bold tracking-tight text-gray-900">
+          <div className="mb-10">
+            <h2 className="mb-2 text-2xl font-semibold tracking-tight text-gray-900 sm:text-[28px]">
               {t.lineas}
             </h2>
             <div
-              className="page-block max-w-[75ch] text-sm text-gray-500"
+              className="page-block max-w-[66ch] text-[15px] text-gray-600"
               dangerouslySetInnerHTML={{ __html: lineasIntro }}
             />
           </div>
-          <ul className="grid list-none grid-cols-1 gap-5 p-0 sm:grid-cols-2 lg:grid-cols-6">
+          <ul className="grid list-none grid-cols-1 gap-x-10 gap-y-12 p-0 sm:grid-cols-2 lg:grid-cols-6">
             {lineas.map((l, i) => {
-              const Icon = iconFor(l.icon);
               const descripcion = String(l.descripcion ?? "").trim();
-              const sublineas = String(l.sublineas ?? "")
-                .split(/\r?\n/)
-                .map((s) => s.trim())
-                .filter(Boolean);
+              const sublineas = sublineasDe(l);
               return (
                 <li key={i} className={spanLinea(i, lineas.length)}>
                   <Reveal delay={(i % 3) * 80} className="h-full">
-                    <article className="card-lift flex h-full flex-col rounded-xl border border-gray-200 bg-surface-card p-6 shadow-sm hover:border-brand-400 hover:shadow-md">
-                      <span className="mb-4 flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-diderot-pale">
-                        <Icon className="h-[22px] w-[22px] text-ink" aria-hidden="true" />
-                      </span>
-                      <h3 className="text-balance text-lg font-semibold leading-snug text-gray-900">
+                    <article className="flex h-full flex-col border-t-2 border-diderot-gold pt-5">
+                      <h3 className="text-balance text-xl font-semibold leading-snug text-gray-900">
                         {String(l.titulo ?? "")}
                       </h3>
                       {descripcion ? (
-                        <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                        <p className="mt-2 text-[15px] leading-relaxed text-gray-600">
                           {descripcion}
                         </p>
                       ) : null}
                       {sublineas.length > 0 ? (
-                        <div className="mt-5 border-t border-gray-100 pt-4">
-                          <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-diderot-amber">
-                            {t.lineasDelEje}
-                          </p>
-                          <ul className="flex list-none flex-col gap-2 p-0">
-                            {sublineas.map((s) => (
-                              <li
-                                key={s}
-                                className="flex items-start gap-2 text-[13px] leading-snug text-gray-700"
-                              >
-                                <Music2
-                                  className="mt-px h-3.5 w-3.5 flex-none text-diderot-amber"
-                                  aria-hidden="true"
-                                />
-                                {s}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <ul className="mt-5 flex list-none flex-col gap-2.5 p-0">
+                          {sublineas.map((s) => (
+                            <li
+                              key={s}
+                              className="flex items-baseline gap-2.5 text-sm leading-snug text-gray-700"
+                            >
+                              <Gota className="text-diderot-gold" />
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
                       ) : null}
                     </article>
                   </Reveal>
@@ -217,11 +196,11 @@ export default async function InvestigacionPage() {
           className="scroll-mt-20 border-y border-gray-200 bg-surface-card"
         >
           <div className="mx-auto max-w-6xl px-6 py-14">
-            <h2 className="mb-1.5 text-2xl font-bold tracking-tight text-gray-900">
+            <h2 className="mb-2 text-2xl font-semibold tracking-tight text-gray-900 sm:text-[28px]">
               {t.proyectos}
             </h2>
             <div
-              className="page-block mb-6 max-w-[80ch] text-sm text-gray-500"
+              className="page-block mb-8 max-w-[70ch] text-[15px] text-gray-600"
               dangerouslySetInnerHTML={{ __html: proyectosDescripcion }}
             />
             {proyectos.length > 0 ? (
@@ -231,7 +210,7 @@ export default async function InvestigacionPage() {
                 locale={locale}
               />
             ) : (
-              <p className="rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center text-sm text-gray-500">
+              <p className="note border-y border-gray-200 py-10 text-center text-base">
                 {t.sinProyectos}
               </p>
             )}
@@ -241,32 +220,22 @@ export default async function InvestigacionPage() {
 
       {/* Puente a la producción científica (página propia) */}
       {!hiddenPaths.includes("/publicaciones") ? (
-        <section>
-          <div className="mx-auto max-w-6xl px-6 pb-16 pt-14">
-            <Reveal
-              from="scale"
-              className="staff-lines rounded-xl border border-gray-200 border-t-[3px] border-t-diderot-amber bg-surface-tinted p-8 shadow-sm"
-            >
-              <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-5 sm:items-center">
-                  <span className="flex h-16 w-16 flex-none items-center justify-center rounded-lg bg-diderot-indigo text-white">
-                    <FileMusic className="h-8 w-8" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <p className="mb-1 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-                      {t.produccion}
-                    </p>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {t.publicacionesTitulo}
-                    </h2>
-                    <p className="mt-1 max-w-[62ch] text-sm leading-relaxed text-gray-600">
-                      {t.publicacionesTexto(totalPublicaciones)}
-                    </p>
-                  </div>
+        <section className="staff-lines bg-surface-tinted">
+          <div className="mx-auto max-w-6xl px-6 py-14">
+            <Reveal>
+              <div className="flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <Eyebrow className="mb-2">{t.produccion}</Eyebrow>
+                  <h2 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-[28px]">
+                    {t.publicacionesTitulo}
+                  </h2>
+                  <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-gray-600">
+                    {t.publicacionesTexto(totalPublicaciones)}
+                  </p>
                 </div>
                 <Link
                   href={href("/publicaciones")}
-                  className={cn(buttonClassName({ size: "lg" }), "flex-none gap-1.5")}
+                  className={cn(buttonClassName({ size: "lg" }), "flex-none gap-2")}
                 >
                   {t.verPublicaciones}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />

@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { GraduationCap, Quote } from "lucide-react";
+import { ArrowRight, GraduationCap } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
-import { CoverImage } from "@/components/news/cover-image";
 import { Reveal } from "@/components/ui/reveal";
 import { CountUp } from "@/components/ui/count-up";
+import { Eyebrow, Gota } from "@/components/ui/eyebrow";
 import { SoundWave } from "@/components/ui/sound-wave";
+import { NewsTeaser } from "@/components/news/news-teaser";
 import { PublicationCard } from "@/components/publicaciones/publication-card";
 import { getPublishedNews } from "@/lib/news-service";
 import { categoryLabel } from "@/lib/content/news";
@@ -14,11 +15,10 @@ import {
   getBlockText,
   getListBlock,
 } from "@/lib/content-blocks-service";
-import { iconFor } from "@/lib/icon-map";
 import { cn } from "@/lib/cn";
 import { withLocale } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
-import { getHiddenPaths } from "@/lib/page-visibility";
+import { getHiddenPaths, isSectionVisible } from "@/lib/page-visibility";
 import { prisma } from "@/lib/prisma";
 import { countActiveMembers } from "@/lib/members-service";
 import { getProjectStats } from "@/lib/projects-service";
@@ -48,15 +48,14 @@ const T = {
     europeos: ["proyecto europeo", "proyectos europeos"] as Plural,
     eventos: ["evento", "eventos y jornadas"] as Plural,
     actualidad: "Actualidad",
-    verTodas: "Ver todas las noticias →",
+    verTodas: "Todas las noticias",
     destacadas: "Publicaciones destacadas",
-    verPublicaciones: "Ver todas las publicaciones →",
+    verPublicaciones: "Todas las publicaciones",
+    accesos: "Secciones de la web",
     afiliacion: "Afiliación institucional",
     usal: "Universidad de Salamanca",
     iuce: "Instituto Universitario de Ciencias de la Educación (IUCE)",
-    doctorado: "Doctorado «Formación en la Sociedad del Conocimiento»",
-    doctoradoAria:
-      "Programa de Doctorado «Formación en la Sociedad del Conocimiento»",
+    doctorado: "Programa de Doctorado «Formación en la Sociedad del Conocimiento»",
   },
   en: {
     altFoto:
@@ -71,14 +70,14 @@ const T = {
     europeos: ["European project", "European projects"] as Plural,
     eventos: ["event", "events"] as Plural,
     actualidad: "Latest news",
-    verTodas: "See all news →",
+    verTodas: "All news",
     destacadas: "Featured publications",
-    verPublicaciones: "See all publications →",
+    verPublicaciones: "All publications",
+    accesos: "Sections of the website",
     afiliacion: "Institutional affiliation",
     usal: "University of Salamanca",
     iuce: "University Institute of Education Sciences (IUCE)",
     doctorado: "PhD Programme “Education in the Knowledge Society”",
-    doctoradoAria: "PhD Programme “Education in the Knowledge Society”",
   },
 } as const;
 
@@ -91,6 +90,33 @@ async function countEvents(): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+/**
+ * Cabecera de bloque con enlace «ver todo» subrayado a la derecha. Sin filete
+ * (`rule={false}`) cuando las fichas de debajo ya llevan el suyo.
+ */
+function BlockHeading({
+  title,
+  href,
+  linkLabel,
+  rule = true,
+}: Readonly<{ title: string; href: string; linkLabel: string; rule?: boolean }>) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-baseline justify-between gap-3",
+        rule ? "mb-8 border-b border-gray-200 pb-3" : "mb-6",
+      )}
+    >
+      <h2 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-[28px]">
+        {title}
+      </h2>
+      <Link href={href} className="link-sub text-sm font-medium">
+        {linkLabel}
+      </Link>
+    </div>
+  );
 }
 
 export default async function HomePage() {
@@ -120,6 +146,7 @@ export default async function HomePage() {
     publicaciones,
     eventos,
     hiddenPaths,
+    mostrarAccesos,
   ] = await Promise.all([
     getBlockText("inicio", "hero-eyebrow"),
     getBlockText("inicio", "hero-titulo"),
@@ -141,6 +168,9 @@ export default async function HomePage() {
     countPublishedPublications(),
     countEvents(),
     getHiddenPaths(),
+    // Accesos rápidos: ocultos por defecto (repetían el menú); se pueden
+    // volver a mostrar desde el panel → Visualización.
+    isSectionVisible("inicio-accesos"),
   ]);
 
   // Una página (o sección con ancla) oculta desde el panel → Visualización
@@ -152,7 +182,9 @@ export default async function HomePage() {
     const base = enlace.split("#")[0] || "/";
     return hiddenPaths.includes(enlace) || hiddenPaths.includes(base);
   };
-  const accesos = quickAccess.filter((item) => !oculto(String(item.enlace ?? "")));
+  const accesos = mostrarAccesos
+    ? quickAccess.filter((item) => !oculto(String(item.enlace ?? "")))
+    : [];
   const plural = (n: number, [uno, varios]: Plural) => (n === 1 ? uno : varios);
 
   // «DIDEROT en cifras»: solo datos vivos de la BD. Se enseñan hasta cuatro
@@ -178,60 +210,54 @@ export default async function HomePage() {
     <>
       {/* Héroe */}
       <section className="bg-surface-card">
-        <div className="mx-auto grid max-w-6xl items-center gap-14 px-6 pb-[68px] pt-16 lg:grid-cols-[1.05fr_1fr]">
+        <div className="mx-auto grid max-w-6xl items-center gap-14 px-6 pb-[72px] pt-16 lg:grid-cols-[1.05fr_1fr]">
           <div>
-            <Reveal>
-              <p className="mb-3.5 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-                {heroEyebrow}
-              </p>
-            </Reveal>
+            {heroEyebrow ? (
+              <Reveal>
+                <Eyebrow className="mb-4">{heroEyebrow}</Eyebrow>
+              </Reveal>
+            ) : null}
             <Reveal delay={100}>
-              <h1 className="mb-[18px] text-balance text-4xl font-bold leading-tight tracking-tight text-ink sm:text-[44px]">
+              <h1 className="mb-5 text-balance text-4xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-[50px]">
                 {heroTitulo}
               </h1>
             </Reveal>
             <Reveal delay={200}>
               <div
-                className="page-block mb-7 max-w-[52ch] text-base leading-relaxed text-gray-600"
+                className="page-block mb-8 max-w-[52ch] text-[17px] leading-relaxed text-gray-600"
                 // Bloque editable desde el gestor (inicio:hero-parrafo)
                 dangerouslySetInnerHTML={{ __html: heroParrafo }}
               />
             </Reveal>
-            <Reveal delay={300} className="flex flex-wrap items-center gap-3">
+            <Reveal delay={300} className="flex flex-wrap items-center gap-x-6 gap-y-3">
               {!oculto("/grupo") && botonPrincipal ? (
-                <Link href={href("/grupo")} className={buttonClassName({ size: "lg" })}>
+                <Link href={href("/grupo")} className={cn(buttonClassName({ size: "lg" }), "gap-2")}>
                   {botonPrincipal}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               ) : null}
               {!oculto("/publicaciones") && botonSecundario ? (
-                <Link
-                  href={href("/publicaciones")}
-                  className={buttonClassName({ variant: "outline", size: "lg" })}
-                >
+                <Link href={href("/publicaciones")} className="link-sub text-[15px] font-medium">
                   {botonSecundario}
                 </Link>
               ) : null}
             </Reveal>
             {hitosHero.length > 0 ? (
-              <Reveal
-                delay={420}
-                className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-gray-100 pt-5 text-xs text-gray-500"
-              >
-                {hitosHero.map((h, i) => {
-                  const Icon = iconFor(h.icon);
-                  return (
-                    <span key={i} className="inline-flex items-center gap-1.5">
-                      <Icon className="h-3.5 w-3.5 flex-none text-diderot-amber" aria-hidden="true" />
+              <Reveal delay={420}>
+                <ul className="mt-10 flex list-none flex-col gap-2 border-t border-gray-200 p-0 pt-5 text-sm text-gray-600 sm:flex-row sm:flex-wrap sm:gap-x-7">
+                  {hitosHero.map((h, i) => (
+                    <li key={i} className="flex items-baseline gap-2">
+                      <Gota className="text-diderot-gold" />
                       {String(h.texto ?? "")}
-                    </span>
-                  );
-                })}
+                    </li>
+                  ))}
+                </ul>
               </Reveal>
             ) : null}
           </div>
 
           <Reveal from="right" delay={250} className="relative">
-            <div className="relative h-[380px] w-full overflow-hidden rounded-xl">
+            <div className="relative h-[380px] w-full overflow-hidden rounded">
               <Image
                 src="/images/aula-performativa.jpg"
                 alt={t.altFoto}
@@ -244,66 +270,50 @@ export default async function HomePage() {
               />
             </div>
             {fotoEtiqueta ? (
-              <div className="pointer-events-none absolute bottom-[22px] left-0 inline-flex items-center gap-2.5 rounded-r-md bg-diderot-indigo px-3.5 py-2 text-xs text-white">
+              <p className="pointer-events-none absolute bottom-[22px] left-0 inline-flex items-center gap-2.5 bg-diderot-indigo px-4 py-2 font-serif text-[15px] italic text-white">
                 <SoundWave className="text-diderot-gold" />
                 {fotoEtiqueta}
-              </div>
+              </p>
             ) : null}
           </Reveal>
         </div>
       </section>
 
-      {/* Accesos rápidos */}
+      {/* Accesos rápidos (ocultos por defecto: repetían el menú) */}
       {accesos.length > 0 ? (
-        <section className="border-y border-gray-200 bg-surface-page">
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-6 py-9 sm:grid-cols-2 lg:grid-cols-4">
+        <section id="accesos" aria-label={t.accesos} className="border-y border-gray-200 bg-surface-page">
+          <ul className="mx-auto grid max-w-6xl list-none grid-cols-1 gap-x-10 gap-y-6 px-6 py-10 sm:grid-cols-2 lg:grid-cols-4">
             {accesos.map((item, i) => {
-              const Icon = iconFor(item.icon);
               const enlace = String(item.enlace ?? "#");
               const external = /^https?:\/\//i.test(enlace);
               return (
-                <Reveal key={enlace + i} delay={i * 80} className="h-full">
+                <li key={enlace + i}>
                   <Link
                     href={external ? enlace : href(enlace)}
-                    {...(external
-                      ? { target: "_blank", rel: "noopener noreferrer" }
-                      : {})}
-                    className="card-lift flex h-full flex-col gap-2.5 rounded-xl border border-gray-200 bg-surface-card p-5 shadow-sm hover:border-brand-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
+                    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="group flex h-full flex-col gap-1.5 border-t-2 border-gray-200 pt-4 transition-colors hover:border-diderot-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
                   >
-                    <span className="flex h-[38px] w-[38px] items-center justify-center rounded-md bg-diderot-pale">
-                      <Icon
-                        className={cn(
-                          "h-5 w-5",
-                          item.destacado ? "text-diderot-amber" : "text-ink",
-                        )}
-                        aria-hidden="true"
-                      />
-                    </span>
-                    <span className="text-base font-semibold text-gray-900">
+                    <span className="text-base font-semibold text-gray-900 group-hover:text-ink">
                       {String(item.titulo ?? "")}
                     </span>
-                    <span className="text-xs leading-snug text-gray-500">
+                    <span className="text-sm leading-snug text-gray-600">
                       {String(item.descripcion ?? "")}
                     </span>
                   </Link>
-                </Reveal>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </section>
       ) : null}
 
       {/* DIDEROT en cifras (datos vivos; sin cifras, sin banda) */}
       {cifras.length > 0 ? (
-        <section className="border-b border-gray-200 bg-surface-tinted">
-          <div className="mx-auto flex max-w-6xl flex-col items-start gap-7 px-6 py-10 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-[38ch]">
-              {cifrasEyebrow ? (
-                <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-                  {cifrasEyebrow}
-                </p>
-              ) : null}
-              <h2 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">
+        <section className="border-y border-gray-200 bg-surface-tinted">
+          <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-[40ch]">
+              {cifrasEyebrow ? <Eyebrow className="mb-2">{cifrasEyebrow}</Eyebrow> : null}
+              <h2 className="mb-2 text-2xl font-semibold tracking-tight text-gray-900 sm:text-[28px]">
                 {cifrasTitulo}
               </h2>
               <div
@@ -314,7 +324,7 @@ export default async function HomePage() {
             <ul
               aria-label={t.cifrasAria}
               className={cn(
-                "grid w-full list-none grid-cols-2 gap-3.5 p-0 lg:w-auto",
+                "grid w-full list-none grid-cols-2 gap-x-8 gap-y-7 p-0 lg:w-auto",
                 columnasCifras,
               )}
             >
@@ -323,14 +333,14 @@ export default async function HomePage() {
                   <Reveal from="right" delay={i * 110} className="h-full">
                     <Link
                       href={href(c.enlace)}
-                      className="card-lift flex h-full flex-col justify-center rounded-xl border border-gray-200 bg-surface-card p-5 text-center shadow-sm hover:border-brand-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-tinted lg:w-[156px]"
+                      className="group flex h-full flex-col border-l-2 border-diderot-gold pl-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet lg:w-[150px]"
                     >
                       {/* CountUp arranca en 0 y anima en el cliente: el
                           lector de pantalla recibe la cifra real, fija. */}
-                      <span aria-hidden="true" className="text-[26px] font-bold leading-tight text-ink">
+                      <span aria-hidden="true" className="font-serif text-[44px] leading-none text-ink tabular-nums">
                         <CountUp value={String(c.valor)} />
                       </span>
-                      <span aria-hidden="true" className="mt-1 text-[11px] leading-snug text-gray-500">
+                      <span aria-hidden="true" className="mt-2 text-[13px] leading-snug text-gray-600 group-hover:text-ink">
                         {c.texto}
                       </span>
                       <span className="sr-only">{`${c.valor} ${c.texto}`}</span>
@@ -345,51 +355,22 @@ export default async function HomePage() {
 
       {/* Actualidad (sin noticias publicadas, sin sección) */}
       {mostrarNoticias ? (
-        <section className="border-b border-gray-200 bg-surface-card">
+        <section className="bg-surface-card">
           <div className="mx-auto max-w-6xl px-6 pb-16 pt-14">
-            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-                {t.actualidad}
-              </h2>
-              <Link
-                href={href("/noticias")}
-                className="inline-flex min-h-6 items-center text-sm font-medium text-diderot-violet hover:underline"
-              >
-                {t.verTodas}
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <BlockHeading title={t.actualidad} href={href("/noticias")} linkLabel={t.verTodas} />
+            <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
               {latestNews.map((item, i) => (
                 <Reveal key={item.slug} delay={i * 90} className="h-full">
-                  <Link
+                  <NewsTeaser
                     href={href(`/noticias/${item.slug}`)}
-                    className="group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
-                  >
-                    <article className="card-lift flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-surface-card shadow-sm hover:border-brand-400 hover:shadow-md">
-                      <CoverImage
-                        src={item.coverImage}
-                        alt={item.photoLabel}
-                        zoom
-                        className="h-[150px] w-full"
-                      />
-                      <div className="flex flex-col gap-2 px-5 pb-5 pt-[18px]">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="rounded-full bg-diderot-pale px-2.5 py-0.5 font-medium text-ink">
-                            {categoryLabel(item.category, locale)}
-                          </span>
-                          <span className="text-gray-500">{item.dateDisplay}</span>
-                        </div>
-                        <h3 className="text-base font-semibold leading-snug text-gray-900">
-                          {item.title}
-                        </h3>
-                        {item.excerpt ? (
-                          <p className="line-clamp-3 text-sm leading-normal text-gray-600">
-                            {item.excerpt}
-                          </p>
-                        ) : null}
-                      </div>
-                    </article>
-                  </Link>
+                    title={item.title}
+                    excerpt={item.excerpt}
+                    category={categoryLabel(item.category, locale)}
+                    date={item.dateDisplay}
+                    dateTime={item.publishedAt}
+                    coverImage={item.coverImage}
+                    photoLabel={item.photoLabel}
+                  />
                 </Reveal>
               ))}
             </div>
@@ -399,20 +380,15 @@ export default async function HomePage() {
 
       {/* Publicaciones destacadas (featured en el panel) */}
       {mostrarDestacadas ? (
-        <section className="border-b border-gray-200 bg-surface-page">
+        <section className="border-t border-gray-200 bg-surface-page">
           <div className="mx-auto max-w-6xl px-6 pb-16 pt-14">
-            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-                {t.destacadas}
-              </h2>
-              <Link
-                href={href("/publicaciones")}
-                className="inline-flex min-h-6 items-center text-sm font-medium text-diderot-violet hover:underline"
-              >
-                {t.verPublicaciones}
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <BlockHeading
+              title={t.destacadas}
+              href={href("/publicaciones")}
+              linkLabel={t.verPublicaciones}
+              rule={false}
+            />
+            <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
               {destacadas.map((pub, i) => (
                 <Reveal key={pub.id} delay={i * 90} className="h-full">
                   <PublicationCard pub={pub} locale={locale} />
@@ -423,50 +399,40 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {/* Banda de cita (en lugar de la banda de la revista EKS del IUCE),
-          sobre el pentagrama de fondo de la marca DIDEROT. */}
+      {/* Cita sobre el pentagrama de la marca: serif en cursiva, sin iconos. */}
       {cita.replace(/<[^>]+>/g, "").trim() ? (
-        <section className="staff-lines border-b border-gray-200 bg-surface-tinted">
-          <Reveal from="scale" className="mx-auto max-w-6xl px-6 py-12">
-            <div className="mx-auto flex max-w-4xl flex-col gap-5 sm:flex-row sm:gap-7">
-              <span
-                aria-hidden="true"
-                className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-md bg-diderot-indigo text-white"
-              >
-                <Quote className="h-5 w-5" />
-              </span>
-              <figure className="min-w-0">
-                <blockquote
-                  className="page-block text-lg italic leading-relaxed text-gray-900 sm:text-xl"
-                  // Bloque editable desde el gestor (inicio:cita)
-                  dangerouslySetInnerHTML={{ __html: cita }}
-                />
-                {citaAutor ? (
-                  <figcaption className="mt-4 flex items-center gap-3 text-sm font-semibold text-diderot-amber">
-                    <span aria-hidden="true" className="h-0.5 w-8 flex-none rounded-full bg-diderot-gold" />
-                    {citaAutor}
-                  </figcaption>
-                ) : null}
-              </figure>
-            </div>
+        <section className="staff-lines border-y border-gray-200 bg-surface-tinted">
+          <Reveal className="mx-auto max-w-6xl px-6 py-14">
+            <figure className="mx-auto max-w-4xl border-l-2 border-diderot-gold pl-6 sm:pl-8">
+              <blockquote
+                className="page-block font-serif text-[22px] italic leading-snug text-gray-900 sm:text-[26px]"
+                // Bloque editable desde el gestor (inicio:cita)
+                dangerouslySetInnerHTML={{ __html: cita }}
+              />
+              {citaAutor ? (
+                <figcaption className="mt-5 text-sm font-semibold text-diderot-amber">
+                  {citaAutor}
+                </figcaption>
+              ) : null}
+            </figure>
           </Reveal>
         </section>
       ) : null}
 
       {/* Afiliaciones: USAL, IUCE y Programa de Doctorado */}
-      <section className="border-b border-gray-200 bg-surface-card">
-        <div className="mx-auto max-w-6xl px-6 py-10">
-          <h2 className="mb-6 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
+      <section className="bg-surface-card">
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <h2 className="mb-7 text-center font-serif text-lg italic text-gray-500">
             {t.afiliacion}
           </h2>
-          <ul className="flex list-none flex-wrap items-center justify-center gap-x-12 gap-y-6 p-0">
+          <ul className="flex list-none flex-wrap items-center justify-center gap-x-14 gap-y-6 p-0">
             <li>
               <a
                 href={SITE.links.usal}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={t.usal}
-                className="block rounded-md p-1 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
+                className="block rounded-sm p-1 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
               >
                 <Image src="/images/usal-logo.png" alt="" width={854} height={232} className="h-11 w-auto dark:hidden" />
                 <Image src="/images/usal-logo-white.webp" alt="" width={640} height={177} className="hidden h-11 w-auto dark:block" />
@@ -478,23 +444,22 @@ export default async function HomePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={t.iuce}
-                className="block rounded-md p-1 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
+                className="block rounded-sm p-1 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
               >
                 <Image src="/images/afiliaciones/iuce-logo.png" alt="" width={800} height={362} className="h-12 w-auto dark:hidden" />
                 <Image src="/images/afiliaciones/iuce-logo-white.webp" alt="" width={640} height={196} className="hidden h-11 w-auto dark:block" />
               </a>
             </li>
             <li>
-              {/* El programa no tiene logotipo propio: chip de texto. */}
+              {/* El programa no tiene logotipo propio: enlace de texto. */}
               <a
                 href={SITE.links.doctorado}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={t.doctoradoAria}
-                className="inline-flex min-h-11 items-center gap-2.5 rounded-full border border-gray-200 bg-surface-page px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-diderot-violet hover:text-diderot-violet focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
+                className="inline-flex max-w-[34ch] items-start gap-2.5 text-sm font-medium leading-snug text-gray-700"
               >
-                <GraduationCap className="h-5 w-5 flex-none text-diderot-amber" aria-hidden="true" />
-                {t.doctorado}
+                <GraduationCap className="mt-0.5 h-5 w-5 flex-none text-diderot-amber" aria-hidden="true" />
+                <span className="link-sub">{t.doctorado}</span>
               </a>
             </li>
           </ul>

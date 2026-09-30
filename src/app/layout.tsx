@@ -1,10 +1,30 @@
 import type { Metadata } from "next";
+import { Instrument_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { ThemeScript } from "@/components/theme-script";
 import { getLocale } from "@/lib/locale-server";
 import { ToastProvider } from "@/components/toast-provider";
 import { SITE, SITE_URL } from "@/lib/site";
 import { getSiteSettings } from "@/lib/site-settings";
+
+/*
+ * Tipografía: Instrument Sans para titulares y texto; Instrument Serif (sobre
+ * todo en cursiva) como acento: antetítulos, citas y notas. Se sirven desde
+ * el propio dominio (next/font), sin peticiones a Google en tiempo de uso.
+ */
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-instrument-sans",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const en = getLocale() === "en";
@@ -64,7 +84,11 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const { email } = await getSiteSettings();
   return (
-    <html lang={getLocale()} suppressHydrationWarning>
+    <html
+      lang={getLocale()}
+      className={`${instrumentSans.variable} ${instrumentSerif.variable}`}
+      suppressHydrationWarning
+    >
       <body className="min-h-screen bg-surface-page text-gray-600 antialiased">
         <ThemeScript />
         {children}

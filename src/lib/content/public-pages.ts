@@ -33,6 +33,11 @@ export interface PublicSectionDef {
   defaultHidden: boolean;
 }
 
+// Texto de ayuda común a las secciones que nacen ocultas porque su contenido
+// por defecto era genérico o repetía otra parte de la web.
+const SIN_CONTENIDO =
+  "Oculta por defecto: su texto era provisional o repetía otra sección. Muéstrala cuando el grupo aporte contenido propio (Contenido → Páginas).";
+
 export const PUBLIC_SECTIONS: PublicSectionDef[] = [
   {
     slug: "seccion-proyectos",
@@ -40,6 +45,48 @@ export const PUBLIC_SECTIONS: PublicSectionDef[] = [
     path: "/investigacion#proyectos",
     hint: "Explorador de proyectos del grupo (se gestionan en Proyectos)",
     defaultHidden: false,
+  },
+  {
+    slug: "inicio-accesos",
+    label: "Inicio (accesos rápidos)",
+    path: "/#accesos",
+    hint: `Tarjetas de acceso a las secciones; repiten el menú. ${SIN_CONTENIDO}`,
+    defaultHidden: true,
+  },
+  {
+    slug: "grupo-objetivos",
+    label: "El grupo (Objetivos)",
+    path: "/grupo#objetivos",
+    hint: `Objetivos redactados a partir de la presentación. ${SIN_CONTENIDO}`,
+    defaultHidden: true,
+  },
+  {
+    slug: "transferencia-lineas",
+    label: "Transferencia (líneas y servicios)",
+    path: "/transferencia#lineas",
+    hint: SIN_CONTENIDO,
+    defaultHidden: true,
+  },
+  {
+    slug: "transferencia-divulgacion",
+    label: "Transferencia (divulgación)",
+    path: "/transferencia#divulgacion",
+    hint: SIN_CONTENIDO,
+    defaultHidden: true,
+  },
+  {
+    slug: "formacion-profesorado",
+    label: "Formación (profesorado, TFG y TFM)",
+    path: "/formacion#profesorado",
+    hint: SIN_CONTENIDO,
+    defaultHidden: true,
+  },
+  {
+    slug: "formacion-movilidad",
+    label: "Formación (estancias y movilidad)",
+    path: "/formacion#movilidad",
+    hint: SIN_CONTENIDO,
+    defaultHidden: true,
   },
 ];
 
@@ -90,6 +137,6 @@ export const PUBLIC_PAGES: PublicPageDef[] = [
     slug: "contacto",
     label: "Contacto",
     path: "/contacto",
-    hint: "Formulario y datos de contacto",
+    hint: "Correo, redes sociales, dirección y cómo llegar",
   },
 ];

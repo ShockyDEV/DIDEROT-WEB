@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { CalendarDays, Expand } from "lucide-react";
+import { Expand } from "lucide-react";
+import { SoundWave } from "@/components/ui/sound-wave";
 import { cn } from "@/lib/cn";
 import { isLocalPath } from "@/lib/validations";
 
@@ -23,7 +24,7 @@ interface EventPosterProps {
  * Cartel de evento. Los carteles son verticales (A4) y llevan texto, así que
  * nunca se recortan: se muestran enteros (object-contain) sobre un fondo
  * tintado con pentagrama, como un cartel colgado en un tablón. Sin imagen,
- * el hueco se rellena con el mismo fondo y un icono de calendario.
+ * el hueco se rellena con el mismo fondo y las ondas de la marca.
  */
 export function EventPoster({
   src,
@@ -41,9 +42,7 @@ export function EventPoster({
   if (!src) {
     return (
       <div aria-hidden="true" className={cn(frame, "flex items-center justify-center")}>
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-card text-ink shadow-sm">
-          <CalendarDays className="h-6 w-6" aria-hidden="true" />
-        </span>
+        <SoundWave className="scale-150 text-diderot-gold" />
       </div>
     );
   }
@@ -93,7 +92,7 @@ export function EventPoster({
       {/* Pista visual de «ampliar» al pasar el ratón o con el foco. */}
       <span
         aria-hidden="true"
-        className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-surface-card text-ink opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+        className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-sm bg-surface-card text-ink opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
       >
         <Expand className="h-4 w-4" aria-hidden="true" />
       </span>

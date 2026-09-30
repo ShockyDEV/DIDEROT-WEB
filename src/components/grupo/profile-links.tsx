@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-import { BarChart3, Globe, GraduationCap, Library } from "lucide-react";
 import { pick, type Locale } from "@/lib/locale";
 import type { PublicMember } from "@/lib/members-service";
 
@@ -8,15 +6,12 @@ interface ProfileLink {
   label: string;
   /** Nombre accesible: incluye el rótulo visible (WCAG 2.5.3) y la persona. */
   ariaLabel: string;
-  mark: ReactNode;
 }
 
-const iconClass = "h-3.5 w-3.5 flex-none";
-
 /**
- * Perfiles académicos de un miembro como píldoras con texto (ORCID, Portal
- * de Producción Científica de la USAL, Scopus, Google Scholar y web). Se
- * abren en pestaña nueva; los enlaces ya llegan saneados (solo http/https)
+ * Perfiles académicos de un miembro como enlaces de texto subrayados (ORCID,
+ * Portal de Producción Científica de la USAL, Scopus, Google Scholar y web).
+ * Se abren en pestaña nueva; los enlaces ya llegan saneados (solo http/https)
  * desde members-service. Si no tiene ninguno, no pinta nada.
  */
 export function ProfileLinks({
@@ -31,15 +26,6 @@ export function ProfileLinks({
       href: member.orcid,
       label: "ORCID",
       ariaLabel: pick(locale, `ORCID de ${name}`, `ORCID profile of ${name}`),
-      // Distintivo «iD» con el verde de ORCID (logotipo, no texto).
-      mark: (
-        <span
-          aria-hidden="true"
-          className="flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full bg-[#A6CE39] text-[7px] font-bold leading-none text-white"
-        >
-          iD
-        </span>
-      ),
     });
   }
   if (member.portalUrl) {
@@ -51,7 +37,6 @@ export function ProfileLinks({
         `Portal USAL: producción científica de ${name}`,
         `USAL Portal: research output of ${name}`,
       ),
-      mark: <Library className={iconClass} aria-hidden="true" />,
     });
   }
   if (member.scopus) {
@@ -59,7 +44,6 @@ export function ProfileLinks({
       href: member.scopus,
       label: "Scopus",
       ariaLabel: pick(locale, `Scopus de ${name}`, `Scopus profile of ${name}`),
-      mark: <BarChart3 className={iconClass} aria-hidden="true" />,
     });
   }
   if (member.scholar) {
@@ -71,7 +55,6 @@ export function ProfileLinks({
         `Google Scholar de ${name}`,
         `Google Scholar profile of ${name}`,
       ),
-      mark: <GraduationCap className={iconClass} aria-hidden="true" />,
     });
   }
   if (member.website) {
@@ -79,7 +62,6 @@ export function ProfileLinks({
       href: member.website,
       label: pick(locale, "Web", "Website"),
       ariaLabel: pick(locale, `Web de ${name}`, `Website of ${name}`),
-      mark: <Globe className={iconClass} aria-hidden="true" />,
     });
   }
 
@@ -88,7 +70,7 @@ export function ProfileLinks({
   return (
     <ul
       aria-label={pick(locale, `Perfiles de ${name}`, `${name}'s profiles`)}
-      className="flex list-none flex-wrap gap-1.5 p-0"
+      className="flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 text-[13px] font-medium"
     >
       {links.map((l) => (
         <li key={l.label}>
@@ -97,9 +79,8 @@ export function ProfileLinks({
             target="_blank"
             rel="noopener noreferrer"
             aria-label={l.ariaLabel}
-            className="inline-flex h-7 items-center gap-1.5 rounded-full border border-gray-200 bg-surface-card px-2.5 text-[11px] font-semibold text-gray-700 transition-colors hover:border-diderot-violet hover:text-diderot-violet focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
+            className="link-sub rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
           >
-            {l.mark}
             {l.label}
           </a>
         </li>

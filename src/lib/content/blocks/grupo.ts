@@ -1,5 +1,5 @@
 import { SITE } from "@/lib/site";
-import { ICON_FIELD, type PageContentModule } from "./types";
+import type { PageContentModule } from "./types";
 
 /**
  * Contenido editable de «El grupo» (pageSlug "grupo"): presentación (texto
@@ -52,7 +52,6 @@ export const content: PageContentModule = {
       title: "Presentación (ficha «El grupo en breve»)",
       itemLabel: "dato",
       fields: [
-        ICON_FIELD,
         { key: "etiqueta", label: "Etiqueta", type: "text", hint: "p. ej. Creación" },
         { key: "texto", label: "Texto", type: "text" },
       ],
@@ -146,12 +145,11 @@ export const content: PageContentModule = {
           type: "url",
           hint: "vacío = se usa el de tema claro sobre placa blanca",
         },
-        ICON_FIELD,
       ],
       defaultItems: [
         {
           titulo: "Instituto Universitario de Ciencias de la Educación (IUCE)",
-          texto: "Instituto al que está adscrito el grupo. Paseo de Canalejas, 169 · Edificio Solís · 37008 Salamanca.",
+          texto: "Instituto al que está adscrito el grupo. Paseo de Canalejas, 169, Edificio Solís, 37008 Salamanca.",
           enlace: SITE.links.iuce,
           logo: "/images/afiliaciones/iuce-logo.png",
           logoOscuro: "/images/afiliaciones/iuce-logo-white.webp",
@@ -237,7 +235,7 @@ export const content: PageContentModule = {
     "grupo:list:afiliaciones": [
       {
         titulo: "University Institute of Education Sciences (IUCE)",
-        texto: "The institute to which the group is attached. Paseo de Canalejas, 169 · Solís Building · 37008 Salamanca.",
+        texto: "The institute to which the group is attached. Paseo de Canalejas, 169, Solís Building, 37008 Salamanca.",
         enlace: SITE.links.iuce,
         logo: "/images/afiliaciones/iuce-logo.png",
         logoOscuro: "/images/afiliaciones/iuce-logo-white.webp",

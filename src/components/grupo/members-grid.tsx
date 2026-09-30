@@ -6,6 +6,7 @@ import { CopyEmail } from "@/components/ui/copy-email";
 import { MemberPhoto } from "@/components/grupo/member-photo";
 import { ProfileLinks } from "@/components/grupo/profile-links";
 import { cn } from "@/lib/cn";
+import { columnasSinHuecos } from "@/lib/grid";
 import { pick, type Locale } from "@/lib/locale";
 import type { PublicMember } from "@/lib/members-service";
 
@@ -27,6 +28,30 @@ function normalize(s: string): string {
 
 function hasProfiles(m: PublicMember): boolean {
   return Boolean(m.orcid || m.portalUrl || m.scopus || m.scholar || m.website);
+}
+
+/**
+ * Renglones de un dato escrito con «·» como separador (cargo, afiliación):
+ * en la web van en líneas separadas, sin el punto medio.
+ */
+function renglones(texto?: string | null): string[] {
+  return (texto ?? "")
+    .split(/\s*·\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function Lineas({ texto }: Readonly<{ texto?: string | null }>) {
+  const partes = renglones(texto);
+  return (
+    <>
+      {partes.map((p, i) => (
+        <span key={i} className="block">
+          {p}
+        </span>
+      ))}
+    </>
+  );
 }
 
 /** Semblanza en párrafos (texto plano del panel; una línea en blanco separa). */
@@ -75,20 +100,19 @@ function Affiliation({
   if (!member.affiliation && !member.area) return null;
   return (
     <p className={cn("leading-relaxed text-gray-500", className)}>
-      {member.affiliation}
-      {member.affiliation && member.area ? <br /> : null}
-      {member.area}
+      <Lineas texto={member.affiliation} />
+      <Lineas texto={member.area} />
     </p>
   );
 }
 
-/** Tarjeta grande (coordinación), como el equipo de dirección del IUCE. */
+/** Coordinación: ficha grande con el filete ámbar de la marca. */
 function CoordinationCard({
   member,
   locale,
 }: Readonly<{ member: PublicMember; locale: Locale }>) {
   return (
-    <article className="card-lift flex h-full flex-col gap-5 rounded-xl border border-gray-200 border-t-[3px] border-t-diderot-amber bg-surface-card p-6 shadow-sm hover:shadow-md sm:flex-row sm:items-start sm:gap-7 sm:p-7">
+    <article className="flex h-full flex-col gap-5 border-t-2 border-diderot-gold pt-6 sm:flex-row sm:items-start sm:gap-7">
       <MemberPhoto
         name={member.name}
         photo={member.photo}
@@ -96,12 +120,12 @@ function CoordinationCard({
         className="h-28 w-28 text-2xl"
       />
       <div className="min-w-0 flex-1">
-        <h4 className="text-lg font-semibold leading-snug text-gray-900">
+        <h4 className="text-xl font-semibold leading-snug text-gray-900">
           {member.name}
         </h4>
         {member.role ? (
-          <p className="mt-1 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-            {member.role}
+          <p className="mt-1 font-serif text-[17px] italic leading-snug text-diderot-amber">
+            <Lineas texto={member.role} />
           </p>
         ) : null}
         <Affiliation member={member} className="mt-2 text-sm" />
@@ -129,13 +153,13 @@ function CoordinationCard({
   );
 }
 
-/** Tarjeta compacta (resto del equipo), heredera de la rejilla del IUCE. */
+/** Ficha compacta (resto del equipo): filete superior, sin caja ni sombra. */
 function MemberCard({
   member,
   locale,
 }: Readonly<{ member: PublicMember; locale: Locale }>) {
   return (
-    <article className="card-lift flex h-full flex-col rounded-xl border border-gray-200 bg-surface-card p-5 shadow-sm hover:border-brand-400 hover:shadow-md">
+    <article className="flex h-full flex-col border-t border-gray-300 pt-5">
       <div className="flex items-start gap-3.5">
         {/* 80px, como en la web del IUCE: retrato presente sin descuadrar. */}
         <MemberPhoto
@@ -150,7 +174,7 @@ function MemberCard({
           </h4>
           {member.role ? (
             <p className="mt-0.5 text-[13px] leading-snug text-gray-600">
-              {member.role}
+              <Lineas texto={member.role} />
             </p>
           ) : null}
         </div>
@@ -249,15 +273,16 @@ export function MembersGrid({
             aria-labelledby={headingId}
             className={cn(gi > 0 && "mt-12")}
           >
-            <div className="mb-5 flex items-baseline gap-3">
+            {/* Cabecera de grupo: título y número de personas, sin cápsula. */}
+            <div className="mb-6 flex items-baseline gap-3">
               <h3
                 id={headingId}
-                className="text-xl font-bold tracking-tight text-gray-900"
+                className="text-xl font-semibold tracking-tight text-gray-900"
               >
                 {g.title}
               </h3>
               {!coordination ? (
-                <span className="rounded-full bg-diderot-pale px-2.5 py-0.5 text-xs font-semibold text-ink">
+                <span className="font-serif text-lg italic tabular-nums text-gray-500">
                   {g.members.length}
                 </span>
               ) : null}
@@ -274,7 +299,14 @@ export function MembersGrid({
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div
+                className={cn(
+                  "grid grid-cols-1 gap-x-8 gap-y-9 sm:grid-cols-2 lg:grid-cols-3",
+                  // Sin fichas huérfanas: filas de cuatro en pantallas anchas
+                  // cuando dejan menos huecos (4, 7, 8… personas).
+                  columnasSinHuecos(g.members.length) === 4 && "xl:grid-cols-4",
+                )}
+              >
                 {g.members.map((m) => (
                   <MemberCard key={m.id} member={m} locale={locale} />
                 ))}

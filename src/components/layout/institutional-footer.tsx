@@ -19,7 +19,7 @@ export async function InstitutionalFooter() {
   ]);
   const redes = socialLinks(redesItems);
   return (
-    <footer className="mt-16 bg-gray-950 text-white">
+    <footer className="bg-gray-950 text-white">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-6 py-10 sm:grid-cols-3">
         <div className="flex justify-center sm:justify-start">
           <Image
@@ -52,8 +52,8 @@ export async function InstitutionalFooter() {
             <MapPin className="h-4 w-4 flex-none text-diderot-gold" aria-hidden="true" />
             {pick(
               locale,
-              "IUCE · Edificio Solís · Salamanca",
-              "IUCE · Solís Building · Salamanca",
+              "IUCE, Edificio Solís, Salamanca",
+              "IUCE, Solís Building, Salamanca",
             )}
           </p>
         </div>
@@ -98,38 +98,32 @@ export async function InstitutionalFooter() {
 
       <div className="border-t border-white/10 bg-gray-950">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-3 text-[11px] text-white/55 sm:flex-row">
-          <p className="text-center sm:text-left">
-            © {year} {SITE.shortName} –{" "}
-            {pick(locale, "Universidad de Salamanca", "University of Salamanca")}
-            {" · "}
-            <Link
-              href={withLocale("/aviso-legal", locale)}
-              className="transition-colors hover:text-white"
+          <div className="flex flex-col items-center gap-x-6 gap-y-1.5 sm:flex-row">
+            <p className="text-center sm:text-left">
+              © {year} {SITE.shortName},{" "}
+              {pick(locale, "Universidad de Salamanca", "University of Salamanca")}
+            </p>
+            {/* Enlaces legales separados por aire, sin «·» entre ellos. */}
+            <nav
+              aria-label={pick(locale, "Información legal", "Legal information")}
+              className="flex flex-wrap justify-center gap-x-4 gap-y-1"
             >
-              {pick(locale, "Aviso legal", "Legal notice")}
-            </Link>
-            {" · "}
-            <Link
-              href={withLocale("/privacidad", locale)}
-              className="transition-colors hover:text-white"
-            >
-              {pick(locale, "Privacidad", "Privacy")}
-            </Link>
-            {" · "}
-            <Link
-              href={withLocale("/politica-de-cookies", locale)}
-              className="transition-colors hover:text-white"
-            >
-              Cookies
-            </Link>
-            {" · "}
-            <Link
-              href={withLocale("/accesibilidad", locale)}
-              className="transition-colors hover:text-white"
-            >
-              {pick(locale, "Accesibilidad", "Accessibility")}
-            </Link>
-          </p>
+              {[
+                ["/aviso-legal", pick(locale, "Aviso legal", "Legal notice")],
+                ["/privacidad", pick(locale, "Privacidad", "Privacy")],
+                ["/politica-de-cookies", "Cookies"],
+                ["/accesibilidad", pick(locale, "Accesibilidad", "Accessibility")],
+              ].map(([href, label]) => (
+                <Link
+                  key={href}
+                  href={withLocale(href, locale)}
+                  className="underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-diderot-gold"
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </div>
           {/* Los iconos miden 14-16 px, pero el área de pulsación de cada
               enlace llega a 24x24 (mínimo de WCAG 2.2 para objetivos). */}
           <div className="flex items-center gap-2">

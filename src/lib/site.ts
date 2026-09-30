@@ -25,7 +25,7 @@ export const SITE = {
   /** Correo de contacto público por defecto (editable en el panel). */
   email: "javiermerchan@usal.es",
   /** Sede: el grupo está adscrito al IUCE (Edificio Solís). */
-  address: "Instituto Universitario de Ciencias de la Educación (IUCE) · Paseo de Canalejas, 169 · Edificio Solís",
+  address: "Instituto Universitario de Ciencias de la Educación (IUCE), Paseo de Canalejas, 169, Edificio Solís",
   city: "37008 Salamanca",
   /** Redes y enlaces institucionales. */
   links: {

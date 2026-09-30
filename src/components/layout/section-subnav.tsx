@@ -31,19 +31,15 @@ export function SectionSubnav({
   const en = getLocale() === "en";
   // Un ítem externo nunca es «la sección en la que estás».
   const active = activeId ?? items.find((i) => !i.external)?.id;
+  // Pestañas de texto con el indicador ámbar que se traza debajo (.tab).
   return (
     <nav
       aria-label={en ? "Sections on this page" : "Secciones de esta página"}
-      className="flex gap-6 overflow-x-auto text-sm font-medium"
+      className="flex gap-7 overflow-x-auto"
     >
       {items.map((item) => {
         const isActive = !item.external && item.id === active;
-        const clase = cn(
-          "whitespace-nowrap border-b-2 py-2.5 transition-colors",
-          isActive
-            ? "border-diderot-amber text-ink"
-            : "border-transparent text-gray-600 hover:text-gray-900",
-        );
+        const clase = cn("tab whitespace-nowrap py-3", isActive && "text-ink");
         if (item.external) {
           return (
             <a

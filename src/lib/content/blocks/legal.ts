@@ -12,8 +12,8 @@ import type { PageContentModule } from "./types";
  */
 
 // Enlaces que se repiten en varios textos.
-const USAL_DATOS = "https://www.usal.es/proteccion-de-datos";
-const USAL_ACCESIBILIDAD = "https://www.usal.es/accesibilidad";
+const USAL_DATOS = "https://www.usal.es/politica-de-privacidad";
+const USAL_ACCESIBILIDAD = "https://sede.usal.es/accesibilidad";
 const AEPD = "https://www.aepd.es";
 const MAIL = `<a href="mailto:${SITE.email}">${SITE.email}</a>`;
 

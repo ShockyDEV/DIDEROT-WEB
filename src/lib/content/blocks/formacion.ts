@@ -1,5 +1,5 @@
 import { SITE } from "@/lib/site";
-import { ICON_FIELD, type PageContentModule } from "./types";
+import type { PageContentModule } from "./types";
 
 /**
  * Contenido editable de «Formación» (pageSlug "formacion"): misma estructura
@@ -29,7 +29,7 @@ export const content: PageContentModule = {
       {
         blockKey: "intro",
         title: "Cabecera — párrafo de presentación",
-        defaultContent: `<p>DIDEROT forma a investigadoras, investigadores y docentes en las didácticas digitales de la música y las artes performativas: dirección de tesis doctorales y de trabajos fin de grado y máster, seminarios especializados, formación del profesorado y estancias de investigación.</p>`,
+        defaultContent: `<p>DIDEROT forma a investigadoras e investigadores en las didácticas digitales de la música y las artes performativas: dirección de tesis doctorales en los programas de doctorado de la Universidad de Salamanca y el Seminario Internacional del grupo.</p>`,
       },
       {
         blockKey: "url-doctorado",
@@ -44,7 +44,7 @@ export const content: PageContentModule = {
       {
         blockKey: "seminario-edicion",
         title: "Seminario Internacional — antetítulo (edición y año)",
-        defaultContent: `<p>Seminario Internacional · 1.ª edición · 2026</p>`,
+        defaultContent: `<p>Seminario Internacional, 1.ª edición (2026)</p>`,
       },
       {
         blockKey: "seminario-titulo",
@@ -146,7 +146,7 @@ export const content: PageContentModule = {
       blockKey: "list:ambitos",
       title: "Doctorado (ámbitos para tesis y trabajos)",
       itemLabel: "ámbito",
-      fields: [ICON_FIELD, { key: "texto", label: "Texto", type: "text" }],
+      fields: [{ key: "texto", label: "Texto", type: "text" }],
       defaultItems: [
         { icon: "music", texto: "Didácticas digitales de la expresión musical" },
         {
@@ -234,21 +234,21 @@ export const content: PageContentModule = {
           codigo: "I",
           titulo:
             "Encuentro de investigación predoctoral. Educación musical y artes performativas",
-          fecha: "30 de abril de 2026 · 16:00 h",
+          fecha: "30 de abril de 2026, 16:00 h",
           lugar: "Aula 12A, Edificio Solís",
         },
         {
           codigo: "II",
           titulo:
             "Mesa de comunicaciones. Investigación y proyectos en educación musical y artes performativas",
-          fecha: "4 de junio de 2026 · 16:00 h",
+          fecha: "4 de junio de 2026, 16:00 h",
           lugar: "Aula 17A (IUCE), Edificio Solís",
         },
         {
           codigo: "III",
           titulo:
             "Mesa de comunicaciones. Intersecciones entre arte, educación y tecnología",
-          fecha: "10 de junio de 2026 · 16:30 h",
+          fecha: "10 de junio de 2026, 16:30 h",
           lugar: "Aula de Usos Múltiples (IUCE), Edificio Solís",
         },
       ],
@@ -259,7 +259,6 @@ export const content: PageContentModule = {
       title: "Profesorado, TFG y TFM (tarjetas)",
       itemLabel: "tarjeta",
       fields: [
-        ICON_FIELD,
         { key: "titulo", label: "Título", type: "text" },
         { key: "texto", label: "Texto", type: "textarea" },
         { key: "cta", label: "Texto del enlace", type: "text" },
@@ -307,7 +306,6 @@ export const content: PageContentModule = {
       title: "Estancias y movilidad (tarjetas)",
       itemLabel: "tarjeta",
       fields: [
-        ICON_FIELD,
         { key: "titulo", label: "Título", type: "text" },
         { key: "texto", label: "Texto", type: "textarea" },
       ],
@@ -336,9 +334,9 @@ export const content: PageContentModule = {
   blocksEn: {
     "formacion:hero-eyebrow": `<p>Research and teacher training</p>`,
     "formacion:hero-titulo": `<p>Training</p>`,
-    "formacion:intro": `<p>DIDEROT trains researchers and teachers in the digital didactics of music and the performing arts: supervision of doctoral theses and of bachelor's and master's theses, specialised seminars, teacher training and research stays.</p>`,
+    "formacion:intro": `<p>DIDEROT trains researchers in the digital didactics of music and the performing arts: supervision of doctoral theses in the University of Salamanca's doctoral programmes and the group's International Seminar.</p>`,
     "formacion:doctorado-intro": `<p>DIDEROT members supervise doctoral theses on music education, the performing arts and technology. If you would like to do your thesis with the group, write to us and we will advise you on research lines, supervision and admission to the programmes.</p>`,
-    "formacion:seminario-edicion": `<p>International Seminar · 1st edition · 2026</p>`,
+    "formacion:seminario-edicion": `<p>International Seminar, 1st edition (2026)</p>`,
     "formacion:seminario-titulo": `<p>Digital didactics of musical expression and the performing arts</p>`,
     "formacion:seminario-subtitulo": `<p>Intelligent technologies and creativity in virtual environments</p>`,
     "formacion:seminario-intro": `<p>Organised by DIDEROT, the University Institute of Education Sciences (IUCE) and the Lifelong Learning Centre of the University of Salamanca, the seminar brings together research and teaching on intelligent technologies and creativity in music education and the performing arts. Its first edition was held in 2026, over three sessions in the Solís Building.</p>`,
@@ -431,21 +429,21 @@ export const content: PageContentModule = {
         codigo: "I",
         titulo:
           "Predoctoral research meeting. Music education and the performing arts",
-        fecha: "30 April 2026 · 16:00",
+        fecha: "30 April 2026, 16:00",
         lugar: "Room 12A, Solís Building",
       },
       {
         codigo: "II",
         titulo:
           "Paper session. Research and projects in music education and the performing arts",
-        fecha: "4 June 2026 · 16:00",
+        fecha: "4 June 2026, 16:00",
         lugar: "Room 17A (IUCE), Solís Building",
       },
       {
         codigo: "III",
         titulo:
           "Paper session. Intersections between art, education and technology",
-        fecha: "10 June 2026 · 16:30",
+        fecha: "10 June 2026, 16:30",
         lugar: "Multipurpose Room (IUCE), Solís Building",
       },
     ],

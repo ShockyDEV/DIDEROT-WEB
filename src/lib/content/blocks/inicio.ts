@@ -1,4 +1,4 @@
-import { ICON_FIELD, type PageContentModule } from "./types";
+import type { PageContentModule } from "./types";
 
 /**
  * Contenido editable de «Inicio — Portada» (pageSlug "inicio").
@@ -15,8 +15,8 @@ export const content: PageContentModule = {
     blocks: [
       {
         blockKey: "hero-eyebrow",
-        title: "Portada — antetítulo (línea ámbar pequeña)",
-        defaultContent: `<p>Grupo de Investigación Reconocido · USAL</p>`,
+        title: "Portada — antetítulo (cursiva ámbar sobre el titular)",
+        defaultContent: `<p>Grupo de Investigación Reconocido de la Universidad de Salamanca</p>`,
       },
       {
         blockKey: "hero-titulo",
@@ -41,7 +41,7 @@ export const content: PageContentModule = {
       {
         blockKey: "hero-foto-etiqueta",
         title: "Portada — rótulo sobre la foto (vacío = sin rótulo)",
-        defaultContent: `<p>Proyecto DIDEROT · Aula performativa</p>`,
+        defaultContent: `<p>Aula performativa del proyecto DIDEROT</p>`,
       },
       {
         blockKey: "cifras-eyebrow",
@@ -77,7 +77,7 @@ export const content: PageContentModule = {
       blockKey: "list:hitos-hero",
       title: "Portada (hitos bajo el titular)",
       itemLabel: "hito",
-      fields: [ICON_FIELD, { key: "texto", label: "Texto", type: "text" }],
+      fields: [{ key: "texto", label: "Texto", type: "text" }],
       defaultItems: [
         { icon: "award", texto: "Grupo de Investigación Reconocido desde 2021" },
         { icon: "landmark", texto: "Adscrito al IUCE" },
@@ -90,7 +90,6 @@ export const content: PageContentModule = {
       title: "Portada (tarjetas de acceso rápido)",
       itemLabel: "tarjeta",
       fields: [
-        ICON_FIELD,
         { key: "titulo", label: "Título", type: "text" },
         { key: "descripcion", label: "Descripción", type: "textarea" },
         {
@@ -135,12 +134,12 @@ export const content: PageContentModule = {
   ],
 
   blocksEn: {
-    "inicio:hero-eyebrow": `<p>Recognised Research Group · USAL</p>`,
+    "inicio:hero-eyebrow": `<p>Recognised Research Group of the University of Salamanca</p>`,
     "inicio:hero-titulo": `<p>Digital didactics of musical expression and the performing arts</p>`,
     "inicio:hero-parrafo": `<p>An interdisciplinary team of researchers from different fields of knowledge and institutions who identify, develop and apply new teaching methodologies and strategies where music education, art and cutting-edge technology meet.</p>`,
     "inicio:hero-boton-principal": `<p>Meet the group</p>`,
     "inicio:hero-boton-secundario": `<p>Publications</p>`,
-    "inicio:hero-foto-etiqueta": `<p>DIDEROT Project · Performative classroom</p>`,
+    "inicio:hero-foto-etiqueta": `<p>The DIDEROT project's performative classroom</p>`,
     "inicio:cifras-eyebrow": `<p>Group activity</p>`,
     "inicio:cifras-titulo": `<p>DIDEROT in figures</p>`,
     "inicio:cifras-parrafo": `<p>The group's team, projects and scientific output, always up to date.</p>`,

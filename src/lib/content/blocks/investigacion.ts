@@ -1,4 +1,4 @@
-import { ICON_FIELD, type PageContentModule } from "./types";
+import type { PageContentModule } from "./types";
 
 /**
  * Contenido editable de «Investigación» (pageSlug "investigacion").
@@ -41,7 +41,6 @@ export const content: PageContentModule = {
       title: "Líneas de investigación (tarjetas de ejes)",
       itemLabel: "eje",
       fields: [
-        ICON_FIELD,
         { key: "titulo", label: "Título del eje", type: "text" },
         {
           key: "descripcion",

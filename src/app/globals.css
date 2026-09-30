@@ -55,9 +55,10 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
 
-  /* Tipografía */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  /* Tipografía (next/font define --font-instrument-* en <html>) */
+  --font-sans: var(--font-instrument-sans), system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
 }
 
 /* --------------------------------------------------------------------------
@@ -205,6 +206,185 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ==========================================================================
+   Recursos gráficos propios de DIDEROT
+   - La «gota»: la «o» ámbar del logotipo, un círculo con la esquina superior
+     derecha en punta (como la cabeza de una nota). Marca antetítulos,
+     estados, viñetas y la forma de los botones.
+   - El pentagrama (.staff-lines) y las ondas (.sound-wave), más abajo.
+   En la capa «components»: las utilidades de Tailwind pueden matizarlas.
+   ========================================================================== */
+@layer components {
+.gota {
+  display: inline-block;
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50% 0 50% 50%;
+  background: currentColor;
+}
+
+/* Botones: esquinas pequeñas y la de arriba a la derecha en punta, como la
+   gota del logo (nunca cápsulas). */
+.btn-gota {
+  border-radius: 0.625rem 0.125rem 0.625rem 0.625rem;
+}
+
+/* Antetítulo: serif en cursiva, en minúscula normal, con la gota delante. */
+.eyebrow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  color: var(--diderot-amber);
+}
+
+.eyebrow > .gota {
+  color: var(--diderot-gold);
+  transform: translateY(-0.12em);
+}
+
+/* Etiqueta de dato (en fichas y listas): cursiva serif, sin mayúsculas. */
+.data-label {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: var(--gray-500);
+}
+
+/* Pestañas y filtros: texto con un indicador que se traza debajo. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.5rem;
+  row-gap: 0.25rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: color 0.2s ease;
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--diderot-amber);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab:hover {
+  color: var(--brand-ink);
+}
+
+.tab:hover::after {
+  transform: scaleX(0.35);
+}
+
+.tab[aria-current="page"],
+.tab[aria-current="true"],
+.tab[aria-pressed="true"],
+.tab[aria-selected="true"] {
+  color: var(--brand-ink);
+  font-weight: 600;
+}
+
+.tab[aria-current="page"]::after,
+.tab[aria-current="true"]::after,
+.tab[aria-pressed="true"]::after,
+.tab[aria-selected="true"]::after {
+  transform: scaleX(1);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--diderot-violet);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Contador dentro de una pestaña: número discreto, sin cápsula. */
+.tab-count {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Enlace secundario: subrayado fino que toma el ámbar al pasar el ratón. */
+.link-sub {
+  color: var(--diderot-violet);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+
+.link-sub:hover {
+  text-decoration-color: var(--diderot-amber);
+}
+
+/* Enlace de texto grande (títulos, correo): el subrayado se traza al pasar. */
+.link-trace {
+  background-image: linear-gradient(var(--diderot-amber), var(--diderot-amber));
+  background-size: 0% 2px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-trace:hover,
+.link-trace:focus-visible {
+  background-size: 100% 2px;
+}
+
+/* Marca de estado o categoría: texto con la gota de color (sin píldora). */
+.status {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.status > .gota {
+  transform: translateY(-0.05em);
+}
+
+/* Nota en cursiva («Por anunciar», «celebrado»). */
+.note {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--gray-500);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .tab::after,
+  .link-sub,
+  .link-trace {
+    transition: none;
+  }
+}
+}
+
 /* --------------------------------------------------------------------------
    Cuerpo de noticia (HTML del editor del gestor).
    Coincide con el prototipo: negritas en tinta de titular, blockquote con
@@ -224,15 +404,14 @@ body {
 
 .news-body blockquote {
   margin: 8px 0;
-  padding: 18px 24px;
-  border-left: 3px solid var(--diderot-amber);
-  background: var(--surface-tinted);
-  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 4px 0 4px 24px;
+  border-left: 2px solid var(--diderot-gold);
 }
 
 .news-body blockquote p {
-  font-size: 1rem;
-  line-height: 1.65;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.5;
   color: var(--gray-900);
   font-style: italic;
 }
@@ -240,6 +419,27 @@ body {
 .news-body ul,
 .news-body ol {
   padding-left: 1.5rem;
+}
+
+/* Viñetas del cuerpo de noticia: la gota del logo, como en los bloques. */
+.news-body ul {
+  list-style: none;
+  padding-left: 1.25rem;
+}
+
+.news-body ul > li {
+  position: relative;
+}
+
+.news-body ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.125rem;
+  top: 0.7em;
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50% 0 50% 50%;
+  background: var(--diderot-gold);
 }
 
 /* Medios dentro de una noticia: imágenes y vídeos incrustados (embeds del
@@ -250,7 +450,7 @@ body {
   margin: 4px auto;
   max-width: 100%;
   height: auto;
-  border-radius: 0.75rem;
+  border-radius: 0.25rem;
 }
 
 .news-body figure {
@@ -277,7 +477,7 @@ body {
   aspect-ratio: 16 / 9;
   margin: 4px auto;
   border: 0;
-  border-radius: 0.75rem;
+  border-radius: 0.25rem;
   background: #000;
 }
 
@@ -308,6 +508,27 @@ body {
 .page-block ol {
   margin: 0 0 14px;
   padding-left: 1.5rem;
+}
+
+/* Viñetas de los bloques: la gota del logo en lugar del punto genérico. */
+.page-block ul {
+  list-style: none;
+  padding-left: 1.25rem;
+}
+
+.page-block ul > li {
+  position: relative;
+}
+
+.page-block ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.125rem;
+  top: 0.62em;
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50% 0 50% 50%;
+  background: var(--diderot-gold);
 }
 
 /* --------------------------------------------------------------------------

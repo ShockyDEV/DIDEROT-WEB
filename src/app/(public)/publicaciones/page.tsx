@@ -1,16 +1,10 @@
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-  Library,
-  Search,
-  SearchX,
-} from "lucide-react";
+import { ArrowUpRight, Search } from "lucide-react";
 import { metadataBilingue } from "@/lib/metadata";
-import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { PageHeader } from "@/components/layout/page-header";
 import { buttonClassName } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Pagination } from "@/components/ui/pagination";
 import { Reveal } from "@/components/ui/reveal";
 import { AutoSubmitSelect } from "@/components/publicaciones/auto-submit-select";
 import { PublicationReference } from "@/components/publicaciones/publication-reference";
@@ -79,10 +73,10 @@ const T = {
     vacioTexto:
       "Muy pronto encontrarás aquí la producción científica del grupo. Mientras tanto, puedes consultarla en el Portal de Producción Científica de la Universidad de Salamanca.",
     paginacion: "Paginación de publicaciones",
-    paginaAnterior: "Página anterior",
-    paginaSiguiente: "Página siguiente",
+    anterior: "Anterior",
+    siguiente: "Siguiente",
     pagina: (n: number) => `Página ${n}`,
-    portalEyebrow: "Portal de Producción Científica · USAL",
+    portalEyebrow: "Portal de Producción Científica de la USAL",
     portalTitulo: "Toda la producción de los miembros",
     irAlPortal: "Ir al Portal",
     orcidTitulo: "Perfiles ORCID del equipo",
@@ -120,10 +114,10 @@ const T = {
     vacioTexto:
       "The group's scientific output will be listed here very soon. In the meantime, you can browse it on the University of Salamanca Research Portal.",
     paginacion: "Publications pagination",
-    paginaAnterior: "Previous page",
-    paginaSiguiente: "Next page",
+    anterior: "Previous",
+    siguiente: "Next",
     pagina: (n: number) => `Page ${n}`,
-    portalEyebrow: "Research Portal · USAL",
+    portalEyebrow: "University of Salamanca Research Portal",
     portalTitulo: "All our members' output",
     irAlPortal: "Go to the Portal",
     orcidTitulo: "Team ORCID profiles",
@@ -158,20 +152,6 @@ function pageHref(f: PublicationFilters, pagina: number): string {
   return qs ? `/publicaciones?${qs}` : "/publicaciones";
 }
 
-/** Números de página a mostrar: 1 … (p-1) p (p+1) … total, sin repetidos. */
-function pageNumbers(current: number, total: number): Array<number | "…"> {
-  const wanted = new Set<number>([1, 2, current - 1, current, current + 1, total - 1, total]);
-  const list = [...wanted].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
-  const out: Array<number | "…"> = [];
-  let prev = 0;
-  for (const n of list) {
-    if (n - prev > 1) out.push("…");
-    out.push(n);
-    prev = n;
-  }
-  return out;
-}
-
 /** Agrupa la página actual por año (ya viene ordenada: año desc). */
 function porAnio(items: PublicPublication[]) {
   const grupos: Array<{ year: number; items: PublicPublication[] }> = [];
@@ -183,19 +163,8 @@ function porAnio(items: PublicPublication[]) {
   return grupos;
 }
 
-const chipClass = (active: boolean) =>
-  cn(
-    "flex h-[34px] items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card",
-    active
-      ? "border-diderot-indigo bg-diderot-indigo text-white"
-      : "border-gray-300 bg-surface-card text-gray-600 hover:border-brand-400 hover:text-ink",
-  );
-
-const countClass = (active: boolean) =>
-  cn(
-    "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
-    active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600",
-  );
+const campoClass =
+  "h-10 rounded-md border border-gray-300 bg-surface-card text-sm outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25";
 
 export default async function PublicacionesPage({
   searchParams,
@@ -240,7 +209,7 @@ export default async function PublicacionesPage({
     anios.push({ year: filtros.year, count: 0 });
     anios.sort((a, b) => b.year - a.year);
   }
-  // Chips: solo los tipos con publicaciones (más el activo, si no tuviera).
+  // Pestañas: solo los tipos con publicaciones (más el activo, si no tuviera).
   const tipos = PUBLICATION_TYPES.filter(
     (pt) => (typeCounts[pt.value] ?? 0) > 0 || pt.value === filtros.type,
   );
@@ -250,122 +219,97 @@ export default async function PublicacionesPage({
 
   return (
     <>
-      {/* Cabecera con filtros */}
-      <section className="border-b border-gray-200 bg-surface-card">
-        <div className="mx-auto max-w-6xl px-6 pb-8 pt-12">
-          <div className="mb-3.5">
-            <Breadcrumb
-              items={[
-                { label: t.inicio, href: href("/") },
-                { label: t.publicaciones },
-              ]}
-            />
-          </div>
-          <p className="mb-2.5 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-            {t.eyebrow}
-          </p>
-          <h1 className="mb-3.5 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
-            {t.publicaciones}
-          </h1>
-          <div
-            className="page-block max-w-[70ch] text-base leading-relaxed text-gray-600"
-            // Bloque editable desde el gestor (publicaciones:intro)
-            dangerouslySetInnerHTML={{ __html: intro }}
-          />
-
-          {!catalogoVacio ? (
-            <>
-              {/* Tipos: enlaces (funcionan sin JS) con su recuento */}
-              <nav aria-label={t.filtrarTipo} className="mt-6 flex flex-wrap gap-2">
-                <Link
-                  href={lh({ ...filtros, type: null }, 1)}
-                  aria-current={!filtros.type ? "page" : undefined}
-                  className={chipClass(!filtros.type)}
-                >
-                  {t.todas}
-                  <span className={countClass(!filtros.type)}>{allTypesCount}</span>
-                </Link>
-                {tipos.map((pt) => {
-                  const activo = filtros.type === pt.value;
-                  return (
-                    <Link
-                      key={pt.value}
-                      href={lh({ ...filtros, type: pt.value }, 1)}
-                      aria-current={activo ? "page" : undefined}
-                      className={chipClass(activo)}
-                    >
-                      {locale === "en" ? pt.pluralEn : pt.plural}
-                      <span className={countClass(activo)}>
-                        {typeCounts[pt.value] ?? 0}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              {/* Búsqueda y año: formulario GET, se resuelve en el servidor */}
-              <form
-                method="get"
-                action={href("/publicaciones")}
-                role="search"
-                aria-label={t.buscarEnPublicaciones}
-                className="mt-4 flex flex-wrap items-center gap-2.5"
+      <PageHeader
+        breadcrumb={[{ label: t.inicio, href: href("/") }, { label: t.publicaciones }]}
+        eyebrow={t.eyebrow}
+        title={t.publicaciones}
+        intro={intro}
+        className={catalogoVacio ? undefined : "pb-8"}
+      >
+        {!catalogoVacio ? (
+          <>
+            {/* Tipos: pestañas de texto (funcionan sin JS) con su recuento */}
+            <nav aria-label={t.filtrarTipo} className="tabs mt-8">
+              <Link
+                href={lh({ ...filtros, type: null }, 1)}
+                aria-current={!filtros.type ? "page" : undefined}
+                className="tab"
               >
-                {filtros.type ? (
-                  <input
-                    type="hidden"
-                    name="tipo"
-                    value={PUBLICATION_TYPE_SLUGS[filtros.type]}
-                  />
-                ) : null}
-                <div className="relative w-full sm:w-[340px]">
-                  <Search
-                    className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
-                    aria-hidden="true"
-                  />
-                  <input
-                    type="search"
-                    name="q"
-                    defaultValue={filtros.q}
-                    maxLength={100}
-                    placeholder={t.placeholder}
-                    aria-label={t.textoABuscar}
-                    className="h-10 w-full rounded-full border border-gray-300 bg-surface-card pl-10 pr-4 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-500 focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
-                  />
-                </div>
-                <AutoSubmitSelect
-                  name="anio"
-                  defaultValue={filtros.year ? String(filtros.year) : ""}
-                  aria-label={t.filtrarAnio}
-                  className="h-10 rounded-full border border-gray-300 bg-surface-card px-3.5 text-sm text-gray-700 outline-none transition-colors focus:border-diderot-violet focus:ring-2 focus:ring-diderot-violet/25"
-                >
-                  <option value="">{t.todosLosAnios}</option>
-                  {anios.map((y) => (
-                    // Un solo texto: <option> no admite nodos intermedios.
-                    <option key={y.year} value={y.year}>
-                      {`${y.year} (${y.count})`}
-                    </option>
-                  ))}
-                </AutoSubmitSelect>
-                <button
-                  type="submit"
-                  className="h-10 rounded-full bg-diderot-indigo px-5 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card"
-                >
-                  {t.buscar}
-                </button>
-                {hayFiltros ? (
+                {t.todas}
+                <span className="tab-count">{allTypesCount}</span>
+              </Link>
+              {tipos.map((pt) => {
+                const activo = filtros.type === pt.value;
+                return (
                   <Link
-                    href={lh(sinFiltros, 1)}
-                    className="inline-flex min-h-6 items-center rounded text-sm font-medium text-diderot-violet hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
+                    key={pt.value}
+                    href={lh({ ...filtros, type: pt.value }, 1)}
+                    aria-current={activo ? "page" : undefined}
+                    className="tab"
                   >
-                    {t.limpiar}
+                    {locale === "en" ? pt.pluralEn : pt.plural}
+                    <span className="tab-count">{typeCounts[pt.value] ?? 0}</span>
                   </Link>
-                ) : null}
-              </form>
-            </>
-          ) : null}
-        </div>
-      </section>
+                );
+              })}
+            </nav>
+
+            {/* Búsqueda y año: formulario GET, se resuelve en el servidor */}
+            <form
+              method="get"
+              action={href("/publicaciones")}
+              role="search"
+              aria-label={t.buscarEnPublicaciones}
+              className="mt-5 flex flex-wrap items-center gap-2.5"
+            >
+              {filtros.type ? (
+                <input
+                  type="hidden"
+                  name="tipo"
+                  value={PUBLICATION_TYPE_SLUGS[filtros.type]}
+                />
+              ) : null}
+              <div className="relative min-w-0 flex-1 basis-[220px] sm:w-[340px] sm:flex-none">
+                <Search
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={filtros.q}
+                  maxLength={100}
+                  placeholder={t.placeholder}
+                  aria-label={t.textoABuscar}
+                  className={cn(campoClass, "w-full pl-10 pr-4 text-gray-900 placeholder:text-gray-500")}
+                />
+              </div>
+              <AutoSubmitSelect
+                name="anio"
+                defaultValue={filtros.year ? String(filtros.year) : ""}
+                aria-label={t.filtrarAnio}
+                className={cn(campoClass, "px-3.5 text-gray-700")}
+              >
+                <option value="">{t.todosLosAnios}</option>
+                {anios.map((y) => (
+                  // Un solo texto: <option> no admite nodos intermedios.
+                  <option key={y.year} value={y.year}>
+                    {`${y.year} (${y.count})`}
+                  </option>
+                ))}
+              </AutoSubmitSelect>
+              <button type="submit" className={buttonClassName()}>
+                {t.buscar}
+              </button>
+              {hayFiltros ? (
+                <Link href={lh(sinFiltros, 1)} className="link-sub ml-1 text-sm font-medium">
+                  {t.limpiar}
+                </Link>
+              ) : null}
+            </form>
+          </>
+        ) : null}
+      </PageHeader>
 
       {/* Listado por años */}
       <section aria-labelledby="listado-publicaciones">
@@ -375,10 +319,9 @@ export default async function PublicacionesPage({
           </h2>
 
           {catalogoVacio ? (
-            <div className="rounded-xl border border-dashed border-gray-300 px-6 py-14 text-center">
-              <BookOpen className="mx-auto mb-3 h-8 w-8 text-gray-400" aria-hidden="true" />
-              <p className="text-base font-semibold text-gray-900">{t.vacioTitulo}</p>
-              <p className="mx-auto mt-1.5 max-w-[60ch] text-sm leading-relaxed text-gray-500">
+            <div className="border-y border-gray-200 px-6 py-14 text-center">
+              <p className="text-lg font-semibold text-gray-900">{t.vacioTitulo}</p>
+              <p className="mx-auto mt-2 max-w-[60ch] text-[15px] leading-relaxed text-gray-600">
                 {t.vacioTexto}
               </p>
               {urlPortal ? (
@@ -386,7 +329,7 @@ export default async function PublicacionesPage({
                   href={urlPortal}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn(buttonClassName({ variant: "outline" }), "mt-5 gap-1.5")}
+                  className={cn(buttonClassName({ variant: "outline" }), "mt-6 gap-1.5")}
                 >
                   {t.irAlPortal}
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
@@ -394,15 +337,11 @@ export default async function PublicacionesPage({
               ) : null}
             </div>
           ) : total === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-300 px-6 py-14 text-center">
-              <SearchX className="mx-auto mb-3 h-8 w-8 text-gray-400" aria-hidden="true" />
-              <p className="text-sm text-gray-500">
+            <div className="border-y border-gray-200 px-6 py-12 text-center">
+              <p className="note text-base">
                 {t.sinResultados(filtros.q, Boolean(filtros.type || filtros.year))}
               </p>
-              <Link
-                href={lh(sinFiltros, 1)}
-                className="mt-3 inline-flex min-h-6 items-center rounded text-sm font-medium text-diderot-violet hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
-              >
+              <Link href={lh(sinFiltros, 1)} className="link-sub mt-3 inline-block text-sm font-medium">
                 {t.limpiar}
               </Link>
             </div>
@@ -417,21 +356,21 @@ export default async function PublicacionesPage({
                   <section
                     key={g.year}
                     aria-labelledby={`anio-${g.year}`}
-                    className="grid gap-x-10 gap-y-2 border-t border-gray-200 pt-8 lg:grid-cols-[140px_1fr]"
+                    className="grid gap-x-10 gap-y-2 border-t border-gray-300 pt-8 lg:grid-cols-[150px_1fr]"
                   >
                     {/* El año acompaña a su bloque mientras se lee (lg). */}
                     <div className="lg:sticky lg:top-24 lg:self-start">
                       <h3
                         id={`anio-${g.year}`}
-                        className="text-3xl font-bold tracking-tight text-ink"
+                        className="font-serif text-[42px] leading-none tabular-nums text-ink"
                       >
                         {g.year}
                       </h3>
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-2 text-[13px] text-gray-500">
                         {t.enAnio(recuentoAnio.get(g.year) ?? g.items.length)}
                       </p>
                     </div>
-                    <ul className="list-none divide-y divide-gray-100 p-0 [&>li:first-child>article]:pt-1">
+                    <ul className="list-none divide-y divide-gray-200 p-0 [&>li:first-child>article]:pt-1">
                       {g.items.map((p) => (
                         <li key={p.id}>
                           <PublicationReference pub={p} locale={locale} />
@@ -448,63 +387,12 @@ export default async function PublicacionesPage({
 
       {/* Paginación (conserva los filtros) */}
       {totalPages > 1 ? (
-        <nav
-          aria-label={t.paginacion}
-          className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-1.5 px-6 pb-14 pt-4"
-        >
-          {page > 1 ? (
-            <Link
-              href={lh(filtros, page - 1)}
-              aria-label={t.paginaAnterior}
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-600 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
-            >
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          ) : (
-            <span className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-300">
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </span>
-          )}
-
-          {pageNumbers(page, totalPages).map((p, i) =>
-            p === "…" ? (
-              <span key={`gap-${i}`} className="px-1 text-sm text-gray-500" aria-hidden="true">
-                …
-              </span>
-            ) : p === page ? (
-              <span
-                key={p}
-                aria-current="page"
-                className="flex h-9 w-9 items-center justify-center rounded-md border border-diderot-indigo bg-diderot-indigo text-sm font-semibold text-white"
-              >
-                {p}
-              </span>
-            ) : (
-              <Link
-                key={p}
-                href={lh(filtros, p)}
-                aria-label={t.pagina(p)}
-                className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-sm text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
-              >
-                {p}
-              </Link>
-            ),
-          )}
-
-          {page < totalPages ? (
-            <Link
-              href={lh(filtros, page + 1)}
-              aria-label={t.paginaSiguiente}
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-600 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          ) : (
-            <span className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-surface-card text-gray-300">
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </span>
-          )}
-        </nav>
+        <Pagination
+          current={page}
+          total={totalPages}
+          hrefFor={(p) => lh(filtros, p)}
+          labels={{ nav: t.paginacion, prev: t.anterior, next: t.siguiente, page: t.pagina }}
+        />
       ) : (
         <div className="pb-8" />
       )}
@@ -512,32 +400,24 @@ export default async function PublicacionesPage({
       {/* Portal de Producción Científica de la USAL y perfiles ORCID */}
       <section className="staff-lines border-t border-gray-200 bg-surface-tinted">
         <div className="mx-auto max-w-6xl px-6 py-14">
-          <Reveal
-            from="scale"
-            className="rounded-xl border border-gray-200 border-t-[3px] border-t-diderot-amber bg-surface-card p-8 shadow-sm"
-          >
-            <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-5 sm:items-center">
-                <span className="flex h-16 w-16 flex-none items-center justify-center rounded-lg bg-diderot-indigo text-white">
-                  <Library className="h-8 w-8" aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="mb-1 text-xs font-bold uppercase tracking-wider text-diderot-amber">
-                    {t.portalEyebrow}
-                  </p>
-                  <h2 className="text-xl font-bold text-gray-900">{t.portalTitulo}</h2>
-                  <div
-                    className="page-block mt-1 max-w-[62ch] text-sm leading-relaxed text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: portalDescripcion }}
-                  />
-                </div>
+          <Reveal>
+            <div className="flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
+              <div>
+                <Eyebrow className="mb-2">{t.portalEyebrow}</Eyebrow>
+                <h2 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-[28px]">
+                  {t.portalTitulo}
+                </h2>
+                <div
+                  className="page-block mt-2 max-w-[62ch] text-[15px] leading-relaxed text-gray-600"
+                  dangerouslySetInnerHTML={{ __html: portalDescripcion }}
+                />
               </div>
               {urlPortal ? (
                 <a
                   href={urlPortal}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn(buttonClassName({ size: "lg" }), "flex-none gap-1.5")}
+                  className={cn(buttonClassName({ size: "lg" }), "flex-none gap-2")}
                 >
                   {t.irAlPortal}
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
@@ -547,12 +427,12 @@ export default async function PublicacionesPage({
           </Reveal>
 
           {orcids.length > 0 ? (
-            <div className="mt-10">
-              <h2 className="mb-1.5 text-lg font-bold tracking-tight text-gray-900">
+            <div className="mt-12 border-t border-gray-300 pt-8">
+              <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-gray-900">
                 {t.orcidTitulo}
               </h2>
-              <p className="mb-5 max-w-[70ch] text-sm text-gray-600">{t.orcidTexto}</p>
-              <ul className="flex list-none flex-wrap gap-2.5 p-0">
+              <p className="mb-5 max-w-[70ch] text-[15px] text-gray-600">{t.orcidTexto}</p>
+              <ul className="grid list-none grid-cols-1 gap-x-8 gap-y-2.5 p-0 sm:grid-cols-2 lg:grid-cols-3">
                 {orcids.map((o) => (
                   <li key={o.orcid}>
                     <a
@@ -560,16 +440,16 @@ export default async function PublicacionesPage({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={t.orcidDe(o.name)}
-                      className="inline-flex min-h-9 items-center gap-2 rounded-full border border-gray-200 bg-surface-card py-1 pl-1.5 pr-3.5 text-sm text-gray-700 shadow-sm transition-colors hover:border-[#A6CE39] hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-tinted"
+                      className="group inline-flex items-center gap-2.5 text-[15px] text-gray-700"
                     >
                       {/* Distintivo «iD» de ORCID (logotipo, decorativo). */}
                       <span
                         aria-hidden="true"
-                        className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#A6CE39] text-[10px] font-bold text-white"
+                        className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[#A6CE39] text-[9px] font-bold text-white"
                       >
                         iD
                       </span>
-                      {o.name}
+                      <span className="link-sub">{o.name}</span>
                     </a>
                   </li>
                 ))}

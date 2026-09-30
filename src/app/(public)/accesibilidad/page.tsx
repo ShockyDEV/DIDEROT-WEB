@@ -51,11 +51,11 @@ export default async function AccesibilidadPage() {
             ]}
           />
         </div>
-        <h1 className="mb-6 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
+        <h1 className="mb-6 text-balance text-4xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-[44px]">
           {t.titulo}
         </h1>
         <div
-          className="page-block text-base leading-relaxed text-gray-600 [&_a]:text-diderot-violet [&_a]:underline [&_h2]:mb-2 [&_h2]:mt-7 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_li]:mb-1.5 [&_ul]:list-disc [&_ul]:pl-5"
+          className="page-block text-base leading-relaxed text-gray-600 [&_a]:text-diderot-violet [&_a]:underline [&_h2]:mb-2 [&_h2]:mt-7 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-gray-900 [&_li]:mb-1.5 [&_ul]:list-disc [&_ul]:pl-5"
           dangerouslySetInnerHTML={{ __html: contenido }}
         />
       </div>

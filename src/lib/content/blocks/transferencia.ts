@@ -1,5 +1,5 @@
 import { SITE } from "@/lib/site";
-import { ICON_FIELD, type PageContentModule } from "./types";
+import type { PageContentModule } from "./types";
 
 /**
  * Contenido editable de «Transferencia» (pageSlug "transferencia"): misma
@@ -60,7 +60,6 @@ export const content: PageContentModule = {
       title: "Líneas y servicios de transferencia (tarjetas)",
       itemLabel: "línea",
       fields: [
-        ICON_FIELD,
         { key: "titulo", label: "Título", type: "text" },
         { key: "texto", label: "Texto", type: "textarea" },
       ],
@@ -103,7 +102,7 @@ export const content: PageContentModule = {
           key: "financiacion",
           label: "Programa y financiación",
           type: "text",
-          hint: "p. ej. Erasmus+ KA201 · Comisión Europea",
+          hint: "p. ej. Erasmus+ KA201, Comisión Europea",
         },
         { key: "periodo", label: "Periodo", type: "text", hint: "p. ej. 2019–2022" },
         {
@@ -125,7 +124,7 @@ export const content: PageContentModule = {
           acronimo: "EA-DIGIFOLK",
           titulo:
             "An European and Ibero-American approach for the digital collection, analysis and dissemination of folk music",
-          financiacion: "Horizonte Europa · MSCA Staff Exchanges (Unión Europea)",
+          financiacion: "Horizonte Europa, MSCA Staff Exchanges (Unión Europea)",
           periodo: "2023–2026",
           ip: "Javier Félix Merchán Sánchez-Jara y María Navarro Cáceres",
           texto:
@@ -136,7 +135,7 @@ export const content: PageContentModule = {
           acronimo: "Co-POEM",
           titulo:
             "Platform for the Collaborative Generation of European Popular Music",
-          financiacion: "Erasmus+ KA201 · Comisión Europea",
+          financiacion: "Erasmus+ KA201, Comisión Europea",
           periodo: "2019–2022",
           ip: "María Navarro Cáceres",
           texto:
@@ -162,7 +161,6 @@ export const content: PageContentModule = {
       title: "Divulgación (tarjetas)",
       itemLabel: "tarjeta",
       fields: [
-        ICON_FIELD,
         { key: "titulo", label: "Título", type: "text" },
         { key: "texto", label: "Texto", type: "textarea" },
         {
@@ -236,7 +234,7 @@ export const content: PageContentModule = {
         acronimo: "EA-DIGIFOLK",
         titulo:
           "An European and Ibero-American approach for the digital collection, analysis and dissemination of folk music",
-        financiacion: "Horizon Europe · MSCA Staff Exchanges (European Union)",
+        financiacion: "Horizon Europe, MSCA Staff Exchanges (European Union)",
         periodo: "2023–2026",
         ip: "Javier Félix Merchán Sánchez-Jara and María Navarro Cáceres",
         texto:
@@ -247,7 +245,7 @@ export const content: PageContentModule = {
         acronimo: "Co-POEM",
         titulo:
           "Platform for the Collaborative Generation of European Popular Music",
-        financiacion: "Erasmus+ KA201 · European Commission",
+        financiacion: "Erasmus+ KA201, European Commission",
         periodo: "2019–2022",
         ip: "María Navarro Cáceres",
         texto:

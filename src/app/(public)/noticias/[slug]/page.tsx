@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { CoverImage } from "@/components/news/cover-image";
+import { NewsMeta } from "@/components/news/news-teaser";
 import { ShareRow } from "@/components/news/share-row";
+import { Gota } from "@/components/ui/eyebrow";
 import {
   getPublishedNews,
   getPublishedNewsBySlug,
@@ -28,15 +30,17 @@ const T = {
     inicio: "Inicio",
     noticias: "Noticias",
     masActualidad: "Más actualidad",
-    todasLasNoticias: "Todas las noticias →",
+    todasLasNoticias: "Todas las noticias",
     noEncontrada: "Noticia no encontrada",
+    por: "Por",
   },
   en: {
     inicio: "Home",
     noticias: "News",
     masActualidad: "More news",
-    todasLasNoticias: "All news →",
+    todasLasNoticias: "All news",
     noEncontrada: "News item not found",
+    por: "By",
   },
 } as const;
 
@@ -138,23 +142,31 @@ export default async function NoticiaPage({ params }: Readonly<PageProps>) {
             ]}
           />
         </div>
-        <div className="mb-4 flex flex-wrap items-center gap-2.5 text-xs">
-          <Link
-            href={href(`/noticias?categoria=${encodeURIComponent(item.category)}`)}
-            className="inline-flex min-h-[24px] items-center rounded-full bg-diderot-pale px-3 py-1 font-medium text-ink underline-offset-2 hover:underline"
-          >
-            {catLabel(item.category)}
-          </Link>
-          <span className="text-gray-500">
-            <time dateTime={item.publishedAt}>{item.dateLong}</time> ·{" "}
-            {item.author}
+        {/* Categoría (enlace al filtro), fecha y autoría: sin píldoras ni «·» */}
+        <p className="mb-5 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
+          <span className="status">
+            <Gota className="text-diderot-gold" />
+            <Link
+              href={href(`/noticias?categoria=${encodeURIComponent(item.category)}`)}
+              className="link-sub"
+            >
+              {catLabel(item.category)}
+            </Link>
           </span>
-        </div>
-        <h1 className="mb-4 text-balance text-4xl font-bold leading-tight tracking-tight text-ink">
+          <time dateTime={item.publishedAt} className="tabular-nums text-gray-500">
+            {item.dateLong}
+          </time>
+          {item.author ? (
+            <span className="text-gray-500">
+              {t.por} {item.author}
+            </span>
+          ) : null}
+        </p>
+        <h1 className="mb-5 text-balance text-4xl font-semibold leading-[1.12] tracking-tight text-ink sm:text-[44px]">
           {item.title}
         </h1>
         {item.excerpt ? (
-          <p className="mb-7 text-lg leading-relaxed text-gray-500">
+          <p className="mb-8 font-serif text-[22px] italic leading-snug text-gray-600">
             {item.excerpt}
           </p>
         ) : null}
@@ -184,7 +196,7 @@ export default async function NoticiaPage({ params }: Readonly<PageProps>) {
           .news-body de globals.css no los define. */}
       <div className="mx-auto max-w-[800px] px-6 pt-7">
         <div
-          className="news-body flex flex-col gap-[18px] text-[17px] leading-[1.75] text-gray-600 [&_h2]:mt-3 [&_h2]:text-balance [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:leading-snug [&_h2]:text-gray-900 [&_h3]:mt-2 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:leading-snug [&_h3]:text-gray-900 [&_li]:mb-1 [&_ol]:list-decimal [&_ul]:list-disc"
+          className="news-body flex flex-col gap-[18px] text-[17px] leading-[1.75] text-gray-600 [&_h2]:mt-3 [&_h2]:text-balance [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:leading-snug [&_h2]:text-gray-900 [&_h3]:mt-2 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:leading-snug [&_h3]:text-gray-900 [&_li]:mb-1 [&_ol]:list-decimal"
           // Contenido del gestor (HTML del editor del panel de administración)
           dangerouslySetInnerHTML={{ __html: item.content }}
         />
@@ -197,33 +209,27 @@ export default async function NoticiaPage({ params }: Readonly<PageProps>) {
       {/* Más actualidad */}
       {related.length > 0 ? (
         <div className="mx-auto max-w-6xl px-6 pb-16 pt-12">
-          <div className="mb-5 flex items-baseline justify-between gap-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              {t.masActualidad}
-            </h2>
-            <Link
-              href={href("/noticias")}
-              className="text-sm font-medium text-diderot-violet hover:underline"
-            >
+          <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4 border-b border-gray-200 pb-3">
+            <h2 className="text-xl font-semibold text-gray-900">{t.masActualidad}</h2>
+            <Link href={href("/noticias")} className="link-sub text-sm font-medium">
               {t.todasLasNoticias}
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((n) => (
               <Link
                 key={n.slug}
                 href={href(`/noticias/${n.slug}`)}
-                className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
+                className="group flex flex-col gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-diderot-violet focus-visible:ring-offset-4 focus-visible:ring-offset-surface-page"
               >
-                <article className="card-lift h-full rounded-xl border border-gray-200 bg-surface-card px-5 py-[18px] shadow-sm hover:border-brand-400 hover:shadow-md">
-                  <p className="mb-1.5 text-xs text-gray-500">
-                    {catLabel(n.category)} ·{" "}
-                    <time dateTime={n.publishedAt}>{n.dateDisplay}</time>
-                  </p>
-                  <h3 className="text-sm font-semibold leading-snug text-gray-900">
-                    {n.title}
-                  </h3>
-                </article>
+                <NewsMeta
+                  category={catLabel(n.category)}
+                  date={n.dateDisplay}
+                  dateTime={n.publishedAt}
+                />
+                <h3 className="text-base font-semibold leading-snug text-gray-900">
+                  <span className="link-trace">{n.title}</span>
+                </h3>
               </Link>
             ))}
           </div>
