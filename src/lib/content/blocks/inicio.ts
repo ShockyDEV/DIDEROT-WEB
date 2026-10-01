@@ -41,7 +41,9 @@ export const content: PageContentModule = {
       {
         blockKey: "hero-foto-etiqueta",
         title: "Portada — rótulo sobre la foto (vacío = sin rótulo)",
-        defaultContent: `<p>Aula performativa del proyecto DIDEROT</p>`,
+        // Sin rótulo por defecto: la foto se explica sola (su descripción va
+        // en el texto alternativo).
+        defaultContent: "",
       },
       {
         blockKey: "cifras-eyebrow",
@@ -139,7 +141,6 @@ export const content: PageContentModule = {
     "inicio:hero-parrafo": `<p>An interdisciplinary team of researchers from different fields of knowledge and institutions who identify, develop and apply new teaching methodologies and strategies where music education, art and cutting-edge technology meet.</p>`,
     "inicio:hero-boton-principal": `<p>Meet the group</p>`,
     "inicio:hero-boton-secundario": `<p>Publications</p>`,
-    "inicio:hero-foto-etiqueta": `<p>The DIDEROT project's performative classroom</p>`,
     "inicio:cifras-eyebrow": `<p>Group activity</p>`,
     "inicio:cifras-titulo": `<p>DIDEROT in figures</p>`,
     "inicio:cifras-parrafo": `<p>The group's team, projects and scientific output, always up to date.</p>`,
