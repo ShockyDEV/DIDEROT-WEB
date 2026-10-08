@@ -11,6 +11,7 @@ import { getPublishedNews } from "@/lib/news-service";
 import { getBlock } from "@/lib/content-blocks-service";
 import { Reveal } from "@/components/ui/reveal";
 import { cn } from "@/lib/cn";
+import { columnasSinHuecos } from "@/lib/grid";
 import { withLocale } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
 import { assertVisible } from "@/lib/page-visibility";
@@ -357,6 +358,8 @@ export default async function NoticiasPage({
                 <div
                   className={cn(
                     "grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3",
+                    // Sin noticias huérfanas: filas de cuatro cuando dejan menos huecos.
+                    columnasSinHuecos(feed.length) === 4 && "xl:grid-cols-4",
                     featured && currentPage === 1 && "border-t border-gray-200 pt-10",
                   )}
                 >

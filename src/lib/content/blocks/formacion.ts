@@ -92,9 +92,9 @@ export const content: PageContentModule = {
       // Datos del Portal de Producción Científica de la USAL (grupo 12132).
       defaultItems: [
         {
-          cifra: "3",
+          cifra: "4",
           texto:
-            "tesis doctorales defendidas con dirección de miembros del grupo (2021–2024)",
+            "tesis doctorales defendidas con dirección de miembros del grupo (2021–2026)",
         },
         {
           cifra: "2026",
@@ -188,8 +188,17 @@ export const content: PageContentModule = {
           hint: "vacío = sin enlace",
         },
       ],
-      // Portal de Producción Científica de la USAL (grupo 12132).
+      // Portal de Producción Científica de la USAL (grupo 12132); la de 2026,
+      // del listado de tesis defendidas de la USAL (curso 2025/26).
       defaultItems: [
+        {
+          anio: "2026",
+          titulo:
+            "Hacia un modelo para la integración de las nuevas tecnologías digitales en el aula de música de Educación Secundaria basado en el paradigma Blended Learning",
+          autoria: "Carlos Sánchez García",
+          direccion: "Javier Félix Merchán Sánchez-Jara",
+          enlace: "",
+        },
         {
           anio: "2024",
           titulo:
@@ -347,9 +356,9 @@ export const content: PageContentModule = {
   listsEn: {
     "formacion:list:datos": [
       {
-        cifra: "3",
+        cifra: "4",
         texto:
-          "doctoral theses defended under the supervision of group members (2021–2024)",
+          "doctoral theses defended under the supervision of group members (2021–2026)",
       },
       {
         cifra: "2026",
@@ -397,6 +406,14 @@ export const content: PageContentModule = {
       },
     ],
     "formacion:list:tesis": [
+      {
+        anio: "2026",
+        titulo:
+          "Hacia un modelo para la integración de las nuevas tecnologías digitales en el aula de música de Educación Secundaria basado en el paradigma Blended Learning",
+        autoria: "Carlos Sánchez García",
+        direccion: "Javier Félix Merchán Sánchez-Jara",
+        enlace: "",
+      },
       {
         anio: "2024",
         titulo:
