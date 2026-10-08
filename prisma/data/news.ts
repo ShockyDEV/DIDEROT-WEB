@@ -31,21 +31,21 @@ export const news: NewsSeed[] = [
   {
     // Fecha, título, programa y dirección: «Tesis defendidas en la Universidad
     // de Salamanca en el curso 2025/26» (posgrado.usal.es). Calificación y
-    // propuesta de premio: el propio grupo. Foto: el grupo.
+    // propuesta de premio, aula y foto: el propio grupo.
     slug: "tesis-doctoral-carlos-sanchez-garcia",
     title:
-      "Carlos Sánchez García se doctora con una tesis sobre tecnologías digitales en el aula de música de Secundaria",
+      "Cum laude y propuesta de premio extraordinario para la tesis de Carlos Sánchez García sobre blended learning en el aula de música",
     titleEn:
-      "Carlos Sánchez García earns his doctorate with a thesis on digital technologies in the secondary music classroom",
+      "Cum laude and an extraordinary award nomination for Carlos Sánchez García's thesis on blended learning in the music classroom",
     excerpt:
-      "Carlos Sánchez García, miembro de DIDEROT, defendió el 30 de septiembre su tesis doctoral, dirigida por Javier Félix Merchán Sánchez-Jara, con la calificación de sobresaliente cum laude y propuesta de premio extraordinario.",
+      "Carlos Sánchez García, miembro de DIDEROT, defendió el 30 de septiembre en el Aula Francisco de Vitoria su tesis doctoral, dirigida por Javier Félix Merchán Sánchez-Jara: un modelo para integrar las tecnologías digitales en el aula de música de Secundaria.",
     excerptEn:
-      "Carlos Sánchez García, a member of DIDEROT, defended his doctoral thesis, supervised by Javier Félix Merchán Sánchez-Jara, on 30 September. It was awarded the highest grade, sobresaliente cum laude, and proposed for the extraordinary doctorate award.",
-    content: `<p>El <strong>30 de septiembre de 2026</strong>, <strong>Carlos Sánchez García</strong>, miembro de DIDEROT, defendió en la Universidad de Salamanca su tesis doctoral <strong>«Hacia un modelo para la integración de las nuevas tecnologías digitales en el aula de música de Educación Secundaria basado en el paradigma <em>Blended Learning</em>»</strong>.</p>
+      "On 30 September, in the Francisco de Vitoria lecture hall, Carlos Sánchez García, a member of DIDEROT, defended his doctoral thesis, supervised by Javier Félix Merchán Sánchez-Jara: a model for integrating digital technologies into the secondary school music classroom.",
+    content: `<p>El <strong>30 de septiembre de 2026</strong>, <strong>Carlos Sánchez García</strong>, miembro de DIDEROT, defendió en el <strong>Aula Francisco de Vitoria</strong> de la Universidad de Salamanca su tesis doctoral <strong>«Hacia un modelo para la integración de las nuevas tecnologías digitales en el aula de música de Educación Secundaria basado en el paradigma <em>Blended Learning</em>»</strong>.</p>
 <p>La tesis, dirigida por <strong>Javier Félix Merchán Sánchez-Jara</strong>, responsable del grupo, se ha desarrollado en el Programa de Doctorado <strong>Formación en la Sociedad del Conocimiento</strong>. El tribunal le otorgó la calificación de <strong>sobresaliente cum laude</strong> y la propuso para <strong>premio extraordinario de doctorado</strong>.</p>
 <p>El trabajo plantea un modelo para integrar las tecnologías digitales en la asignatura de Música de Educación Secundaria desde el aprendizaje combinado (<em>blended learning</em>), que alterna la enseñanza presencial y la enseñanza en línea.</p>
 <p>La tesis se suma a las <a href="/formacion#tesis">tesis doctorales dirigidas por miembros del grupo</a>. Enhorabuena, doctor.</p>`,
-    contentEn: `<p>On <strong>30 September 2026</strong>, <strong>Carlos Sánchez García</strong>, a member of DIDEROT, defended his doctoral thesis at the University of Salamanca: <strong>“Hacia un modelo para la integración de las nuevas tecnologías digitales en el aula de música de Educación Secundaria basado en el paradigma <em>Blended Learning</em>”</strong> (Towards a model for integrating new digital technologies into the secondary school music classroom based on the blended learning paradigm).</p>
+    contentEn: `<p>On <strong>30 September 2026</strong>, <strong>Carlos Sánchez García</strong>, a member of DIDEROT, defended his doctoral thesis in the <strong>Francisco de Vitoria lecture hall</strong> of the University of Salamanca: <strong>“Hacia un modelo para la integración de las nuevas tecnologías digitales en el aula de música de Educación Secundaria basado en el paradigma <em>Blended Learning</em>”</strong> (Towards a model for integrating new digital technologies into the secondary school music classroom based on the blended learning paradigm).</p>
 <p>The thesis, supervised by <strong>Javier Félix Merchán Sánchez-Jara</strong>, head of the group, was carried out in the <strong>Knowledge Society Training</strong> doctoral programme. The examining board awarded it the grade of <strong>sobresaliente cum laude</strong>, the highest in the Spanish system, and proposed it for the <strong>extraordinary doctorate award</strong>.</p>
 <p>The work puts forward a model for integrating digital technologies into secondary school music lessons through blended learning, which combines face-to-face and online teaching.</p>
 <p>It joins the <a href="/en/formacion#tesis">doctoral theses supervised by group members</a>. Congratulations, Dr Sánchez García.</p>`,
